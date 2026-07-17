@@ -1,0 +1,70 @@
+{
+    "energie_mtr": {
+        "mots_cles": [
+            "moteur", 
+            "vitesse", 
+            "propulseurs", 
+            "fuite"
+        ],
+        "reponses": [
+            "Toute puissance dans les propulseurs, Commandant.",
+            "Moteurs à 100%.",
+            "Compris, on accélère la cadence.",
+            "Les propulseurs crachent tout ce qu'ils ont.",
+            "Bien commandant.",
+            "Compris, commandant.",
+            "Ça va pousser, commandant"
+        ]
+    },
+    "energie_arm": {
+        "mots_cles": [
+            "arme", 
+            "laser", 
+            "combat"
+        ],
+        "reponses": [
+            "Compris, on va les fumer Commandant.",
+            "Armement alimenté au maximum.",
+            "Bien mon commandant",
+            ""
+        ]
+    },
+    "energie_sys": {
+        "mots_cles": [
+            "bouclier", 
+            "système", 
+            "défense"
+        ],
+        "reponses": [
+            "Énergie déviée vers les générateurs de boucliers.",
+            "Compris, commandant.",
+            "Bien mon commandant",
+            ""
+        ]
+    },
+    "train_atterrissage": {
+        "mots_cles": [
+            "train", 
+            "atterrissage",
+            "pattes",
+            "atterrir"
+        ],
+        "reponses": [
+            "Train d'atterrissage déployé.",
+            "Trains sortis et verrouillés, prêts pour la manœuvre.",
+            "Déploiement des trains effectué."
+        ]
+    },
+    "soute": {
+        "mots_cles": [
+            "soute",
+            "cargo",
+            "conteneur"
+        ],
+        "reponses": [
+            "Soute déployée.",
+            "Conteneurs verrouillés, prêts pour le transport.",
+            "Déploiement de la soute effectué."
+        ]
+    }
+}
