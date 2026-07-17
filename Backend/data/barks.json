@@ -1,4 +1,8 @@
 {
+    "mots_reveil": {
+        "mots_cles": ["elite", "covas", "élite", "élitre", "corvus", "lève", "hève", "eve", "eva", "kovas"],
+        "reponses": ["Oui, commandant ?", "À vos ordres, commandant.", "J'écoute."]
+    },
     "système_vocal_opérationnel": {
         "mots_cles": [],
         "reponses": [
@@ -8,55 +12,32 @@
         ]
     },
     "energie_mtr": {
-        "mots_cles": [
-            "moteur", 
-            "vitesse", 
-            "propulseurs", 
-            "fuite"
-        ],
+        "mots_cles": ["moteur", "vitesse", "propulseurs", "fuite", "propulsion"],
         "reponses": [
             "Toute puissance dans les propulseurs, Commandant.",
             "Moteurs à 100%.",
             "Compris, on accélère la cadence.",
-            "Les propulseurs crachent tout ce qu'ils ont.",
-            "Bien commandant.",
-            "Compris, commandant.",
             "Ça va pousser, commandant"
         ]
     },
     "energie_arm": {
-        "mots_cles": [
-            "arme", 
-            "laser", 
-            "combat"
-        ],
+        "mots_cles": ["arme", "laser", "combat", "armement", "tir"],
         "reponses": [
             "Compris, on va les fumer Commandant.",
             "Armement alimenté au maximum.",
-            "Bien mon commandant",
-            ""
+            "Bien mon commandant."
         ]
     },
     "energie_sys": {
-        "mots_cles": [
-            "bouclier", 
-            "système", 
-            "défense"
-        ],
+        "mots_cles": ["bouclier", "système", "défense", "générateur", "boucliers"],
         "reponses": [
             "Énergie déviée vers les générateurs de boucliers.",
             "Compris, commandant.",
-            "Bien mon commandant",
-            ""
+            "Bien mon commandant."
         ]
     },
     "train_atterrissage": {
-        "mots_cles": [
-            "train", 
-            "atterrissage",
-            "pattes",
-            "atterrir"
-        ],
+        "mots_cles": ["train", "atterrissage", "pattes", "atterrir", "sort", "rentre", "déploie"],
         "reponses": [
             "Train d'atterrissage déployé.",
             "Trains sortis et verrouillés, prêts pour la manœuvre.",
@@ -64,11 +45,7 @@
         ]
     },
     "soute": {
-        "mots_cles": [
-            "soute",
-            "cargo",
-            "conteneur"
-        ],
+        "mots_cles": ["soute", "cargo", "conteneur", "ouvre", "ferme"],
         "reponses": [
             "Soute déployée.",
             "Conteneurs verrouillés, prêts pour le transport.",
