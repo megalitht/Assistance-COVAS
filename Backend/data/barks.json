@@ -1,4 +1,12 @@
 {
+    "système_vocal_opérationnel": {
+        "mots_cles": [],
+        "reponses": [
+            "Système COVAS opérationnel, commandant.",
+            "Tous les modules vocaux sont en ligne.",
+            "Initialisation terminée."
+        ]
+    },
     "energie_mtr": {
         "mots_cles": [
             "moteur", 

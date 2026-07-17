@@ -34,15 +34,50 @@ def parler_aleatoire(cle_action):
     moteur_vocal.runAndWait()
 
 # --- INITIALISATION IA (WHISPER) ---
-chemin_vers_fichiers = "./module/modele_vocal_fr"
-print("Chargement du modèle d'IA vocal local...")
-modele_vocal = WhisperModel(chemin_vers_fichiers, device="cuda", compute_type="float16")
-parler_aleatoire("système_vocal_opérationnel")
-
 # --- CHARGEMENT DES RÉPLIQUES (BARKS) ---
-chemin_barks = "./module/barks.json" # À adapter selon l'emplacement exact de ton fichier
+chemin_barks = "D:/Assistance-COVAS/Backend/data/barks.json" 
 with open(chemin_barks, "r", encoding="utf-8") as fichier:
     barks = json.load(fichier)
+
+# --- INITIALISATION IA (WHISPER) ---
+chemin_vers_fichiers = "D:/Assistance-COVAS/Backend/module/modele_vocal_fr"
+print("Chargement du modèle d'IA vocal local...")
+modele_vocal = WhisperModel(chemin_vers_fichiers, device="cuda", compute_type="float16")
+
+# Maintenant que 'barks' est chargé, cette fonction peut s'exécuter sans erreur :
+parler_aleatoire("système_vocal_opérationnel")
+
+
+def ecouter(silencieux=False):
+    """Capte le son du micro et le transcrit localement avec Whisper"""
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        if not silencieux:
+            print("Écoute...")
+        # Ajustement automatique au bruit ambiant
+        r.adjust_for_ambient_noise(source, duration=0.5)
+        try:
+            audio = r.listen(source, timeout=5, phrase_time_limit=10)
+            
+            # Écriture temporaire du fichier wav pour Whisper
+            chemin_wav = "D:/Assistance-COVAS/Backend/data/temp.wav"
+            with open(chemin_wav, "wb") as f:
+                f.write(audio.get_wav_data())
+            
+            # Transcription locale
+            segments, info = modele_vocal.transcribe(chemin_wav, beam_size=5, language="fr")
+            texte = "".join([segment.text for segment in segments]).strip()
+            
+            if texte:
+                print(f"Transcription : {texte}")
+                return texte
+        except sr.WaitTimeoutError:
+            pass
+        except Exception as e:
+            print(f"Erreur lors de la capture : {e}")
+    return ""
+
+# --- CHARGEMENT DES RÉPLIQUES (BARKS) ---
 
 # Lancement de la boucle infinie
 while True:
