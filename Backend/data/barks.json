@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
     "mots_reveil": {
         "mots_cles": ["elite", "covas", "élite", "élitre", "corvus", "lève", "hève", "eve", "eva", "kovas"],
         "reponses": ["Oui, commandant ?", "À vos ordres, commandant.", "J'écoute."]
@@ -14,30 +13,14 @@
     },
     "energie_mtr": {
         "mots_cles": ["moteur", "vitesse", "propulseurs", "fuite", "propulsion"],
-=======
-    "energie_mtr": {
-        "mots_cles": [
-            "moteur", 
-            "vitesse", 
-            "propulseurs", 
-            "fuite"
-        ],
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
         "reponses": [
             "Toute puissance dans les propulseurs, Commandant.",
             "Moteurs à 100%.",
             "Compris, on accélère la cadence.",
-<<<<<<< HEAD
-=======
-            "Les propulseurs crachent tout ce qu'ils ont.",
-            "Bien commandant.",
-            "Compris, commandant.",
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
             "Ça va pousser, commandant"
         ]
     },
     "energie_arm": {
-<<<<<<< HEAD
         "mots_cles": ["arme", "laser", "combat", "armement", "tir"],
         "reponses": [
             "Compris, on va les fumer Commandant.",
@@ -55,40 +38,6 @@
     },
     "train_atterrissage": {
         "mots_cles": ["train", "atterrissage", "pattes", "atterrir", "sort", "rentre", "déploie"],
-=======
-        "mots_cles": [
-            "arme", 
-            "laser", 
-            "combat"
-        ],
-        "reponses": [
-            "Compris, on va les fumer Commandant.",
-            "Armement alimenté au maximum.",
-            "Bien mon commandant",
-            ""
-        ]
-    },
-    "energie_sys": {
-        "mots_cles": [
-            "bouclier", 
-            "système", 
-            "défense"
-        ],
-        "reponses": [
-            "Énergie déviée vers les générateurs de boucliers.",
-            "Compris, commandant.",
-            "Bien mon commandant",
-            ""
-        ]
-    },
-    "train_atterrissage": {
-        "mots_cles": [
-            "train", 
-            "atterrissage",
-            "pattes",
-            "atterrir"
-        ],
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
         "reponses": [
             "Train d'atterrissage déployé.",
             "Trains sortis et verrouillés, prêts pour la manœuvre.",
@@ -96,15 +45,41 @@
         ]
     },
     "soute": {
-<<<<<<< HEAD
         "mots_cles": ["soute", "cargo", "conteneur", "ouvre", "ferme"],
-=======
-        "mots_cles": [
-            "soute",
-            "cargo",
-            "conteneur"
-        ],
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
+        "reponses": [
+            "Soute déployée.",
+            "Conteneurs verrouillés, prêts pour le transport.",
+            "Déploiement de la soute effectué."
+        ]
+    },
+    "mode_Combat": {
+        "mots_cles": ["combat", "attaque", "tir"],
+        "reponses": [
+            " Mode combat activé, mon commandant.",
+            " Bien en commandant",
+            " Tout de suite, mon commandant",
+            " Bonne chance pour le combat, commandant."
+
+        ]
+    },
+    "mode_Croisière": {
+        "mots_cles": ["croisiere", "mode vitesse", "conteneur", "ouvre", "ferme"],
+        "reponses": [
+            " Mode croisière activé, mon commandant.",
+            " Bien en commandant",
+            " Tout de suite, mon commandant"
+        ]
+    },
+    "mode_récuperation": {
+        "mots_cles": ["soute", "cargo", "conteneur", "ouvre", "ferme"],
+        "reponses": [
+            " Mode récupération activé, mon commandant.",
+            " Bien en commandant",
+            " Tout de suite, mon commandant"
+        ]
+    },
+    "soute": {
+        "mots_cles": ["soute", "cargo", "conteneur", "ouvre", "ferme"],
         "reponses": [
             "Soute déployée.",
             "Conteneurs verrouillés, prêts pour le transport.",

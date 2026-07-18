@@ -1,19 +1,22 @@
-<<<<<<< HEAD
 import os
 import sys
-=======
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
 import speech_recognition as sr
 import pyaudio
 import struct
 import math
 import pydirectinput
 from faster_whisper import WhisperModel
-import pyttsx3
 import json
 import random
+import asyncio
+import sounddevice as sd
+import numpy as np
 
-<<<<<<< HEAD
+# Importation de nos modules personnalisés situés dans le sous-dossier 'module'
+from module.macros import executer_touches 
+from module.cerveau import generer_replique_ia
+from module.voix import generer_et_jouer_voix
+
 # --- CONFIGURATION AUTOMATIQUE DES PATHS NVIDIA POUR LE VENV ---
 venv_site_packages = next((p for p in sys.path if 'site-packages' in p), None)
 
@@ -26,49 +29,17 @@ if venv_site_packages:
         if os.path.exists(cublas_path): os.add_dll_directory(cublas_path)
         if os.path.exists(cudnn_path): os.add_dll_directory(cudnn_path)
             
-=======
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
-# --- INITIALISATION VOCALE (TTS) ---
-moteur_vocal = pyttsx3.init()
 
 def detecter_action(texte_entendu):
     """Parcourt le JSON pour trouver à quelle action correspond la phrase"""
     for cle_action, donnees in barks.items():
-<<<<<<< HEAD
-        # On ignore la clé des mots de réveil pour ne pas la confondre avec une commande
         if cle_action == "mots_reveil":
             continue
         for mot_cle in donnees["mots_cles"]:
             if mot_cle in texte_entendu:
-                return cle_action # Retourne "energie_mtr", "train_atterrissage", etc.
+                return cle_action 
     return None
 
-def parler_aleatoire(cle_action):
-    """Sélectionne une réponse au hasard selon la structure JSON"""
-    if cle_action in barks:
-        texte = random.choice(barks[cle_action]["reponses"])
-=======
-        for mot_cle in donnees["mots_cles"]:
-            if mot_cle in texte_entendu:
-                return cle_action # Retourne "energie_mtr", "energie_arm", etc.
-    return None
-
-def parler_aleatoire(cle_action):
-    """Sélectionne une réponse au hasard selon la nouvelle structure JSON"""
-    if cle_action in barks:
-        texte = random.choice(barks[cle_action]["reponses"]) # Ajout de ["reponses"]
-        
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
-        if texte.strip() == "":
-            texte = "Commande confirmée."
-    else:
-        texte = "Erreur de base de données vocale."
-        
-    print(texte)
-    moteur_vocal.say(texte)
-    moteur_vocal.runAndWait()
-
-<<<<<<< HEAD
 # --- CHARGEMENT DES RÉPLIQUES ET PARAMÈTRES (BARKS) ---
 chemin_barks = "D:/Assistance-COVAS/Backend/data/barks.json" 
 with open(chemin_barks, "r", encoding="utf-8") as fichier:
@@ -77,18 +48,10 @@ with open(chemin_barks, "r", encoding="utf-8") as fichier:
 # Extraire dynamiquement les mots de réveil depuis le JSON
 MOTS_REVEIL = barks["mots_reveil"]["mots_cles"]
 
-# Extraire dynamiquement TOUS les mots-clés de commandes pour la détection rapide globale
-TOUS_LES_MOTS_CLES = []
-for cle, data in barks.items():
-    if cle != "mots_reveil":
-        TOUS_LES_MOTS_CLES.extend(data["mots_cles"])
-
 # --- INITIALISATION IA (WHISPER) ---
 chemin_vers_fichiers = "D:/Assistance-COVAS/Backend/module/modele_vocal_fr"
 print("Chargement du modèle d'IA vocal local...")
 modele_vocal = WhisperModel(chemin_vers_fichiers, device="cuda", compute_type="float16")
-
-parler_aleatoire("système_vocal_opérationnel")
 
 
 def ecouter(silencieux=False):
@@ -113,9 +76,7 @@ def ecouter(silencieux=False):
                 initial_prompt=prompt_contexte
             )
             texte = "".join([segment.text for segment in segments]).strip()
-            if texte:
-t
-                return texte
+            return texte
         except sr.WaitTimeoutError:
             pass
         except Exception as e:
@@ -123,146 +84,133 @@ t
     return ""
 
 
-# Lancement de la boucle infinie
-while True:
-    print("\nEn attente d'instruction (en sourdine)...")
-    text = ecouter(silencieux=True)
-    
-    if text:
-        text_min = text.lower()
+# --- ARCHITECTURE DU BACKEND ASYNCHRONE ---
+class CovasBackend:
+    def __init__(self):
+        self.tts_queue = asyncio.Queue()
+        self.action_queue = asyncio.Queue()
         
-        # 1. VÉRIFICATION DU MOT DE RÉVEIL
-        reveil_detecte = any(mot in text_min for mot in MOTS_REVEIL)
-        if not reveil_detecte:
-            continue
+    async def generer_audio_tts(self, action_ou_texte: str):
+        await self.tts_queue.put(action_ou_texte)
 
-        print(f">>>> Mot de réveil détecté dans : {text}")
+    async def tache_lecture_audio(self):
+        while True:
+            texte_a_dire = await self.tts_queue.get()
+            print(f"[COVAS] {texte_a_dire}")
 
-        # 2. CAS OÙ TU DIS JUSTE LE NOM (Interpellation)
-        mots_nettoyes = "".join(caractere for caractere in text_min if caractere.isalpha())
-        if mots_nettoyes in MOTS_REVEIL:
-            print("Activation vocale. En attente de la commande...")
-            parler_aleatoire("mots_reveil")
+            # Kokoro génère et joue le son de manière nativement asynchrone !
+            await generer_et_jouer_voix(texte_a_dire)
+
+            self.tts_queue.task_done()
+
+    async def tache_execution_macros(self):
+        """Dépile et exécute les macros clavier de manière asynchrone via le module externe."""
+        loop = asyncio.get_running_loop()
+        while True:
+            action = await self.action_queue.get()
+            print(f"[Action] Demande d'exécution pour : {action}")
             
-            print(">>>> [ÉCOUTE ACTIVE DÉCLENCHÉE - PARLEZ MAINTENANT]")
-            text = ecouter(silencieux=False)
-            if not text:
-                print("Délai d'attente dépassé. Retour en veille.")
-                continue
-            text_min = text.lower()
+            # Exécution de la fonction importée dans un thread séparé
+            await loop.run_in_executor(None, executer_touches, action)
+            
+            self.action_queue.task_done()
 
-        # 3. EXÉCUTION DES COMMANDES DYNAMIQUES
-        if "amara.org" in text_min:
-            continue
-
-        # Utilisation de notre super moteur de détection basé à 100% sur le JSON
-        action_detectee = detecter_action(text_min)
+    async def boucle_principale(self):
+        print("COVAS Opérationnel et asynchrone.")
+        asyncio.create_task(self.tache_lecture_audio())
+        asyncio.create_task(self.tache_execution_macros())
         
-        if action_detectee:
-            # --- ACTION : TRAIN D'ATTERRISSAGE ---
-            if action_detectee == "train_atterrissage":
-                parler_aleatoire(action_detectee)
-                pydirectinput.press('l')
-
-            # --- ACTION : SOUTE ---
-            elif action_detectee == "soute":
-                parler_aleatoire(action_detectee)
-                pydirectinput.press('home')
-
-            # --- ACTION : PIPS MOTEURS ---
-            elif action_detectee == "energie_mtr":
-=======
-# --- INITIALISATION IA (WHISPER) ---
-chemin_vers_fichiers = "./module/modele_vocal_fr"
-print("Chargement du modèle d'IA vocal local...")
-modele_vocal = WhisperModel(chemin_vers_fichiers, device="cuda", compute_type="float16")
-parler_aleatoire("système_vocal_opérationnel")
-
-# --- CHARGEMENT DES RÉPLIQUES (BARKS) ---
-chemin_barks = "./module/barks.json" # À adapter selon l'emplacement exact de ton fichier
-with open(chemin_barks, "r", encoding="utf-8") as fichier:
-    barks = json.load(fichier)
-
-# Lancement de la boucle infinie
-while True:
-    print("\nEn attente d'instruction...")
-    
-    # Écoute active
-    text = ecouter(silencieux=False)
-    
-    if text:
-        text_min = text.lower()
-
-        # --- GESTION DU PILOTAGE ---
-        if ("sort" in text_min or "rentre" in text_min) and "train" in text_min:
-            parler_aleatoire("train_atterrissage")
-            pydirectinput.press('l')
-
-        # Ton bloc corrigé (exemple configuré pour la soute)
-        elif ("ouvre" in text_min or "ferme" in text_min) and "soute" in text_min:
-            parler_aleatoire("soute")
-            pydirectinput.press('home')
+        while True:
+            # L'écoute Whisper est envoyée dans un thread pour ne pas bloquer le script
+            text = await asyncio.to_thread(ecouter, silencieux=True)
             
-       # --- GESTION ENERGIE (PIPS) ---
-        elif "pleine puissance" in text_min:
-            
-            # 1. On demande à l'algorithme de trouver l'action visée
-            action_detectee = detecter_action(text_min)
-            
-            # 2. On exécute la macro correspondante
-            if action_detectee == "energie_mtr":
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
-                parler_aleatoire(action_detectee)
-                pydirectinput.press('down') 
-                pydirectinput.press('up', presses=4) 
+            if text:
+                text_min = text.lower()
                 
-<<<<<<< HEAD
-            # --- ACTION : PIPS BOUCLIERS ---
-=======
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
-            elif action_detectee == "energie_sys":
-                parler_aleatoire(action_detectee)
-                pydirectinput.press('down') 
-                pydirectinput.press('left', presses=4)
+                # 1. VÉRIFICATION DU MOT DE RÉVEIL
+                reveil_detecte = any(mot in text_min for mot in MOTS_REVEIL)
+                if not reveil_detecte:
+                    continue
 
-<<<<<<< HEAD
-            # --- ACTION : PIPS ARMES ---
-=======
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
-            elif action_detectee == "energie_arm":
-                parler_aleatoire(action_detectee)
-                pydirectinput.press('down') 
-                pydirectinput.press('right', presses=4)
+                print(f">>>> Mot de réveil détecté dans : {text}")
+
+                # 2. CAS OÙ TU DIS JUSTE LE NOM (Interpellation)
+                mots_nettoyes = "".join(caractere for caractere in text_min if caractere.isalpha())
+                if mots_nettoyes in MOTS_REVEIL:
+                    print("Activation vocale. En attente de la commande...")
+                    
+                    # On demande au LLM de générer une réplique d'interpellation
+                    replique_reveil = await generer_replique_ia("mots_reveil")
+                    await self.tts_queue.put(replique_reveil)
+                    
+                    print(">>>> [ÉCOUTE ACTIVE DÉCLENCHÉE - PARLEZ MAINTENANT]")
+                    text = await asyncio.to_thread(ecouter, silencieux=False)
+                    if not text:
+                        print("Délai d'attente dépassé. Retour en veille.")
+                        continue
+                    text_min = text.lower()
+
+                # 3. EXÉCUTION DES COMMANDES DYNAMIQUES VIA LES QUEUES
+                action_detectee = detecter_action(text_min)
                 
-<<<<<<< HEAD
-        # --- CAS PARTICULIER : RESET DES PIPS ---
-        elif "reset" in text_min or "réinitialise" in text_min or "équilibre" in text_min:
-            moteur_vocal.say("Réinitialisation des systèmes en cours.")
-            moteur_vocal.runAndWait()
-            pydirectinput.press('down')
-        
+                if action_detectee:
+                    # 1. Macro immédiate (Priorité absolue en jeu)
+                    await self.action_queue.put(action_detectee)
+                    # 2. Génération de la voix par le LLM en tâche de fond
+                    replique = await generer_replique_ia(action_detectee)
+                    await self.tts_queue.put(replique)
+                    # ON ATTEND QUE LE COVAS AIT FINI DE PARLER AVANT DE RE-ÉCOUTER
+                    await self.tts_queue.join()
+                    
+                # Gestion des cas spécifiques hors de la structure JSON
+                elif "reset" in text_min or "réinitialise" in text_min or "équilibre" in text_min:
+                    await self.action_queue.put("reset")
+                    replique = await generer_replique_ia("reset")
+                    await self.tts_queue.put(replique)
+                    await self.tts_queue.join()
+                    
+                elif "lock" in text_min or "euq" in text_min:
+                    await self.action_queue.put("lock")
+                    replique = await generer_replique_ia("lock")
+                    await self.tts_queue.put(replique)
+                    await self.tts_queue.join()
 
-
-        if "lock" in text_min or "euq":
-            pydirectinput.press('t') 
-
-        #mode 
-        if "mode" in text_min and "combat" in text_min:
-            pydirectinput.press('left', presses=4)
-            pydirectinput.press('right', presses=4)
-
-        if "mode" in text_min and "croisière" in text_min:
-            pydirectinput.press('left', presses=4)
-            pydirectinput.press('up', presses=4)
-
-
-        if "fsd" in text_min:
-            pydirectinput.press('j') 
-=======
-            elif "reset" in text_min or "réinitialise" in text_min:
-                parler("Réinitialisation des systèmes en cours...")
-                pydirectinput.press('down') 
+                elif "boost" in text_min or "propulsion" in text_min:
+                    await self.action_queue.put("boost")
+                    replique = await generer_replique_ia("boost")
+                    await self.tts_queue.put(replique)
+                    await self.tts_queue.join()
                 
-            else:
-                parler("Veuillez préciser le système : moteurs, boucliers ou armes.")
->>>>>>> 961b94d2d4b6c146b79770101cd0d79df548f907
+                elif "fsd" in text_min or "hyperespace" in text_min:
+                    await self.action_queue.put("fsd")
+                    replique = await generer_replique_ia("fsd")
+                    await self.tts_queue.put(replique)
+                    await self.tts_queue.join()
+
+                # --- AJOUT DES MODES DE VOL MANQUANTS ---
+                elif "mode" in text_min and "combat" in text_min:
+                    await self.action_queue.put("mode_combat")
+                    replique = await generer_replique_ia("mode_combat")
+                    await self.tts_queue.put(replique)
+
+                elif "mode" in text_min and "croisière" in text_min:
+                    await self.action_queue.put("mode_croisiere")
+                    replique = await generer_replique_ia("mode_croisiere")
+                    await self.tts_queue.put(replique)
+
+                elif "mode" in text_min and "récupération" in text_min:
+                    await self.action_queue.put("mode_récuperation")
+                    replique = await generer_replique_ia("mode_récuperation")
+                    await self.tts_queue.put(replique)
+                
+                else:
+                    print(f"[Discussion] Envoi de la question libre à l'IA : '{text_min}'")
+                    replique_libre = await generer_replique_ia("discussion", texte_utilisateur=text)
+                    await self.tts_queue.put(replique_libre)
+                    # CRITIQUE ICI AUSSI : On attend la fin de la réponse libre !
+                    await self.tts_queue.join()
+
+# Lancement propre de la boucle asynchrone principale
+if __name__ == "__main__":
+    backend = CovasBackend()
+    asyncio.run(backend.boucle_principale())
