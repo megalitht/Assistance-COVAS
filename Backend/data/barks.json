@@ -1,7 +1,7 @@
 {
     "mots_reveil": {
-        "mots_cles": ["elite", "covas", "élite", "élitre", "corvus", "lève", "hève", "eve", "eva", "kovas"],
-        "reponses": ["Oui, commandant ?", "À vos ordres, commandant.", "J'écoute."]
+        "mots_cles": ["covas", "corvus", "kovas"],
+        "reponses": ["data/son/reveil/A-T-il Com.m4a"]
     },
     "système_vocal_opérationnel": {
         "mots_cles": [],
