@@ -16,6 +16,7 @@ import numpy as np
 from module.macros import executer_touches 
 from module.cerveau import generer_replique_ia
 from module.voix import generer_et_jouer_voix
+from module.lecteur_logs import surveiller_logs
 
 # --- CONFIGURATION AUTOMATIQUE DES PATHS NVIDIA POUR LE VENV ---
 venv_site_packages = next((p for p in sys.path if 'site-packages' in p), None)
@@ -45,7 +46,7 @@ chemin_barks = "D:/Assistance-COVAS/Backend/data/barks.json"
 with open(chemin_barks, "r", encoding="utf-8") as fichier:
     barks = json.load(fichier)
 
-# Extraire dynamiquement les mots de réveil depuis le JSON
+# Extraire les mots de réveil depuis le JSON
 MOTS_REVEIL = barks["mots_reveil"]["mots_cles"]
 
 # --- INITIALISATION IA (WHISPER) ---
@@ -67,7 +68,7 @@ def ecouter(silencieux=False):
             with open(chemin_wav, "wb") as f:
                 f.write(audio.get_wav_data())
             
-            prompt_contexte = "Eve, COVAS, Elite Dangerous, pips, moteurs, boucliers, soute, train d'atterrissage."
+            prompt_contexte = "COVAS, Elite Dangerous, pips, moteurs, boucliers, soute, train d'atterrissage."
             
             segments, info = modele_vocal.transcribe(
                 chemin_wav, 
@@ -84,7 +85,6 @@ def ecouter(silencieux=False):
     return ""
 
 
-# --- ARCHITECTURE DU BACKEND ASYNCHRONE ---
 class CovasBackend:
     def __init__(self):
         self.tts_queue = asyncio.Queue()
@@ -98,7 +98,6 @@ class CovasBackend:
             texte_a_dire = await self.tts_queue.get()
             print(f"[COVAS] {texte_a_dire}")
 
-            # Kokoro génère et joue le son de manière nativement asynchrone !
             await generer_et_jouer_voix(texte_a_dire)
 
             self.tts_queue.task_done()
@@ -110,7 +109,6 @@ class CovasBackend:
             action = await self.action_queue.get()
             print(f"[Action] Demande d'exécution pour : {action}")
             
-            # Exécution de la fonction importée dans un thread séparé
             await loop.run_in_executor(None, executer_touches, action)
             
             self.action_queue.task_done()
@@ -119,29 +117,32 @@ class CovasBackend:
         print("COVAS Opérationnel et asynchrone.")
         asyncio.create_task(self.tache_lecture_audio())
         asyncio.create_task(self.tache_execution_macros())
+
+        asyncio.create_task(surveiller_logs(self.tts_queue, generer_replique_ia))
         
         while True:
-            # L'écoute Whisper est envoyée dans un thread pour ne pas bloquer le script
             text = await asyncio.to_thread(ecouter, silencieux=True)
             
             if text:
                 text_min = text.lower()
                 
-                # 1. VÉRIFICATION DU MOT DE RÉVEIL
                 reveil_detecte = any(mot in text_min for mot in MOTS_REVEIL)
                 if not reveil_detecte:
                     continue
 
                 print(f">>>> Mot de réveil détecté dans : {text}")
 
-                # 2. CAS OÙ TU DIS JUSTE LE NOM (Interpellation)
-                mots_nettoyes = "".join(caractere for caractere in text_min if caractere.isalpha())
-                if mots_nettoyes in MOTS_REVEIL:
+                polite = False
+
+                texte_epure = text_min.replace(",", "").replace(".", "").replace("!", "").replace("?", "").strip()
+                
+                if texte_epure in MOTS_REVEIL:
                     print("Activation vocale. En attente de la commande...")
                     
-                    # On demande au LLM de générer une réplique d'interpellation
-                    replique_reveil = await generer_replique_ia("mots_reveil")
-                    await self.tts_queue.put(replique_reveil)
+                    chemin_reveil = await generer_replique_ia("mots_reveil")
+                    if chemin_reveil:
+                        await self.tts_queue.put(chemin_reveil)
+                        await self.tts_queue.join()
                     
                     print(">>>> [ÉCOUTE ACTIVE DÉCLENCHÉE - PARLEZ MAINTENANT]")
                     text = await asyncio.to_thread(ecouter, silencieux=False)
@@ -150,67 +151,22 @@ class CovasBackend:
                         continue
                     text_min = text.lower()
 
-                # 3. EXÉCUTION DES COMMANDES DYNAMIQUES VIA LES QUEUES
+                # On détecte la politesse dans la commande finale
+                if "s'il te pla" in text_min or "stp" in text_min or "s'il te plaî" in text_min:
+                    polite = True
+
                 action_detectee = detecter_action(text_min)
                 
                 if action_detectee:
-                    # 1. Macro immédiate (Priorité absolue en jeu)
                     await self.action_queue.put(action_detectee)
-                    # 2. Génération de la voix par le LLM en tâche de fond
-                    replique = await generer_replique_ia(action_detectee)
-                    await self.tts_queue.put(replique)
-                    # ON ATTEND QUE LE COVAS AIT FINI DE PARLER AVANT DE RE-ÉCOUTER
-                    await self.tts_queue.join()
                     
-                # Gestion des cas spécifiques hors de la structure JSON
-                elif "reset" in text_min or "réinitialise" in text_min or "équilibre" in text_min:
-                    await self.action_queue.put("reset")
-                    replique = await generer_replique_ia("reset")
-                    await self.tts_queue.put(replique)
-                    await self.tts_queue.join()
+                    chemin_audio = await generer_replique_ia(action_detectee, polite=polite)
                     
-                elif "lock" in text_min or "euq" in text_min:
-                    await self.action_queue.put("lock")
-                    replique = await generer_replique_ia("lock")
-                    await self.tts_queue.put(replique)
-                    await self.tts_queue.join()
-
-                elif "boost" in text_min or "propulsion" in text_min:
-                    await self.action_queue.put("boost")
-                    replique = await generer_replique_ia("boost")
-                    await self.tts_queue.put(replique)
-                    await self.tts_queue.join()
-                
-                elif "fsd" in text_min or "hyperespace" in text_min:
-                    await self.action_queue.put("fsd")
-                    replique = await generer_replique_ia("fsd")
-                    await self.tts_queue.put(replique)
-                    await self.tts_queue.join()
-
-                # --- AJOUT DES MODES DE VOL MANQUANTS ---
-                elif "mode" in text_min and "combat" in text_min:
-                    await self.action_queue.put("mode_combat")
-                    replique = await generer_replique_ia("mode_combat")
-                    await self.tts_queue.put(replique)
-
-                elif "mode" in text_min and "croisière" in text_min:
-                    await self.action_queue.put("mode_croisiere")
-                    replique = await generer_replique_ia("mode_croisiere")
-                    await self.tts_queue.put(replique)
-
-                elif "mode" in text_min and "récupération" in text_min:
-                    await self.action_queue.put("mode_récuperation")
-                    replique = await generer_replique_ia("mode_récuperation")
-                    await self.tts_queue.put(replique)
-                
-                else:
-                    print(f"[Discussion] Envoi de la question libre à l'IA : '{text_min}'")
-                    replique_libre = await generer_replique_ia("discussion", texte_utilisateur=text)
-                    await self.tts_queue.put(replique_libre)
-                    # CRITIQUE ICI AUSSI : On attend la fin de la réponse libre !
-                    await self.tts_queue.join()
-
-# Lancement propre de la boucle asynchrone principale
+                    if chemin_audio:
+                        await self.tts_queue.put(chemin_audio)
+                        await self.tts_queue.join()
+                    else:
+                        print(f"[COVAS] Avertissement : Aucun fichier audio associé à l'action '{action_detectee}'")
 if __name__ == "__main__":
     backend = CovasBackend()
     asyncio.run(backend.boucle_principale())

@@ -1,89 +1,129 @@
 {
     "mots_reveil": {
-        "mots_cles": ["covas", "corvus", "kovas"],
-        "reponses": ["data/son/reveil/A-T-il Com.m4a"]
+        "mots_cles": ["covas", "corvus", "kovas","hé, covas", "hé covas", "hé, corvus", "hé corvus", "hé, kovas", "hé kovas", "et covas" ],
+        "reponses": ["data/son/reveil/A-T-ilCom.wav"],
+        "easter_egg": ["data/son/Easter-egg/EchangeRole.wav"]
     },
     "système_vocal_opérationnel": {
         "mots_cles": [],
         "reponses": [
-            "Système COVAS opérationnel, commandant.",
-            "Tous les modules vocaux sont en ligne.",
-            "Initialisation terminée."
+            "data/son/Demarrage/Système COVAS opérationnel.wav",
+            "data/son/Demarrage/Système COVAS opérationnel.wav"
         ]
     },
     "energie_mtr": {
         "mots_cles": ["moteur", "vitesse", "propulseurs", "fuite", "propulsion"],
         "reponses": [
-            "Toute puissance dans les propulseurs, Commandant.",
-            "Moteurs à 100%.",
-            "Compris, on accélère la cadence.",
-            "Ça va pousser, commandant"
+            "data/son/Macros/Alim/Moteur/AlimMoteur.wav",
+            "data/son/Macros/Alim/Moteur/MoteurA100.wav",
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/CommeSiCTFait.wav"
         ]
     },
     "energie_arm": {
-        "mots_cles": ["arme", "laser", "combat", "armement", "tir"],
+        "mots_cles": ["arme", "armement", "tir"],
         "reponses": [
-            "Compris, on va les fumer Commandant.",
-            "Armement alimenté au maximum.",
-            "Bien mon commandant."
+            "",
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/CommeSiCTFait.wav"
         ]
     },
     "energie_sys": {
-        "mots_cles": ["bouclier", "système", "défense", "générateur", "boucliers"],
+        "mots_cles": ["bouclier", "système", "défense", "générateur", "boucliers","system"],
         "reponses": [
-            "Énergie déviée vers les générateurs de boucliers.",
-            "Compris, commandant.",
-            "Bien mon commandant."
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/CommeSiCTFait.wav"
         ]
     },
     "train_atterrissage": {
-        "mots_cles": ["train", "atterrissage", "pattes", "atterrir", "sort", "rentre", "déploie"],
+        "mots_cles": ["train", "atterrissage", "pattes", "letran", "sort", "rentre", "déploie"],
         "reponses": [
-            "Train d'atterrissage déployé.",
-            "Trains sortis et verrouillés, prêts pour la manœuvre.",
-            "Déploiement des trains effectué."
+            "data/son/Macros/Deploiment/train/DéploymentTrain.wav",
+            "data/son/Macros/Deploiment/train/TrainDéployé.wav",
+            "data/son/Macros/Deploiment/train/TrainDéployé2.wav",
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/CommeSiCTFait.wav"
         ]
     },
     "soute": {
         "mots_cles": ["soute", "cargo", "conteneur", "ouvre", "ferme"],
         "reponses": [
-            "Soute déployée.",
-            "Conteneurs verrouillés, prêts pour le transport.",
-            "Déploiement de la soute effectué."
+            "data/son/Macros/Deploiment/soute/DéploymentSoute.wav",
+            "data/son/Macros/Deploiment/soute/SouteDéployé.wav",
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/CommeSiCTFait.wav"
         ]
     },
     "mode_Combat": {
         "mots_cles": ["combat", "attaque", "tir"],
         "reponses": [
-            " Mode combat activé, mon commandant.",
-            " Bien en commandant",
-            " Tout de suite, mon commandant",
-            " Bonne chance pour le combat, commandant."
-
+            "data/son/Macros/modes/combat/activCombat.wav",
+            "data/son/Macros/modes/combat/activCombat2.wav",
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/CommeSiCTFait.wav"
         ]
     },
     "mode_Croisière": {
-        "mots_cles": ["croisiere", "mode vitesse", "conteneur", "ouvre", "ferme"],
+        "mots_cles": ["croisière", "mode vitesse", "croisière"],
         "reponses": [
-            " Mode croisière activé, mon commandant.",
-            " Bien en commandant",
-            " Tout de suite, mon commandant"
+            "data/son/Macros/modes/croisière/ActivationCoisière.wav",
+            "data/son/Macros/modes/croisière/actvCois.wav",
+            "data/son/Macros/modes/croisière/modeCroisAct.wav",
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/CommeSiCTFait.wav"
         ]
     },
     "mode_récuperation": {
-        "mots_cles": ["soute", "cargo", "conteneur", "ouvre", "ferme"],
+        "mots_cles": ["récupération", "récup"],
         "reponses": [
-            " Mode récupération activé, mon commandant.",
-            " Bien en commandant",
-            " Tout de suite, mon commandant"
+            "data/son/Macros/modes/recup/MBouclierCom.wav",
+            "data/son/Macros/modes/recup/ModeRecup1.wav",
+            "data/son/Macros/modes/recup/ModeRecup2.wav",
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/CommeSiCTFait.wav"
         ]
     },
-    "soute": {
-        "mots_cles": ["soute", "cargo", "conteneur", "ouvre", "ferme"],
+
+    "lock": {
+        "mots_cles": ["lock", "look"],
+        "reponses": []
+
+    },
+
+    "fsd": {
+        "mots_cles": ["fsd", "f.s.d"],
         "reponses": [
-            "Soute déployée.",
-            "Conteneurs verrouillés, prêts pour le transport.",
-            "Déploiement de la soute effectué."
+            "data/son/Macros/Deploiment/FSD/FSD1.wav", 
+            "data/son/Macros/Deploiment/FSD/FSD3.wav",
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/CommeSiCTFait.wav"]
+    },
+
+    "NVG":{
+        "mots_cles": ["nvg", "vision nocturne"],
+        "reponses": []
+    },
+
+    "politesse": {
+        "mots_cles": ["s'il te plaît", "s'il te plait", "stp", "svp"],
+        "reponses": [
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav"
+        ],
+        "easter_egg": [
+            "data/son/Easter-egg/SVP.wav"
         ]
-    }
+    },
+
+    "Boost": []
+    
 }
