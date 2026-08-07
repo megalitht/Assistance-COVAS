@@ -14,9 +14,8 @@ import numpy as np
 
 # Importation de nos modules personnalisés situés dans le sous-dossier 'module'
 from module.macros import executer_touches 
-from module.cerveau import generer_replique_ia
-from module.voix import generer_et_jouer_voix
-from module.lecteur_logs import surveiller_logs
+from module.cerveau import obtenir_chemin_audio
+from module.lecteur_logs import surveiller_logs, surveiller_status_json
 
 # --- CONFIGURATION AUTOMATIQUE DES PATHS NVIDIA POUR LE VENV ---
 venv_site_packages = next((p for p in sys.path if 'site-packages' in p), None)
@@ -114,11 +113,12 @@ class CovasBackend:
             self.action_queue.task_done()
 
     async def boucle_principale(self):
-        print("COVAS Opérationnel et asynchrone.")
+        print("COVAS Opérationnel.")
         asyncio.create_task(self.tache_lecture_audio())
         asyncio.create_task(self.tache_execution_macros())
 
-        asyncio.create_task(surveiller_logs(self.tts_queue, generer_replique_ia))
+        asyncio.create_task(surveiller_logs(self.tts_queue, obtenir_chemin_audio))
+        asyncio.create_task(surveiller_status_json())
         
         while True:
             text = await asyncio.to_thread(ecouter, silencieux=True)
@@ -139,7 +139,7 @@ class CovasBackend:
                 if texte_epure in MOTS_REVEIL:
                     print("Activation vocale. En attente de la commande...")
                     
-                    chemin_reveil = await generer_replique_ia("mots_reveil")
+                    chemin_reveil = await obtenir_chemin_audio("mots_reveil")
                     if chemin_reveil:
                         await self.tts_queue.put(chemin_reveil)
                         await self.tts_queue.join()
@@ -152,7 +152,7 @@ class CovasBackend:
                     text_min = text.lower()
 
                 # On détecte la politesse dans la commande finale
-                if "s'il te pla" in text_min or "stp" in text_min or "s'il te plaî" in text_min:
+                if "s'il te pla" in text_min or "stp" in text_min or "s'il te plaîs" in text_min:
                     polite = True
 
                 action_detectee = detecter_action(text_min)

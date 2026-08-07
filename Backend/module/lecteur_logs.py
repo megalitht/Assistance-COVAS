@@ -4,8 +4,7 @@ import json
 import asyncio
 
 # Chemin standard des logs Elite Dangerous sous Windows
-CHEMIN_LOGS = os.path.expanduser('~') + r"\Saved Games\Frontier Developments\Elite Dangerous\Journal.*.log"
-
+CHEMIN_STATUS = os.path.expanduser('~') + r"\Saved Games\Frontier Developments\Elite Dangerous\Status.json"
 def obtenir_dernier_journal():
     liste_fichiers = glob.glob(CHEMIN_LOGS)
     if not liste_fichiers:
@@ -52,3 +51,26 @@ async def surveiller_logs(tts_queue, generer_replique_func):
 
             except json.JSONDecodeError:
                 pass
+            
+async def surveiller_status_json():
+    """Vérifie en boucle si le fichier Status.json a été modifié par le jeu."""
+    global etat_vaisseau_actuel
+    derniere_modif = 0
+    
+    print("[Logs] Surveillance de Status.json activée.")
+    
+    while True:
+        if os.path.exists(CHEMIN_STATUS):
+            modif_actuelle = os.path.getmtime(CHEMIN_STATUS)
+            
+            if modif_actuelle != derniere_modif:
+                derniere_modif = modif_actuelle
+                try:
+                    with open(CHEMIN_STATUS, 'r', encoding='utf-8') as f:
+                        etat_vaisseau_actuel = json.load(f)
+                        # Le dictionnaire etat_vaisseau_actuel est maintenant à jour en temps réel
+                except Exception as e:
+                    # Ignore les erreurs de lecture si le jeu est en train d'écrire dans le fichier
+                    pass
+                    
+        await asyncio.sleep(0.5) # Fréquence de rafraîchissement très légère
