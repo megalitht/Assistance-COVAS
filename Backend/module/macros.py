@@ -54,7 +54,8 @@ def executer_touches(action: str):
 
     elif action == "fsd":
         pydirectinput.press('j')
-        pydirectinput.press('left', presses=4)
         pydirectinput.press('up', presses=4)
+        pydirectinput.press('left', presses=4)
+        
     else:
         print(f"[Macros] Aucune touche associée à l'action : {action}")

@@ -11,11 +11,13 @@ import random
 import asyncio
 import sounddevice as sd
 import numpy as np
+import winsound
 
 # Importation de nos modules personnalisés situés dans le sous-dossier 'module'
 from module.macros import executer_touches 
 from module.cerveau import obtenir_chemin_audio
 from module.lecteur_logs import surveiller_logs, surveiller_status_json
+from module.voix import generer_et_jouer_voix
 
 # --- CONFIGURATION AUTOMATIQUE DES PATHS NVIDIA POUR LE VENV ---
 venv_site_packages = next((p for p in sys.path if 'site-packages' in p), None)
@@ -35,9 +37,12 @@ def detecter_action(texte_entendu):
     for cle_action, donnees in barks.items():
         if cle_action == "mots_reveil":
             continue
-        for mot_cle in donnees["mots_cles"]:
-            if mot_cle in texte_entendu:
-                return cle_action 
+        
+        # Vérification de sécurité : on s'assure que donnees est un dictionnaire avec la clé voulue
+        if isinstance(donnees, dict) and "mots_cles" in donnees:
+            for mot_cle in donnees["mots_cles"]:
+                if mot_cle in texte_entendu:
+                    return cle_action 
     return None
 
 # --- CHARGEMENT DES RÉPLIQUES ET PARAMÈTRES (BARKS) ---
@@ -160,7 +165,7 @@ class CovasBackend:
                 if action_detectee:
                     await self.action_queue.put(action_detectee)
                     
-                    chemin_audio = await generer_replique_ia(action_detectee, polite=polite)
+                    chemin_audio = await obtenir_chemin_audio(action_detectee, polite=polite)
                     
                     if chemin_audio:
                         await self.tts_queue.put(chemin_audio)

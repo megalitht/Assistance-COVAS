@@ -1,8 +1,2 @@
-# Environnements virtuels
-env/
-venv/
-
-# Variables d'environnement
-.env
-
-.DS_Store
+# Created by venv; see https://docs.python.org/3/library/venv.html
+*

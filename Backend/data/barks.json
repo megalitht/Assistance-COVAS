@@ -50,7 +50,7 @@
         ]
     },
     "soute": {
-        "mots_cles": ["soute", "cargo", "conteneur", "ouvre", "ferme"],
+        "mots_cles": ["soute", "cargo", "suite.", "ouvre", "ferme"],
         "reponses": [
             "data/son/Macros/Deploiment/soute/DéploymentSoute.wav",
             "data/son/Macros/Deploiment/soute/SouteDéployé.wav",
@@ -124,6 +124,9 @@
         ]
     },
 
-    "Boost": []
+    "Boost": {
+        "mots_cles": ["boost", "accélération"],
+        "reponses": []
+    }
     
 }

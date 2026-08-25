@@ -5,6 +5,9 @@ import asyncio
 
 # Chemin standard des logs Elite Dangerous sous Windows
 CHEMIN_STATUS = os.path.expanduser('~') + r"\Saved Games\Frontier Developments\Elite Dangerous\Status.json"
+CHEMIN_LOGS = os.path.expanduser('~') + r"\Saved Games\Frontier Developments\Elite Dangerous\Journal.*.log"
+etat_vaisseau_actuel = {}
+
 def obtenir_dernier_journal():
     liste_fichiers = glob.glob(CHEMIN_LOGS)
     if not liste_fichiers:
