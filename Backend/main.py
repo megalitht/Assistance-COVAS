@@ -13,11 +13,14 @@ import sounddevice as sd
 import numpy as np
 import winsound
 
+
+
 # Importation de nos modules personnalisés situés dans le sous-dossier 'module'
 from module.macros import executer_touches 
 from module.cerveau import obtenir_chemin_audio
-from module.lecteur_logs import surveiller_logs, surveiller_status_json
+from module.lecteur_logs import surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
 from module.voix import generer_et_jouer_voix
+from module.serveur_ws import demarrer_serveur_web
 
 # --- CONFIGURATION AUTOMATIQUE DES PATHS NVIDIA POUR LE VENV ---
 venv_site_packages = next((p for p in sys.path if 'site-packages' in p), None)
@@ -28,8 +31,10 @@ if venv_site_packages:
     
     os.environ["PATH"] = f"{cublas_path};{cudnn_path};" + os.environ.get("PATH", "")
     if hasattr(os, 'add_dll_directory'):
-        if os.path.exists(cublas_path): os.add_dll_directory(cublas_path)
-        if os.path.exists(cudnn_path): os.add_dll_directory(cudnn_path)
+        if os.path.exists(cublas_path): 
+            os.add_dll_directory(cublas_path)
+        if os.path.exists(cudnn_path): 
+            os.add_dll_directory(cudnn_path)
             
 
 def detecter_action(texte_entendu):
@@ -124,6 +129,7 @@ class CovasBackend:
 
         asyncio.create_task(surveiller_logs(self.tts_queue, obtenir_chemin_audio))
         asyncio.create_task(surveiller_status_json())
+        asyncio.create_task(demarrer_serveur_web())
         
         while True:
             text = await asyncio.to_thread(ecouter, silencieux=True)

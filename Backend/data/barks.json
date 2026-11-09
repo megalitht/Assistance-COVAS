@@ -124,8 +124,8 @@
         ]
     },
 
-    "Boost": {
-        "mots_cles": ["boost", "accélération"],
+    "boost": {
+        "mots_cles": ["boost", "accélération","Bruce","Proust"],
         "reponses": []
     }
     

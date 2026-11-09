@@ -2,10 +2,22 @@ import os
 import glob
 import json
 import asyncio
+from module.serveur_ws import envoyer_donnees_web
 
-# Chemin standard des logs Elite Dangerous sous Windows
-CHEMIN_STATUS = os.path.expanduser('~') + r"\Saved Games\Frontier Developments\Elite Dangerous\Status.json"
-CHEMIN_LOGS = os.path.expanduser('~') + r"\Saved Games\Frontier Developments\Elite Dangerous\Journal.*.log"
+# --- CHEMINS D'ACCÈS CORRIGÉS ---
+DOSSIER_ED = r"C:\Users\antoi\Saved Games\Frontier Developments\Elite Dangerous"
+
+CHEMIN_STATUS = os.path.join(DOSSIER_ED, "Status.json")
+CHEMIN_LOGS = os.path.join(DOSSIER_ED, "Journal.*.log")
+CHEMIN_NAVROUTE = os.path.join(DOSSIER_ED, "NavRoute.json")
+CHEMIN_MODULES = os.path.join(DOSSIER_ED, "ModulesInfo.json")
+
+# Vérification au lancement
+if not os.path.exists(DOSSIER_ED):
+    print(f"[Erreur Critique] Le dossier Elite n'a pas été trouvé à : {DOSSIER_ED}")
+else:
+    print(f"[Système] Pointage des logs confirmé sur : {DOSSIER_ED}")
+    
 etat_vaisseau_actuel = {}
 
 def obtenir_dernier_journal():
@@ -54,13 +66,50 @@ async def surveiller_logs(tts_queue, generer_replique_func):
 
             except json.JSONDecodeError:
                 pass
+async def surveiller_fichiers_auxiliaires():
+    """Surveille les fichiers NavRoute et ModulesInfo pour la nouvelle interface UI."""
+    dernieres_modifs = {"navroute": 0, "modules": 0}
+    
+    print("[Logs] Surveillance de NavRoute et ModulesInfo activée.")
+    
+    while True:
+        # Surveillance de la Route de Navigation
+        if os.path.exists(CHEMIN_NAVROUTE):
+            modif_nav = os.path.getmtime(CHEMIN_NAVROUTE)
+            if modif_nav != dernieres_modifs["navroute"]:
+                dernieres_modifs["navroute"] = modif_nav
+                try:
+                    with open(CHEMIN_NAVROUTE, 'r', encoding='utf-8') as f:
+                        donnees_nav = json.load(f)
+                        await envoyer_donnees_web({
+                            "type": "navroute",
+                            "route": donnees_nav.get("Route", [])
+                        })
+                except Exception:
+                    pass
+
+        # Surveillance de l'Intégrité des Modules
+        if os.path.exists(CHEMIN_MODULES):
+            modif_mod = os.path.getmtime(CHEMIN_MODULES)
+            if modif_mod != dernieres_modifs["modules"]:
+                dernieres_modifs["modules"] = modif_mod
+                try:
+                    with open(CHEMIN_MODULES, 'r', encoding='utf-8') as f:
+                        donnees_mod = json.load(f)
+                        await envoyer_donnees_web({
+                            "type": "modulesinfo",
+                            "modules": donnees_mod.get("Modules", [])
+                        })
+                except Exception:
+                    pass
+                    
+        await asyncio.sleep(1.0) # Check toutes les secondes, très léger
             
 async def surveiller_status_json():
-    """Vérifie en boucle si le fichier Status.json a été modifié par le jeu."""
     global etat_vaisseau_actuel
     derniere_modif = 0
     
-    print("[Logs] Surveillance de Status.json activée.")
+    print("[Logs] Surveillance de Status.json activée (avec WebSockets).")
     
     while True:
         if os.path.exists(CHEMIN_STATUS):
@@ -71,9 +120,30 @@ async def surveiller_status_json():
                 try:
                     with open(CHEMIN_STATUS, 'r', encoding='utf-8') as f:
                         etat_vaisseau_actuel = json.load(f)
-                        # Le dictionnaire etat_vaisseau_actuel est maintenant à jour en temps réel
+                        
+                        # Les "Flags" du Status.json déterminent l'état du vaisseau
+                        flags = etat_vaisseau_actuel.get("Flags", 0)
+                        
+                        # Bit 6 (valeur 64) = HardpointsDeployed (Points d'emports sortis = Mode Combat)
+                        en_combat = bool(flags & 64)
+                        
+                        # Extraction des pips (Sys, Eng, Wep)
+                        pips = etat_vaisseau_actuel.get("Pips", [0, 0, 0])
+                        
+                        donnees_a_envoyer = {
+                            "type": "status",
+                            "en_combat": en_combat,
+                            "flags": flags,
+                            "pips_sys": pips[0],
+                            "pips_eng": pips[1],
+                            "pips_wep": pips[2],
+                            "carburant": etat_vaisseau_actuel.get("Fuel", {}).get("FuelMain", 0)
+                        }
+                        
+                        # Envoi en temps réel au 2ème écran
+                        await envoyer_donnees_web(donnees_a_envoyer)
+                        
                 except Exception as e:
-                    # Ignore les erreurs de lecture si le jeu est en train d'écrire dans le fichier
                     pass
                     
-        await asyncio.sleep(0.5) # Fréquence de rafraîchissement très légère
+        await asyncio.sleep(0.5)
