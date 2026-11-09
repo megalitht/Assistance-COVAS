@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>COVAS - Tableau de Bord Avancé</title>
+    <style>
+        :root {
+            --ed-orange: #ff7100;
+            --ed-orange-glow: rgba(255, 113, 0, 0.4);
+            --ed-red: #ff3333;
+            --ed-red-glow: rgba(255, 51, 51, 0.5);
+            --ed-cyan: #00e5ff;
+            --ed-cyan-glow: rgba(0, 229, 255, 0.4);
+            --bg-base: #030202;
+            --panel-bg: rgba(255, 113, 0, 0.05);
+            --border-style: 1px solid rgba(255, 113, 0, 0.5);
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--ed-orange);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: 320px 1fr 320px;
+            grid-template-rows: auto 1fr auto;
+            gap: 15px;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 3px);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        body.combat-mode {
+            --ed-orange: var(--ed-red);
+            --ed-orange-glow: var(--ed-red-glow);
+            --panel-bg: rgba(255, 51, 51, 0.05);
+            --border-style: 1px solid rgba(255, 51, 51, 0.5);
+            box-shadow: inset 0 0 100px rgba(255, 0, 0, 0.1);
+        }
+
+        /* --- HEADER --- */
+        .header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--ed-orange);
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--ed-orange-glow);
+        }
+        
+        .header-item span { color: #fff; margin-left: 10px; }
+
+        /* --- PANNEAUX (DA FUTURISTE) --- */
+        .panel {
+            background: var(--panel-bg);
+            border: var(--border-style);
+            padding: 15px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px));
+            transition: all 0.3s ease;
+        }
+
+        .panel::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 5px; height: 20px; background: var(--ed-orange);
+        }
+
+        h2 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            border-bottom: 1px solid var(--ed-orange);
+            padding-bottom: 5px;
+            margin-top: 0;
+            text-shadow: 0 0 5px var(--ed-orange-glow);
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin: 6px 0;
+            border-bottom: 1px dashed rgba(255, 113, 0, 0.2);
+            padding-bottom: 4px;
+        }
+        
+        body.combat-mode .data-row { border-bottom-color: rgba(255, 51, 51, 0.2); }
+        .data-value { color: #fff; text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+        .alert-text { color: var(--ed-red); font-weight: bold; animation: blink 1s infinite; }
+
+        /* --- COLONNE GAUCHE (Navigation & Soute) --- */
+        .col-left { display: flex; flex-direction: column; gap: 15px; }
+
+        /* --- CENTRE (Hologramme) --- */
+        .col-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .orb {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: radial-gradient(circle, #fff 5%, var(--ed-orange) 40%, transparent 70%);
+            box-shadow: 0 0 30px var(--ed-orange-glow);
+            position: absolute; top: 20px; right: 20px;
+            animation: pulse 3s infinite alternate;
+        }
+
+        .ship-hologram { width: 100%; max-width: 450px; opacity: 0.7; }
+        .svg-hull { stroke: var(--ed-orange); fill: transparent; stroke-width: 1.5; }
+        .svg-shield { stroke: var(--ed-cyan); fill: rgba(0, 229, 255, 0.05); stroke-dasharray: 4 4; transition: opacity 0.3s; }
+        
+        body.combat-mode .svg-hull { stroke: var(--ed-red); fill: rgba(255, 0, 0, 0.05); }
+
+        /* --- COLONNE DROITE (Vaisseau, Modules, Combat) --- */
+        .col-right { display: flex; flex-direction: column; gap: 15px; }
+
+        .module-list {
+            max-height: 150px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--ed-orange) transparent;
+        }
+
+        /* --- BOUTONS --- */
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
+        button {
+            background: rgba(255, 113, 0, 0.1);
+            color: var(--ed-orange);
+            border: 1px solid var(--ed-orange);
+            padding: 8px; font-family: inherit; font-size: 11px;
+            text-transform: uppercase; cursor: pointer; transition: 0.2s;
+        }
+        button:hover { background: var(--ed-orange); color: #000; box-shadow: 0 0 10px var(--ed-orange); }
+
+        @keyframes pulse { to { transform: scale(1.1); box-shadow: 0 0 50px var(--ed-orange); } }
+        @keyframes blink { 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+
+    <!-- EN-TÊTE -->
+    <div class="header">
+        <div class="header-item">CMDR <span id="cmdr-name">Meunier</span></div>
+        <div class="header-item">Vaisseau <span id="ship-name">ANACONDA</span></div>
+        <div class="header-item">Système <span id="current-system">Sol</span></div>
+    </div>
+
+    <!-- COLONNE GAUCHE -->
+    <div class="col-left">
+        <div class="panel">
+            <h2>Navigation & Route</h2>
+            <div class="data-row"><span>Saut Prévu</span><span id="nav-next" class="data-value">Aucun</span></div>
+            <div class="data-row"><span>Sauts Restants</span><span id="nav-jumps" class="data-value">0</span></div>
+            <div class="data-row"><span>Cible Actuelle</span><span id="nav-target" class="data-value">---</span></div>
+            <div class="data-row"><span>Train d'atterrissage</span><span id="nav-gear" class="data-value">Rentrée</span></div>
+            <div class="data-row"><span>Récupérateur Soute</span><span id="nav-scoop" class="data-value">Rentrée</span></div>
+        </div>
+
+        <div class="panel" style="flex-grow: 1;">
+            <h2>Inventaire & Soute</h2>
+            <div class="data-row"><span>Capacité</span><span id="cargo-cap" class="data-value">0 / 0 T</span></div>
+            <div class="data-row"><span>Carburant Principal</span><span id="fuel-main" class="data-value">100%</span></div>
+            <div class="data-row"><span>Réservoir FSD</span><span id="fuel-fsd" class="data-value">100%</span></div>
+        </div>
+    </div>
+
+    <!-- COLONNE CENTRALE -->
+    <div class="col-center">
+        <div class="orb"></div>
+        <svg viewBox="0 0 400 500" class="ship-hologram">
+            <!-- Bouclier -->
+            <path id="shield-path" class="svg-shield" d="M200,30 C80,120 80,380 130,460 L270,460 C320,380 320,120 200,30 Z" />
+            <!-- Structure Vaisseau (Vue Top-Down complexe) -->
+            <g class="svg-hull">
+                <!-- Nez -->
+                <polygon points="200,60 230,220 280,420 240,440 160,440 120,420 170,220" />
+                <!-- Ailes -->
+                <polygon points="120,340 50,420 120,420" />
+                <polygon points="280,340 350,420 280,420" />
+                <!-- Cockpit -->
+                <polygon points="200,180 220,280 180,280" />
+            </g>
+        </svg>
+    </div>
+
+    <!-- COLONNE DROITE -->
+    <div class="col-right">
+        <div class="panel">
+            <h2>Statut & Combat</h2>
+            <div class="data-row"><span>Points d'Emports</span><span id="hardpoints-status" class="data-value">Rentrés</span></div>
+            <div class="data-row"><span>Intégrité Coque</span><span id="hull-data" class="data-value">100%</span></div>
+            <div class="data-row"><span>Boucliers</span><span id="shield-data" class="data-value">Actifs</span></div>
+            
+            <h2 style="margin-top: 15px;">Énergie (PIPS)</h2>
+            <div class="data-row"><span>Systèmes (SYS)</span><span id="pip-sys" class="data-value">4</span></div>
+            <div class="data-row"><span>Moteurs (ENG)</span><span id="pip-eng" class="data-value">4</span></div>
+            <div class="data-row"><span>Armes (WEP)</span><span id="pip-wep" class="data-value">4</span></div>
+
+            <div class="btn-grid">
+                <button onclick="envoyerAction('cibler')">Verrouiller Cible</button>
+                <button onclick="envoyerAction('fsd')">Charge FSD</button>
+                <button onclick="envoyerAction('cellule')">Cellule Bouclier</button>
+                <button onclick="envoyerAction('paillettes')">Paillettes</button>
+            </div>
+        </div>
+
+        <div class="panel" style="flex-grow: 1;">
+            <h2>Modules & Outfitting</h2>
+            <div class="module-list" id="modules-container">
+                <!-- Les modules seront injectés ici via JS -->
+                <div class="data-row"><span>Générateur</span><span class="data-value">100%</span></div>
+                <div class="data-row"><span>Propulseurs</span><span class="data-value">100%</span></div>
+                <div class="data-row"><span>Répartiteur</span><span class="data-value">100%</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ws = new WebSocket("ws://localhost:8765");
+        ws.onopen = () => console.log("Interface connectée au COVAS.");
+
+        ws.onmessage = (event) => {
+            const donnees = JSON.parse(event.data);
+
+            if (donnees.type === "status") {
+                // Pips & Carburant
+                document.getElementById("pip-sys").innerText = donnees.pips_sys || 0;
+                document.getElementById("pip-eng").innerText = donnees.pips_eng || 0;
+                document.getElementById("pip-wep").innerText = donnees.pips_wep || 0;
+                document.getElementById("fuel-main").innerText = donnees.carburant ? donnees.carburant.toFixed(1) + " T" : "---";
+
+                // Flags binaires (ex: Train d'atterrissage, Soute, Boucliers)
+                const flags = donnees.flags || 0;
+                const enCombat = Boolean(flags & 64);
+                const trainSorti = Boolean(flags & 4);
+                const boucliersActifs = Boolean(flags & 8);
+                const souteOuverte = Boolean(flags & 16);
+
+                document.getElementById("nav-gear").innerText = trainSorti ? "SORTI" : "Rentrée";
+                document.getElementById("nav-gear").className = trainSorti ? "alert-text" : "data-value";
+                
+                document.getElementById("nav-scoop").innerText = souteOuverte ? "OUVERT" : "Fermé";
+                
+                const elemShield = document.getElementById("shield-path");
+                if (boucliersActifs) {
+                    elemShield.style.opacity = "1";
+                    document.getElementById("shield-data").innerText = "En ligne";
+                } else {
+                    elemShield.style.opacity = "0";
+                    document.getElementById("shield-data").innerText = "HORS LIGNE";
+                    document.getElementById("shield-data").className = "alert-text";
+                }
+
+                // Mode Combat
+                if (enCombat) {
+                    document.body.classList.add("combat-mode");
+                    document.getElementById("hardpoints-status").innerText = "DÉPLOYÉS";
+                    document.getElementById("hardpoints-status").className = "alert-text";
+                } else {
+                    document.body.classList.remove("combat-mode");
+                    document.getElementById("hardpoints-status").innerText = "Rentrés";
+                    document.getElementById("hardpoints-status").className = "data-value";
+                }
+            }
+            
+            else if (donnees.type === "navroute") {
+                const route = donnees.route || [];
+                if (route.length > 0) {
+                    document.getElementById("nav-next").innerText = route[0].StarSystem;
+                    document.getElementById("nav-jumps").innerText = route.length - 1;
+                }
+            }
+            
+            else if (donnees.type === "modulesinfo") {
+                const container = document.getElementById("modules-container");
+                container.innerHTML = ""; // Vider l'ancienne liste
+                if (donnees.modules) {
+                    donnees.modules.forEach(mod => {
+                        // On nettoie un peu les noms de l'API Elite
+                        const nomPropre = mod.Item.replace("$int_", "").replace("_name;", "");
+                        const div = document.createElement("div");
+                        div.className = "data-row";
+                        div.innerHTML = `<span>${nomPropre}</span><span class="data-value">${(mod.Health * 100).toFixed(0)}%</span>`;
+                        container.appendChild(div);
+                    });
+                }
+            }
+        };
+
+        function envoyerAction(actionNom) {
+            ws.send(JSON.stringify({ action: actionNom }));
+        }
+    </script>
+</body>
+</html>
