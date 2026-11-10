@@ -127,6 +127,57 @@
     "boost": {
         "mots_cles": ["boost", "accélération","Bruce","Proust"],
         "reponses": []
-    }
-    
+    },
+  "bienvenue": {
+    "mots_cles": [],
+    "reponses": [
+      "data/son/interact/BienvenueCommandant.wav"
+    ]
+  },
+  "alerte_degats": {
+    "mots_cles": [],
+    "reponses": [
+      "data/son/interact/AttDegat.wav"
+    ]
+  },
+  "alerte_blindage": {
+    "mots_cles": [],
+    "reponses": [
+      "data/son/interact/AttDegat.wav"
+    ]
+  },
+  "alerte_bouclier": {
+    "mots_cles": [],
+    "reponses": [
+      "data/son/interact/AttDegat.wav"
+    ]
+  },
+  "bouclier_retabli": {
+    "mots_cles": [],
+    "reponses": []
+  },
+  "alerte_attaque": {
+    "mots_cles": [],
+    "reponses": []
+  },
+  "alerte_interdiction": {
+    "mots_cles": [],
+    "reponses": []
+  },
+  "alerte_surchauffe": {
+    "mots_cles": [],
+    "reponses": []
+  },
+  "alerte_carburant": {
+    "mots_cles": [],
+    "reponses": []
+  },
+  "verriere_brisee": {
+    "mots_cles": [],
+    "reponses": []
+  },
+  "kill_confirme": {
+    "mots_cles": [],
+    "reponses": []
+  }
 }

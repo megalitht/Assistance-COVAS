@@ -12,7 +12,7 @@ import json
 
 import websockets
 
-HOTE = "localhost"   # "0.0.0.0" pour ouvrir l'interface depuis un autre appareil du réseau local
+HOTE = None   # toutes les adresses de la machine (localhost IPv4/IPv6, réseau local)
 PORT = 8765
 
 _clients = set()
@@ -69,7 +69,7 @@ async def demarrer_serveur_web(file_actions=None):
     _file_actions = file_actions
     try:
         async with websockets.serve(_gerer_interface, HOTE, PORT):
-            print(f"[Web] Serveur d'interface prêt sur ws://{HOTE}:{PORT}")
+            print(f"[Web] Serveur d'interface prêt sur ws://localhost:{PORT}")
             await asyncio.Future()   # tourne jusqu'à l'arrêt du programme
     except OSError as erreur:
         print(f"[Web] Impossible d'ouvrir le port {PORT} : {erreur}")

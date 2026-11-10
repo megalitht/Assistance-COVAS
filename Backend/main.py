@@ -9,6 +9,7 @@ from faster_whisper import WhisperModel
 import json
 import random
 import asyncio
+import traceback
 import sounddevice as sd
 import numpy as np
 import winsound
@@ -122,15 +123,32 @@ class CovasBackend:
             
             self.action_queue.task_done()
 
+    def lancer_tache(self, coroutine, nom):
+        """Lance une tâche de fond en gardant une référence dessus (sinon Python peut
+        la supprimer en pleine exécution) et affiche son erreur si elle plante."""
+        tache = asyncio.create_task(coroutine, name=nom)
+        self.taches.add(tache)
+
+        def fin_de_tache(t):
+            self.taches.discard(t)
+            if not t.cancelled() and t.exception():
+                print(f"[Erreur] La tâche « {nom} » s'est arrêtée :")
+                traceback.print_exception(t.exception())
+
+        tache.add_done_callback(fin_de_tache)
+
     async def boucle_principale(self):
         print("COVAS Opérationnel.")
-        asyncio.create_task(self.tache_lecture_audio())
-        asyncio.create_task(self.tache_execution_macros())
+        self.taches = set()
+        # Le serveur de l'interface d'abord, pour que l'écran se connecte au plus vite
+        self.lancer_tache(demarrer_serveur_web(self.action_queue), "serveur web")
+        self.lancer_tache(self.tache_lecture_audio(), "lecture audio")
+        self.lancer_tache(self.tache_execution_macros(), "macros")
 
-        asyncio.create_task(surveiller_logs(self.tts_queue, obtenir_chemin_audio))
-        asyncio.create_task(surveiller_status_json())
-        asyncio.create_task(demarrer_serveur_web())
-        
+        self.lancer_tache(surveiller_logs(self.tts_queue, obtenir_chemin_audio), "journal")
+        self.lancer_tache(surveiller_status_json(), "Status.json")
+        self.lancer_tache(surveiller_fichiers_auxiliaires(), "fichiers auxiliaires")
+
         while True:
             text = await asyncio.to_thread(ecouter, silencieux=True)
             

@@ -2,312 +2,251 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>COVAS - Tableau de Bord Avancé</title>
-    <style>
-        :root {
-            --ed-orange: #ff7100;
-            --ed-orange-glow: rgba(255, 113, 0, 0.4);
-            --ed-red: #ff3333;
-            --ed-red-glow: rgba(255, 51, 51, 0.5);
-            --ed-cyan: #00e5ff;
-            --ed-cyan-glow: rgba(0, 229, 255, 0.4);
-            --bg-base: #030202;
-            --panel-bg: rgba(255, 113, 0, 0.05);
-            --border-style: 1px solid rgba(255, 113, 0, 0.5);
-        }
-
-        body {
-            background-color: var(--bg-base);
-            color: var(--ed-orange);
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
-            display: grid;
-            grid-template-columns: 320px 1fr 320px;
-            grid-template-rows: auto 1fr auto;
-            gap: 15px;
-            overflow: hidden;
-        }
-
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 3px);
-            pointer-events: none;
-            z-index: 100;
-        }
-
-        body.combat-mode {
-            --ed-orange: var(--ed-red);
-            --ed-orange-glow: var(--ed-red-glow);
-            --panel-bg: rgba(255, 51, 51, 0.05);
-            --border-style: 1px solid rgba(255, 51, 51, 0.5);
-            box-shadow: inset 0 0 100px rgba(255, 0, 0, 0.1);
-        }
-
-        /* --- HEADER --- */
-        .header {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 2px solid var(--ed-orange);
-            padding-bottom: 10px;
-            text-transform: uppercase;
-            font-weight: bold;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px var(--ed-orange-glow);
-        }
-        
-        .header-item span { color: #fff; margin-left: 10px; }
-
-        /* --- PANNEAUX (DA FUTURISTE) --- */
-        .panel {
-            background: var(--panel-bg);
-            border: var(--border-style);
-            padding: 15px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px));
-            transition: all 0.3s ease;
-        }
-
-        .panel::before {
-            content: ''; position: absolute; top: 0; left: 0;
-            width: 5px; height: 20px; background: var(--ed-orange);
-        }
-
-        h2 {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            border-bottom: 1px solid var(--ed-orange);
-            padding-bottom: 5px;
-            margin-top: 0;
-            text-shadow: 0 0 5px var(--ed-orange-glow);
-        }
-
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            margin: 6px 0;
-            border-bottom: 1px dashed rgba(255, 113, 0, 0.2);
-            padding-bottom: 4px;
-        }
-        
-        body.combat-mode .data-row { border-bottom-color: rgba(255, 51, 51, 0.2); }
-        .data-value { color: #fff; text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
-        .alert-text { color: var(--ed-red); font-weight: bold; animation: blink 1s infinite; }
-
-        /* --- COLONNE GAUCHE (Navigation & Soute) --- */
-        .col-left { display: flex; flex-direction: column; gap: 15px; }
-
-        /* --- CENTRE (Hologramme) --- */
-        .col-center {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .orb {
-            width: 60px; height: 60px; border-radius: 50%;
-            background: radial-gradient(circle, #fff 5%, var(--ed-orange) 40%, transparent 70%);
-            box-shadow: 0 0 30px var(--ed-orange-glow);
-            position: absolute; top: 20px; right: 20px;
-            animation: pulse 3s infinite alternate;
-        }
-
-        .ship-hologram { width: 100%; max-width: 450px; opacity: 0.7; }
-        .svg-hull { stroke: var(--ed-orange); fill: transparent; stroke-width: 1.5; }
-        .svg-shield { stroke: var(--ed-cyan); fill: rgba(0, 229, 255, 0.05); stroke-dasharray: 4 4; transition: opacity 0.3s; }
-        
-        body.combat-mode .svg-hull { stroke: var(--ed-red); fill: rgba(255, 0, 0, 0.05); }
-
-        /* --- COLONNE DROITE (Vaisseau, Modules, Combat) --- */
-        .col-right { display: flex; flex-direction: column; gap: 15px; }
-
-        .module-list {
-            max-height: 150px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--ed-orange) transparent;
-        }
-
-        /* --- BOUTONS --- */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
-        button {
-            background: rgba(255, 113, 0, 0.1);
-            color: var(--ed-orange);
-            border: 1px solid var(--ed-orange);
-            padding: 8px; font-family: inherit; font-size: 11px;
-            text-transform: uppercase; cursor: pointer; transition: 0.2s;
-        }
-        button:hover { background: var(--ed-orange); color: #000; box-shadow: 0 0 10px var(--ed-orange); }
-
-        @keyframes pulse { to { transform: scale(1.1); box-shadow: 0 0 50px var(--ed-orange); } }
-        @keyframes blink { 50% { opacity: 0.3; } }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>COVAS — Assistance de bord</title>
+    <link rel="stylesheet" href="interface.css">
 </head>
-<body>
+<body data-mode="nav" data-liaison="hors-ligne">
 
-    <!-- EN-TÊTE -->
-    <div class="header">
-        <div class="header-item">CMDR <span id="cmdr-name">Meunier</span></div>
-        <div class="header-item">Vaisseau <span id="ship-name">ANACONDA</span></div>
-        <div class="header-item">Système <span id="current-system">Sol</span></div>
-    </div>
-
-    <!-- COLONNE GAUCHE -->
-    <div class="col-left">
-        <div class="panel">
-            <h2>Navigation & Route</h2>
-            <div class="data-row"><span>Saut Prévu</span><span id="nav-next" class="data-value">Aucun</span></div>
-            <div class="data-row"><span>Sauts Restants</span><span id="nav-jumps" class="data-value">0</span></div>
-            <div class="data-row"><span>Cible Actuelle</span><span id="nav-target" class="data-value">---</span></div>
-            <div class="data-row"><span>Train d'atterrissage</span><span id="nav-gear" class="data-value">Rentrée</span></div>
-            <div class="data-row"><span>Récupérateur Soute</span><span id="nav-scoop" class="data-value">Rentrée</span></div>
+    <!-- ================= BANDEAU ================= -->
+    <header class="bandeau">
+        <div class="marque">
+            <strong>COVAS</strong>
+            <span class="liaison"><i></i><span data-v="liaison">Hors ligne</span></span>
         </div>
 
-        <div class="panel" style="flex-grow: 1;">
-            <h2>Inventaire & Soute</h2>
-            <div class="data-row"><span>Capacité</span><span id="cargo-cap" class="data-value">0 / 0 T</span></div>
-            <div class="data-row"><span>Carburant Principal</span><span id="fuel-main" class="data-value">100%</span></div>
-            <div class="data-row"><span>Réservoir FSD</span><span id="fuel-fsd" class="data-value">100%</span></div>
+        <dl class="identite">
+            <div><dt>Commandant</dt><dd data-v="cmdr">—</dd></div>
+            <div><dt>Vaisseau</dt><dd><span data-v="vaisseau-nom">—</span> <small data-v="vaisseau-modele"></small></dd></div>
+            <div><dt>Système</dt><dd data-v="systeme">—</dd></div>
+            <div><dt>Crédits</dt><dd data-v="credits">—</dd></div>
+            <div><dt>Statut légal</dt><dd data-v="statut-legal">—</dd></div>
+        </dl>
+
+        <div class="bandeau-droite">
+            <div class="horloge"><b data-v="heure">--:--</b><small data-v="date"></small></div>
+            <button type="button" class="selecteur-mode" id="selecteur-mode" title="Changer de vue : automatique, combat forcé, navigation forcée">
+                Vue <b data-v="mode-choisi">auto</b>
+            </button>
+        </div>
+    </header>
+
+    <!-- Bandeau d'alerte, visible uniquement en vue combat -->
+    <div class="alerte-combat" role="status">
+        <strong>Alerte combat</strong>
+        <span data-v="alerte-cause">Contact hostile</span>
+        <span class="alerte-retour" data-v="alerte-retour"></span>
+    </div>
+
+    <!-- ================= VUE NAVIGATION ================= -->
+    <main class="vue vue-nav" aria-label="Navigation">
+
+        <div class="colonne">
+            <section class="panneau">
+                <h2>Position</h2>
+                <p class="titre-systeme" data-v="systeme">—</p>
+                <p class="sous-titre" data-v="lieu"></p>
+                <ul class="pastilles" id="pastilles-systeme"></ul>
+                <dl class="fiche">
+                    <div><dt>État de vol</dt><dd data-v="etat-vol">—</dd></div>
+                    <div><dt>Destination</dt><dd data-v="destination">—</dd></div>
+                    <div><dt>Population</dt><dd data-v="population">—</dd></div>
+                    <div><dt>Corps scannés</dt><dd data-v="corps">—</dd></div>
+                    <div id="ligne-surface" hidden><dt>Surface</dt><dd data-v="surface">—</dd></div>
+                </dl>
+                <div id="bloc-station" hidden>
+                    <h3>Station <span data-v="station-nom"></span></h3>
+                    <p class="sous-titre" data-v="station-detail"></p>
+                    <ul class="pastilles" id="pastilles-services"></ul>
+                </div>
+            </section>
+
+            <section class="panneau grandit">
+                <h2>Route</h2>
+                <div class="onglets" role="tablist">
+                    <button type="button" role="tab" data-onglet="tracee" aria-selected="true">Route tracée</button>
+                    <button type="button" role="tab" data-onglet="proches" aria-selected="false">À portée de saut</button>
+                </div>
+                <div data-contenu="tracee" class="contenu-onglet">
+                    <dl class="chiffres">
+                        <div><dt>Prochain saut</dt><dd data-v="prochain-saut">—</dd></div>
+                        <div><dt>Sauts</dt><dd data-v="sauts-restants">—</dd></div>
+                        <div><dt>Distance</dt><dd data-v="distance-restante">—</dd></div>
+                    </dl>
+                    <ol class="liste defile etapes" id="liste-route"></ol>
+                </div>
+                <div data-contenu="proches" class="contenu-onglet" hidden>
+                    <p class="sous-titre" data-v="proches-resume">—</p>
+                    <ul class="liste defile etapes" id="liste-proches"></ul>
+                </div>
+            </section>
+        </div>
+
+        <div class="colonne centre">
+            <section class="hologramme" data-hologramme></section>
+            <section class="jauges">
+                <div class="jauge-bloc"><span>Coque</span><b data-v="coque">—</b><div class="jauge" data-j="coque"><i></i></div></div>
+                <div class="jauge-bloc bouclier"><span>Boucliers</span><b data-v="boucliers">—</b><div class="jauge" data-j="boucliers"><i></i></div></div>
+                <div class="jauge-bloc"><span>Carburant</span><b data-v="carburant">—</b><div class="jauge" data-j="carburant"><i></i></div></div>
+                <div class="jauge-bloc"><span>Soute</span><b data-v="soute-charge">—</b><div class="jauge" data-j="soute"><i></i></div></div>
+                <div class="jauge-bloc pips-bloc"><span>Énergie</span><div class="pips" data-pips></div></div>
+            </section>
+            <section class="panneau">
+                <h2>Systèmes de vol</h2>
+                <ul class="voyants" data-voyants="vol"></ul>
+            </section>
+        </div>
+
+        <div class="colonne">
+            <section class="panneau">
+                <h2>Vaisseau</h2>
+                <dl class="fiche deux-colonnes">
+                    <div><dt>Modèle</dt><dd data-v="vaisseau-modele">—</dd></div>
+                    <div><dt>Immatriculation</dt><dd data-v="vaisseau-immat">—</dd></div>
+                    <div><dt>Portée de saut</dt><dd data-v="portee">—</dd></div>
+                    <div><dt>Rachat</dt><dd data-v="rachat">—</dd></div>
+                    <div><dt>Réserve moteur</dt><dd data-v="reserve">—</dd></div>
+                    <div><dt>Groupe de tir</dt><dd data-v="groupe-tir">—</dd></div>
+                </dl>
+            </section>
+            <section class="panneau grandit">
+                <h2>Modules <small data-v="modules-releve"></small></h2>
+                <div class="liste defile" id="liste-modules"></div>
+            </section>
+            <section class="panneau">
+                <h2>Soute <small data-v="soute-charge"></small></h2>
+                <ul class="liste defile courte" id="liste-soute"></ul>
+            </section>
+        </div>
+
+        <section class="panneau bas">
+            <h2>Commandant</h2>
+            <dl class="fiche trois-colonnes" id="fiche-rangs"></dl>
+            <h3>Missions <span data-v="missions-nombre"></span></h3>
+            <ul class="liste defile" id="liste-missions"></ul>
+        </section>
+        <section class="panneau bas">
+            <h2>Journal de bord</h2>
+            <div class="filtres" id="filtres-journal"></div>
+            <ol class="liste defile journal" id="liste-journal"></ol>
+        </section>
+        <section class="panneau bas">
+            <h2>Communications</h2>
+            <ol class="liste defile journal" id="liste-comms"></ol>
+        </section>
+    </main>
+
+    <!-- ================= VUE COMBAT ================= -->
+    <main class="vue vue-combat" aria-label="Combat">
+
+        <div class="colonne">
+            <section class="panneau">
+                <h2>Cible</h2>
+                <div id="cible-vide" class="vide">Aucune cible verrouillée</div>
+                <div id="cible-fiche" hidden>
+                    <p class="titre-systeme" data-v="cible-vaisseau">—</p>
+                    <p class="sous-titre" data-v="cible-pilote"></p>
+                    <div class="jauge-bloc bouclier"><span>Boucliers</span><b data-v="cible-boucliers">—</b><div class="jauge" data-j="cible-boucliers"><i></i></div></div>
+                    <div class="jauge-bloc"><span>Coque</span><b data-v="cible-coque">—</b><div class="jauge" data-j="cible-coque"><i></i></div></div>
+                    <dl class="fiche">
+                        <div><dt>Statut</dt><dd data-v="cible-statut">—</dd></div>
+                        <div><dt>Prime</dt><dd data-v="cible-prime">—</dd></div>
+                        <div><dt>Faction</dt><dd data-v="cible-faction">—</dd></div>
+                        <div><dt>Sous-système visé</dt><dd data-v="cible-sous-systeme">—</dd></div>
+                    </dl>
+                </div>
+            </section>
+            <section class="panneau grandit">
+                <h2>Menaces</h2>
+                <ol class="liste defile journal" id="liste-menaces"></ol>
+            </section>
+            <section class="panneau">
+                <h2>Bilan de la session</h2>
+                <dl class="chiffres">
+                    <div><dt>Éliminations</dt><dd data-v="bilan-eliminations">0</dd></div>
+                    <div><dt>Gains</dt><dd data-v="bilan-gains">0 cr</dd></div>
+                    <div><dt>Coups reçus</dt><dd data-v="bilan-coups">0</dd></div>
+                </dl>
+            </section>
+        </div>
+
+        <div class="colonne centre">
+            <section class="hologramme grand" data-hologramme></section>
+            <section class="vitaux">
+                <div class="vital"><span>Coque</span><b data-v="coque">—</b><div class="jauge" data-j="coque"><i></i></div></div>
+                <div class="vital bouclier"><span>Boucliers</span><b data-v="boucliers">—</b><div class="jauge" data-j="boucliers"><i></i></div></div>
+            </section>
+        </div>
+
+        <div class="colonne">
+            <section class="panneau">
+                <h2>Énergie</h2>
+                <div class="pips grands" data-pips></div>
+                <div class="actions">
+                    <button type="button" data-action="energie_sys">Systèmes</button>
+                    <button type="button" data-action="energie_mtr">Moteurs</button>
+                    <button type="button" data-action="energie_arm">Armes</button>
+                    <button type="button" data-action="reset">Équilibrer</button>
+                </div>
+            </section>
+            <section class="panneau">
+                <h2>État du vaisseau</h2>
+                <ul class="voyants" data-voyants="combat"></ul>
+                <dl class="fiche deux-colonnes">
+                    <div><dt>Carburant</dt><dd data-v="carburant">—</dd></div>
+                    <div><dt>Verrière</dt><dd data-v="verriere">—</dd></div>
+                    <div><dt>Chasseur</dt><dd data-v="chasseur">—</dd></div>
+                    <div><dt>Fuite vers</dt><dd data-v="prochain-saut">—</dd></div>
+                </dl>
+            </section>
+            <section class="panneau grandit">
+                <h2>Modules <small>les plus touchés d'abord</small></h2>
+                <div class="liste defile" id="liste-modules-combat"></div>
+            </section>
+            <section class="panneau">
+                <div class="actions">
+                    <button type="button" data-action="lock">Verrouiller la cible</button>
+                    <button type="button" data-action="boost">Boost</button>
+                    <button type="button" data-action="mode_combat">Pips combat</button>
+                    <button type="button" data-action="fsd">Charger le FSD</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- ================= LIAISON PERDUE ================= -->
+    <div class="voile" id="voile-liaison">
+        <div class="voile-boite">
+            <h2>Liaison COVAS interrompue</h2>
+            <p>L'interface n'arrive pas à joindre le backend sur <code data-v="adresse-ws"></code>.
+               Lance <code>main.py</code> : la connexion se rétablit toute seule.</p>
+            <div class="actions">
+                <button type="button" id="bouton-demo">Lancer la simulation</button>
+            </div>
         </div>
     </div>
 
-    <!-- COLONNE CENTRALE -->
-    <div class="col-center">
-        <div class="orb"></div>
-        <svg viewBox="0 0 400 500" class="ship-hologram">
-            <!-- Bouclier -->
-            <path id="shield-path" class="svg-shield" d="M200,30 C80,120 80,380 130,460 L270,460 C320,380 320,120 200,30 Z" />
-            <!-- Structure Vaisseau (Vue Top-Down complexe) -->
-            <g class="svg-hull">
-                <!-- Nez -->
-                <polygon points="200,60 230,220 280,420 240,440 160,440 120,420 170,220" />
-                <!-- Ailes -->
-                <polygon points="120,340 50,420 120,420" />
-                <polygon points="280,340 350,420 280,420" />
-                <!-- Cockpit -->
-                <polygon points="200,180 220,280 180,280" />
+    <!-- Silhouette générique du vaisseau, clonée dans les deux vues -->
+    <template id="gabarit-vaisseau">
+        <svg viewBox="0 0 400 560" class="vaisseau" aria-hidden="true">
+            <g class="socle">
+                <ellipse cx="200" cy="300" rx="188" ry="250"/>
+                <ellipse cx="200" cy="300" rx="150" ry="205"/>
             </g>
+            <path class="bouclier-anneau" d="M200 18 C330 70 372 250 360 420 C352 500 300 545 200 548 C100 545 48 500 40 420 C28 250 70 70 200 18Z"/>
+            <g class="coque">
+                <path d="M200 34 L226 96 L246 176 L262 292 L344 398 L352 452 L278 470 L264 522 L136 522 L122 470 L48 452 L56 398 L138 292 L154 176 L174 96 Z"/>
+                <path class="fin" d="M200 104 L217 160 L200 190 L183 160 Z"/>
+                <path class="fin" d="M200 34 L200 104 M200 190 L200 522 M154 176 L246 176 M138 292 L262 292 M122 470 L278 470"/>
+                <path class="fin" d="M138 292 L122 470 M262 292 L278 470 M56 398 L122 420 M344 398 L278 420 M174 96 L226 96"/>
+                <path class="fin" d="M146 522 L146 540 L186 540 L186 522 M214 522 L214 540 L254 540 L254 522"/>
+            </g>
+            <g class="zones"></g>
+            <g class="impact"><circle cx="200" cy="300" r="40"/><circle cx="200" cy="300" r="40"/></g>
         </svg>
-    </div>
+    </template>
 
-    <!-- COLONNE DROITE -->
-    <div class="col-right">
-        <div class="panel">
-            <h2>Statut & Combat</h2>
-            <div class="data-row"><span>Points d'Emports</span><span id="hardpoints-status" class="data-value">Rentrés</span></div>
-            <div class="data-row"><span>Intégrité Coque</span><span id="hull-data" class="data-value">100%</span></div>
-            <div class="data-row"><span>Boucliers</span><span id="shield-data" class="data-value">Actifs</span></div>
-            
-            <h2 style="margin-top: 15px;">Énergie (PIPS)</h2>
-            <div class="data-row"><span>Systèmes (SYS)</span><span id="pip-sys" class="data-value">4</span></div>
-            <div class="data-row"><span>Moteurs (ENG)</span><span id="pip-eng" class="data-value">4</span></div>
-            <div class="data-row"><span>Armes (WEP)</span><span id="pip-wep" class="data-value">4</span></div>
-
-            <div class="btn-grid">
-                <button onclick="envoyerAction('cibler')">Verrouiller Cible</button>
-                <button onclick="envoyerAction('fsd')">Charge FSD</button>
-                <button onclick="envoyerAction('cellule')">Cellule Bouclier</button>
-                <button onclick="envoyerAction('paillettes')">Paillettes</button>
-            </div>
-        </div>
-
-        <div class="panel" style="flex-grow: 1;">
-            <h2>Modules & Outfitting</h2>
-            <div class="module-list" id="modules-container">
-                <!-- Les modules seront injectés ici via JS -->
-                <div class="data-row"><span>Générateur</span><span class="data-value">100%</span></div>
-                <div class="data-row"><span>Propulseurs</span><span class="data-value">100%</span></div>
-                <div class="data-row"><span>Répartiteur</span><span class="data-value">100%</span></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const ws = new WebSocket("ws://localhost:8765");
-        ws.onopen = () => console.log("Interface connectée au COVAS.");
-
-        ws.onmessage = (event) => {
-            const donnees = JSON.parse(event.data);
-
-            if (donnees.type === "status") {
-                // Pips & Carburant
-                document.getElementById("pip-sys").innerText = donnees.pips_sys || 0;
-                document.getElementById("pip-eng").innerText = donnees.pips_eng || 0;
-                document.getElementById("pip-wep").innerText = donnees.pips_wep || 0;
-                document.getElementById("fuel-main").innerText = donnees.carburant ? donnees.carburant.toFixed(1) + " T" : "---";
-
-                // Flags binaires (ex: Train d'atterrissage, Soute, Boucliers)
-                const flags = donnees.flags || 0;
-                const enCombat = Boolean(flags & 64);
-                const trainSorti = Boolean(flags & 4);
-                const boucliersActifs = Boolean(flags & 8);
-                const souteOuverte = Boolean(flags & 16);
-
-                document.getElementById("nav-gear").innerText = trainSorti ? "SORTI" : "Rentrée";
-                document.getElementById("nav-gear").className = trainSorti ? "alert-text" : "data-value";
-                
-                document.getElementById("nav-scoop").innerText = souteOuverte ? "OUVERT" : "Fermé";
-                
-                const elemShield = document.getElementById("shield-path");
-                if (boucliersActifs) {
-                    elemShield.style.opacity = "1";
-                    document.getElementById("shield-data").innerText = "En ligne";
-                } else {
-                    elemShield.style.opacity = "0";
-                    document.getElementById("shield-data").innerText = "HORS LIGNE";
-                    document.getElementById("shield-data").className = "alert-text";
-                }
-
-                // Mode Combat
-                if (enCombat) {
-                    document.body.classList.add("combat-mode");
-                    document.getElementById("hardpoints-status").innerText = "DÉPLOYÉS";
-                    document.getElementById("hardpoints-status").className = "alert-text";
-                } else {
-                    document.body.classList.remove("combat-mode");
-                    document.getElementById("hardpoints-status").innerText = "Rentrés";
-                    document.getElementById("hardpoints-status").className = "data-value";
-                }
-            }
-            
-            else if (donnees.type === "navroute") {
-                const route = donnees.route || [];
-                if (route.length > 0) {
-                    document.getElementById("nav-next").innerText = route[0].StarSystem;
-                    document.getElementById("nav-jumps").innerText = route.length - 1;
-                }
-            }
-            
-            else if (donnees.type === "modulesinfo") {
-                const container = document.getElementById("modules-container");
-                container.innerHTML = ""; // Vider l'ancienne liste
-                if (donnees.modules) {
-                    donnees.modules.forEach(mod => {
-                        // On nettoie un peu les noms de l'API Elite
-                        const nomPropre = mod.Item.replace("$int_", "").replace("_name;", "");
-                        const div = document.createElement("div");
-                        div.className = "data-row";
-                        div.innerHTML = `<span>${nomPropre}</span><span class="data-value">${(mod.Health * 100).toFixed(0)}%</span>`;
-                        container.appendChild(div);
-                    });
-                }
-            }
-        };
-
-        function envoyerAction(actionNom) {
-            ws.send(JSON.stringify({ action: actionNom }));
-        }
-    </script>
+    <script src="demo.js"></script>
+    <script src="interface.js"></script>
 </body>
 </html>
