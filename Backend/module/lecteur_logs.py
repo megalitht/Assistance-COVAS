@@ -736,9 +736,23 @@ def _appontage_accorde(e):
     _note(e, "station", f"Appontage autorisé — plateforme {e.get('LandingPad', '?')}", "succes")
 
 
+RAISONS_REFUS_APPONTAGE = {
+    "NoSpace": "aucune plateforme libre",
+    "TooLarge": "vaisseau trop grand pour cette station",
+    "Hostile": "la station vous est hostile",
+    "Offences": "infractions en cours dans ce système",
+    "Distance": "trop loin, approche à moins de 7,5 km",
+    "ActiveFighter": "rappelle d'abord ton chasseur",
+    "NoReason": "sans raison donnée",
+    "RestrictedAccess": "accès restreint",
+    "JumpImminent": "le porte-vaisseaux va sauter",
+}
+
+
 @_sur("DockingDenied")
 def _appontage_refuse(e):
-    _note(e, "station", f"Appontage refusé ({e.get('Reason', '?')})", "attention")
+    raison = RAISONS_REFUS_APPONTAGE.get(e.get("Reason"), e.get("Reason", "raison inconnue"))
+    _note(e, "station", f"Appontage refusé : {raison}", "alerte")
 
 
 @_sur("DockingCancelled", "DockingTimeout")

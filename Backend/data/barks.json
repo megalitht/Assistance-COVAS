@@ -161,6 +161,18 @@
             "data/son/Affirmation/AVosOrdre.wav"
         ]
     },
+    "appontage": {
+        "mots_cles": ["appontage", "apontage", "demande d'amarrage", "demande d'atterrissage", "permission d'atterrir"],
+        "reponses": [
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/AVosOrdre.wav"
+        ]
+    },
+    "appontage_accorde": { "mots_cles": [], "reponses": [] },
+    "appontage_refuse": { "mots_cles": [], "reponses": [] },
+    "refus_deja_amarre": { "mots_cles": [], "reponses": [] },
+
     "ravitaillement_termine": { "mots_cles": [], "reponses": [] },
     "ravitaillement_inutile": { "mots_cles": [], "reponses": [] },
 

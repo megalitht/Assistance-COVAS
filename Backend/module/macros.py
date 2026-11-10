@@ -32,6 +32,10 @@ TOUCHES = {
     "ui_droite": "d",
     "ui_selection": "space",
     "ui_retour": "backspace",
+    # Panneaux du cockpit
+    "panneau_gauche": "1",
+    "onglet_suivant": "e",
+    "onglet_precedent": "q",   # touche A sur un clavier AZERTY (même emplacement physique)
 }
 
 # --- RAVITAILLEMENT À QUAI -------------------------------------------------
@@ -46,6 +50,13 @@ SEQUENCE_RAVITAILLEMENT = ["ui_haut", "ui_gauche", "ui_gauche", "ui_selection",
                            "ui_droite", "ui_selection"]
 
 ATTENTE_ECRAN = 2.5     # secondes laissées au jeu pour afficher l'écran des services
+
+# --- DEMANDE D'APPONTAGE ---------------------------------------------------
+# Panneau de gauche (1), deux onglets à droite (E E) jusqu'à « Contacts »,
+# puis bas (S), droite (D) et valider (espace) sur « Demander l'appontage ».
+SEQUENCE_APPONTAGE = ["panneau_gauche", "onglet_suivant", "onglet_suivant",
+                      "ui_bas", "ui_droite", "ui_selection"]
+ATTENTE_PANNEAU = 0.5   # secondes laissées au panneau pour s'ouvrir après la touche 1
 # ---------------------------------------------------------------------------
 
 DUREE_APPUI = 0.06      # Elite rate parfois les appuis trop brefs

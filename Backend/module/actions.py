@@ -112,6 +112,8 @@ async def executer_commande(action, texte, dire, poli=False):
         return await _bascule(action, BASCULES[cle], texte, dire, poli)
     if cle == "ravitaillement":
         return await _ravitaillement(dire, poli)
+    if cle == "appontage":
+        return await _appontage(dire, poli)
 
     if cle == "fsd" and etat_connu():
         if not drapeau("vaisseau"):
@@ -274,3 +276,59 @@ async def _ravitaillement(dire, poli):
     else:
         await logs.annoncer("Rien à faire : réservoir plein, vaisseau intact, munitions au maximum")
         await dire("ravitaillement_inutile")
+
+
+# =====================================================================
+#  DEMANDE D'APPONTAGE
+# =====================================================================
+REPONSES_APPONTAGE = ("DockingGranted", "DockingDenied")
+
+
+async def _appontage(dire, poli):
+    if etat_connu():
+        if not drapeau("vaisseau"):
+            return await refuser(dire, "refus_hors_vaisseau", "Appontage : impossible hors du vaisseau")
+        if drapeau("amarre"):
+            return await refuser(dire, "refus_deja_amarre", "Appontage : le vaisseau est déjà amarré")
+        if drapeau("supercroisiere"):
+            return await refuser(dire, "refus_supercroisiere",
+                                 "Appontage : sors d'abord de supercroisière, puis approche à moins de 7,5 km")
+
+    if not await preparer_jeu(dire):
+        return
+    await dire("appontage", poli=poli)
+
+    recus = []
+    arreter_ecoute = logs.ecouter_evenements(
+        lambda e: recus.append(e) if e.get("event") in ("DockingRequested",) + REPONSES_APPONTAGE else None)
+    try:
+        # La touche 1 ouvre OU ferme le panneau : on part toujours du cockpit, panneaux fermés
+        if not await fermer_panneaux():
+            return await refuser(dire, "macro_echec",
+                                 "Appontage : un menu reste ouvert, ferme-le et réessaie")
+        for touche in macros.SEQUENCE_APPONTAGE:
+            await appuyer(touche)
+            await asyncio.sleep(macros.ATTENTE_PANNEAU if touche == "panneau_gauche" else 0.2)
+
+        await attendre(lambda: any(e["event"] in REPONSES_APPONTAGE for e in recus), 6)
+        # Le jeu se souvient du dernier onglet : on revient au premier avant de refermer,
+        # pour que la séquence marche aussi la fois suivante.
+        if _focus() == 2:
+            await appuyer("onglet_precedent", macros.SEQUENCE_APPONTAGE.count("onglet_suivant"))
+        await fermer_panneaux()              # referme le panneau de gauche
+    finally:
+        arreter_ecoute()
+
+    # Le journal de bord affiche déjà la réponse (plateforme ou raison du refus)
+    noms = [e["event"] for e in recus]
+    if "DockingGranted" in noms:
+        await dire("appontage_accorde")
+    elif "DockingDenied" in noms:
+        await dire("appontage_refuse", "refus")
+    elif "DockingRequested" in noms:
+        await logs.annoncer("Appontage : demande envoyée, la station n'a pas encore répondu", "attention")
+    else:
+        await logs.annoncer("Appontage : aucune demande envoyée. Vérifie que le panneau de gauche "
+                            "s'ouvre bien sur le premier onglet (SEQUENCE_APPONTAGE dans macros.py)",
+                            "alerte")
+        await dire("macro_echec", "refus")
