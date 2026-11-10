@@ -30,6 +30,8 @@ TOUCHES = {
     "ui_bas": "s",
     "ui_gauche": "a",
     "ui_droite": "d",
+    "ui_onglet_gauche": "q",
+    "ui_onglet_droite": "e",
     "ui_selection": "space",
     "ui_retour": "backspace",
     # Ecran 
@@ -49,6 +51,8 @@ SEQUENCE_OUVRIR_SERVICES = ["ui_haut"] * 4 + ["ui_bas", "ui_selection"]
 SEQUENCE_RAVITAILLEMENT = ["ui_selection",
                            "ui_droite", "ui_selection",
                            "ui_droite", "ui_selection"]
+
+SEQUENCE_DEMANDE_APONTAGE = ["ec_nav"] + ["ui_onglet_droite"] * 3 + ["ui_bas"] + ["ui_droite"] + ["ui_selection"] + ["ec_nav"]
 
 ATTENTE_ECRAN = 2.5     # secondes laissées au jeu pour afficher l'écran des services
 # ---------------------------------------------------------------------------
