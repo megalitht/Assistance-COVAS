@@ -30,12 +30,19 @@ TOUCHES = {
     "ui_bas": "s",
     "ui_gauche": "a",
     "ui_droite": "d",
+    "ui_onglet_gauche": "q",
+    "ui_onglet_droite": "e",
     "ui_selection": "space",
     "ui_retour": "backspace",
     # Panneaux du cockpit
     "panneau_gauche": "1",
     "onglet_suivant": "e",
     "onglet_precedent": "q",   # touche A sur un clavier AZERTY (même emplacement physique)
+    # Ecran 
+    "ec_nav": "1",
+    "ec_com": "2",
+    "ec_deploy": "3",
+    "ec_sys": "4",
 }
 
 # --- RAVITAILLEMENT À QUAI -------------------------------------------------
@@ -45,9 +52,11 @@ TOUCHES = {
 SEQUENCE_OUVRIR_SERVICES = ["ui_haut"] * 4 + ["ui_bas", "ui_selection"]
 
 # Une fois dans les services : Ravitailler, Réparer, Réarmer (boutons en haut à gauche).
-SEQUENCE_RAVITAILLEMENT = ["ui_haut", "ui_gauche", "ui_gauche", "ui_selection",
+SEQUENCE_RAVITAILLEMENT = ["ui_selection",
                            "ui_droite", "ui_selection",
                            "ui_droite", "ui_selection"]
+
+SEQUENCE_DEMANDE_APONTAGE = ["ec_nav"] + ["ui_onglet_droite"] * 3 + ["ui_bas"] + ["ui_droite"] + ["ui_selection"] + ["ec_nav"]
 
 ATTENTE_ECRAN = 2.5     # secondes laissées au jeu pour afficher l'écran des services
 
