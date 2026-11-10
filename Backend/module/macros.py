@@ -32,6 +32,11 @@ TOUCHES = {
     "ui_droite": "d",
     "ui_selection": "space",
     "ui_retour": "backspace",
+    # Ecran 
+    "ec_nav": "1",
+    "ec_com": "2",
+    "ec_deploy": "3",
+    "ec_sys": "4",
 }
 
 # --- RAVITAILLEMENT À QUAI -------------------------------------------------
@@ -41,7 +46,7 @@ TOUCHES = {
 SEQUENCE_OUVRIR_SERVICES = ["ui_haut"] * 4 + ["ui_bas", "ui_selection"]
 
 # Une fois dans les services : Ravitailler, Réparer, Réarmer (boutons en haut à gauche).
-SEQUENCE_RAVITAILLEMENT = ["ui_haut", "ui_gauche", "ui_gauche", "ui_selection",
+SEQUENCE_RAVITAILLEMENT = ["ui_selection",
                            "ui_droite", "ui_selection",
                            "ui_droite", "ui_selection"]
 
