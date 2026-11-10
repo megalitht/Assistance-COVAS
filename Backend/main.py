@@ -17,7 +17,7 @@ import winsound
 
 
 # Importation de nos modules personnalisés situés dans le sous-dossier 'module'
-from module.macros import executer_touches 
+from module.actions import executer_commande
 from module.cerveau import obtenir_chemin_audio
 from module.lecteur_logs import surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
 from module.voix import generer_et_jouer_voix
@@ -38,18 +38,22 @@ if venv_site_packages:
             os.add_dll_directory(cudnn_path)
             
 
+# Clés de barks.json qui ne sont pas des commandes
+CLES_IGNOREES = {"mots_reveil", "politesse"}
+
+
 def detecter_action(texte_entendu):
-    """Parcourt le JSON pour trouver à quelle action correspond la phrase"""
+    """Trouve l'action dont le mot-clé reconnu est le plus précis (le plus long).
+    Ex. « réarme » (ravitaillement) l'emporte sur « arme » (énergie aux armes)."""
+    meilleure, longueur = None, 0
     for cle_action, donnees in barks.items():
-        if cle_action == "mots_reveil":
+        if cle_action in CLES_IGNOREES or not isinstance(donnees, dict):
             continue
-        
-        # Vérification de sécurité : on s'assure que donnees est un dictionnaire avec la clé voulue
-        if isinstance(donnees, dict) and "mots_cles" in donnees:
-            for mot_cle in donnees["mots_cles"]:
-                if mot_cle in texte_entendu:
-                    return cle_action 
-    return None
+        for mot_cle in donnees.get("mots_cles", []):
+            mot_cle = mot_cle.lower()
+            if mot_cle and mot_cle in texte_entendu and len(mot_cle) > longueur:
+                meilleure, longueur = cle_action, len(mot_cle)
+    return meilleure
 
 # --- CHARGEMENT DES RÉPLIQUES ET PARAMÈTRES (BARKS) ---
 chemin_barks = "D:/Assistance-COVAS/Backend/data/barks.json" 
@@ -112,16 +116,28 @@ class CovasBackend:
 
             self.tts_queue.task_done()
 
+    async def dire(self, *cles, poli=False):
+        """Joue la première réplique disponible parmi les clés de barks.json données."""
+        for cle in cles:
+            chemin = await obtenir_chemin_audio(cle, polite=poli)
+            if chemin:
+                await self.tts_queue.put(chemin)
+                return True
+        return False
+
     async def tache_execution_macros(self):
-        """Dépile et exécute les macros clavier de manière asynchrone via le module externe."""
-        loop = asyncio.get_running_loop()
+        """Exécute les commandes (voix ou boutons de l'interface), une à la fois."""
         while True:
-            action = await self.action_queue.get()
+            commande = await self.action_queue.get()
+            action, texte, poli = commande if isinstance(commande, tuple) else (commande, "", False)
             print(f"[Action] Demande d'exécution pour : {action}")
-            
-            await loop.run_in_executor(None, executer_touches, action)
-            
-            self.action_queue.task_done()
+            try:
+                await executer_commande(action, texte, self.dire, poli)
+            except Exception:
+                print(f"[Action] Erreur pendant « {action} » :")
+                traceback.print_exc()
+            finally:
+                self.action_queue.task_done()
 
     def lancer_tache(self, coroutine, nom):
         """Lance une tâche de fond en gardant une référence dessus (sinon Python peut
@@ -187,15 +203,10 @@ class CovasBackend:
                 action_detectee = detecter_action(text_min)
                 
                 if action_detectee:
-                    await self.action_queue.put(action_detectee)
-                    
-                    chemin_audio = await obtenir_chemin_audio(action_detectee, polite=polite)
-                    
-                    if chemin_audio:
-                        await self.tts_queue.put(chemin_audio)
-                        await self.tts_queue.join()
-                    else:
-                        print(f"[COVAS] Avertissement : Aucun fichier audio associé à l'action '{action_detectee}'")
+                    await self.action_queue.put((action_detectee, text_min, polite))
+                    # On attend la fin de la commande et de la réponse avant de réécouter le micro
+                    await self.action_queue.join()
+                    await self.tts_queue.join()
 if __name__ == "__main__":
     backend = CovasBackend()
     asyncio.run(backend.boucle_principale())

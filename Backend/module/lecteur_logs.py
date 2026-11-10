@@ -22,6 +22,7 @@ import math
 import os
 import time
 from collections import deque
+from datetime import datetime, timezone
 
 from module import edsm
 from module.serveur_ws import definir_instantane, envoyer_donnees_web
@@ -103,6 +104,27 @@ _puissances = {}          # emplacement -> MW (ModulesInfo.json)
 
 # Ce que le gestionnaire d'événement en cours veut publier
 _lot = {"sections": set(), "lignes": [], "repliques": []}
+
+
+_ecouteurs = set()
+
+
+def ecouter_evenements(fonction):
+    """Appelle fonction(evenement) pour chaque nouvel événement du journal.
+    Renvoie une fonction à appeler pour arrêter l'écoute."""
+    _ecouteurs.add(fonction)
+    return lambda: _ecouteurs.discard(fonction)
+
+
+async def annoncer(texte, gravite="info"):
+    """Message du COVAS lui-même, affiché dans le journal de bord de l'interface."""
+    ligne = {"id": next(_identifiants),
+             "h": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+             "nom": "COVAS", "categorie": "covas", "gravite": gravite, "texte": texte,
+             "hostile": False, "n": 1}
+    HISTORIQUE.append(ligne)
+    print(f"[COVAS] {texte}")
+    await envoyer_donnees_web({"type": "evenement", "evenement": ligne})
 
 
 def _instantane():
@@ -240,7 +262,8 @@ def _chargement(e):
                             nom=e.get("ShipName"), immat=e.get("ShipIdent"))
     _touche("session", "commandant", "vaisseau")
     _note(e, "systeme", f"Session ouverte — CMDR {e.get('Commander', '?')}", "succes")
-    _parle("bienvenue")
+    if "suit" not in (e.get("Ship") or "").lower():      # pas à pied
+        _parle("bienvenue")
 
 
 @_sur("Rank")
@@ -463,7 +486,24 @@ def _vrs_sorti(e):
 
 @_sur("DockSRV")
 def _vrs_rentre(e):
-    _note(e, "vaisseau", "VRS récupéré")
+    _note(e, "vaisseau", "VRS récupéré — retour à bord")
+    _parle("bienvenue")
+
+
+@_sur("Embark")
+def _embarquement(e):
+    if e.get("SRV"):
+        _note(e, "vaisseau", "À bord du VRS")
+    elif e.get("Taxi") or e.get("Multicrew"):
+        _note(e, "vaisseau", "Embarquement (taxi ou équipage)")
+    else:
+        _note(e, "vaisseau", "Retour à bord du vaisseau", "succes")
+        _parle("bienvenue")
+
+
+@_sur("Disembark")
+def _debarquement(e):
+    _note(e, "vaisseau", "Débarquement du VRS" if e.get("SRV") else "Débarquement à pied")
 
 
 @_sur("SRVDestroyed")
@@ -960,6 +1000,12 @@ async def _traiter_ligne(ligne, en_direct):
         evenement = json.loads(ligne)
     except json.JSONDecodeError:
         return
+    if en_direct:
+        for fonction in list(_ecouteurs):
+            try:
+                fonction(evenement)
+            except Exception as erreur:
+                print(f"[Logs] Écouteur en erreur : {erreur!r}")
     gestionnaire = _GESTIONNAIRES.get(evenement.get("event"))
     if not gestionnaire:
         return

@@ -39,7 +39,7 @@
         ]
     },
     "train_atterrissage": {
-        "mots_cles": ["train", "atterrissage", "pattes", "letran", "sort", "rentre", "déploie"],
+        "mots_cles": ["train", "atterrissage", "pattes", "letran"],
         "reponses": [
             "data/son/Macros/Deploiment/train/DéploymentTrain.wav",
             "data/son/Macros/Deploiment/train/TrainDéployé.wav",
@@ -50,7 +50,7 @@
         ]
     },
     "soute": {
-        "mots_cles": ["soute", "cargo", "suite.", "ouvre", "ferme"],
+        "mots_cles": ["soute", "cargo", "suite.", "écope"],
         "reponses": [
             "data/son/Macros/Deploiment/soute/DéploymentSoute.wav",
             "data/son/Macros/Deploiment/soute/SouteDéployé.wav",
@@ -128,56 +128,58 @@
         "mots_cles": ["boost", "accélération","Bruce","Proust"],
         "reponses": []
     },
-  "bienvenue": {
-    "mots_cles": [],
-    "reponses": [
-      "data/son/interact/BienvenueCommandant.wav"
-    ]
-  },
-  "alerte_degats": {
-    "mots_cles": [],
-    "reponses": [
-      "data/son/interact/AttDegat.wav"
-    ]
-  },
-  "alerte_blindage": {
-    "mots_cles": [],
-    "reponses": [
-      "data/son/interact/AttDegat.wav"
-    ]
-  },
-  "alerte_bouclier": {
-    "mots_cles": [],
-    "reponses": [
-      "data/son/interact/AttDegat.wav"
-    ]
-  },
-  "bouclier_retabli": {
-    "mots_cles": [],
-    "reponses": []
-  },
-  "alerte_attaque": {
-    "mots_cles": [],
-    "reponses": []
-  },
-  "alerte_interdiction": {
-    "mots_cles": [],
-    "reponses": []
-  },
-  "alerte_surchauffe": {
-    "mots_cles": [],
-    "reponses": []
-  },
-  "alerte_carburant": {
-    "mots_cles": [],
-    "reponses": []
-  },
-  "verriere_brisee": {
-    "mots_cles": [],
-    "reponses": []
-  },
-  "kill_confirme": {
-    "mots_cles": [],
-    "reponses": []
-  }
+
+    "bienvenue": {
+        "mots_cles": [],
+        "reponses": ["data/son/interact/BienvenueCommandant.wav"]
+    },
+    "alerte_degats": {
+        "mots_cles": [],
+        "reponses": ["data/son/interact/AttDegat.wav"]
+    },
+    "alerte_blindage": {
+        "mots_cles": [],
+        "reponses": ["data/son/interact/AttDegat.wav"]
+    },
+    "alerte_bouclier": {
+        "mots_cles": [],
+        "reponses": ["data/son/interact/AttDegat.wav"]
+    },
+    "bouclier_retabli": { "mots_cles": [], "reponses": [] },
+    "alerte_attaque": { "mots_cles": [], "reponses": [] },
+    "alerte_interdiction": { "mots_cles": [], "reponses": [] },
+    "alerte_surchauffe": { "mots_cles": [], "reponses": [] },
+    "alerte_carburant": { "mots_cles": [], "reponses": [] },
+    "verriere_brisee": { "mots_cles": [], "reponses": [] },
+    "kill_confirme": { "mots_cles": [], "reponses": [] },
+
+    "ravitaillement": {
+        "mots_cles": ["ravitaill", "réparation", "répare", "réarme", "munitions", "fais le plein", "recharge le vaisseau"],
+        "reponses": [
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav",
+            "data/son/Affirmation/AVosOrdre.wav"
+        ]
+    },
+    "ravitaillement_termine": { "mots_cles": [], "reponses": [] },
+    "ravitaillement_inutile": { "mots_cles": [], "reponses": [] },
+
+    "refus": {
+        "mots_cles": [],
+        "reponses": ["data/son/interact/VisiblementPas.wav"]
+    },
+    "train_deja_sorti": { "mots_cles": [], "reponses": [] },
+    "train_deja_rentre": { "mots_cles": [], "reponses": [] },
+    "soute_deja_ouverte": { "mots_cles": [], "reponses": [] },
+    "soute_deja_fermee": { "mots_cles": [], "reponses": [] },
+    "refus_supercroisiere": { "mots_cles": [], "reponses": [] },
+    "refus_amarre": { "mots_cles": [], "reponses": [] },
+    "refus_pose": { "mots_cles": [], "reponses": [] },
+    "refus_pas_amarre": { "mots_cles": [], "reponses": [] },
+    "refus_pas_de_services": { "mots_cles": [], "reponses": [] },
+    "refus_hors_vaisseau": { "mots_cles": [], "reponses": [] },
+    "refus_masse": { "mots_cles": [], "reponses": [] },
+    "refus_jeu_absent": { "mots_cles": [], "reponses": [] },
+    "macro_echec": { "mots_cles": [], "reponses": [] }
+
 }
