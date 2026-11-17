@@ -9,7 +9,7 @@ Chaque refus est dit à voix haute (barks.json) et affiché dans l'interface.
 
 Deux sortes de commandes :
   - les commandes courtes (une ou quelques touches) s'exécutent tout de suite ;
-  - les PROGRAMMES (décollage, apontage, fuite, autopilote, ravitaillement) durent
+  - les PROGRAMMES (décollage, apontage, fuite, autopilote, voyage, ravitaillement) durent
     longtemps : ils tournent en tâche de fond, un seul à la fois, et « stop » les annule.
 
 Point d'entrée : executer_commande(action, texte, dire, poli)
@@ -18,12 +18,18 @@ Point d'entrée : executer_commande(action, texte, dire, poli)
   dire   : fonction async dire(*cles, poli=False) qui joue la première réplique trouvée
 """
 import asyncio
+import os
 import time
 import traceback
 
 from module import lecteur_logs as logs
 from module import macros
+from module import serveur_ws
 from module import touches
+
+# Page de l'interface (le « panel »), ouverte par la commande vocale « ouvre le panel »
+CHEMIN_INTERFACE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)))), "Frontend", "interface.html")
 from module.macros import normaliser
 
 # Bits de Status.json utilisés ici
@@ -194,6 +200,14 @@ async def preparer_jeu(dire):
     return False
 
 
+def sans_reaction(nom, touche):
+    """Texte affiché quand le jeu n'a pas réagi à la touche."""
+    raison = touches.pourquoi_sans_effet(touche)
+    if raison:
+        return f"{nom} : le jeu n'a pas réagi à {macros.nom_touche(touche).upper()} ({raison})"
+    return f"{nom} : le jeu n'a pas réagi (touche « {macros.nom_touche(touche)} » ?)"
+
+
 async def touche_prete(dire, nom_touche, nom_commande):
     """Refuse proprement une commande dont la touche n'existe pas dans le jeu."""
     if macros.touche_connue(nom_touche):
@@ -347,8 +361,7 @@ async def _bascule(action, cfg, texte, dire, poli):
     if await attendre(lambda: drapeau(cfg["bit"]) != actuel, 3):
         await logs.annoncer(f"{cfg['nom']} {cfg['etats'][0 if not actuel else 1]}")
     else:
-        await logs.annoncer(f"{cfg['nom']} : le jeu n'a pas réagi (touche « "
-                            f"{macros.nom_touche(cfg['touche'])} » ?)", "alerte")
+        await logs.annoncer(sans_reaction(cfg["nom"], cfg["touche"]), "alerte")
         await dire("macro_echec", "refus")
 
 
@@ -389,8 +402,7 @@ async def _carte(action, touche, focus, nom, dire, poli):
     if await attendre(lambda: (_focus() == focus) != deja_ouverte, 6):
         await logs.annoncer(f"{nom} {'fermée' if deja_ouverte else 'ouverte'}")
     else:
-        await logs.annoncer(f"{nom} : le jeu n'a pas réagi (touche « "
-                            f"{macros.nom_touche(touche)} » ?)", "alerte")
+        await logs.annoncer(sans_reaction(nom, touche), "alerte")
         await dire("macro_echec", "refus")
 
 
@@ -510,6 +522,23 @@ async def _drone(action, texte, dire, poli):
 
 
 # =====================================================================
+#  INTERFACE WEB (« ouvre le panel »)
+# =====================================================================
+async def _ouvrir_interface(action, texte, dire, poli):
+    if serveur_ws.interfaces_ouvertes():
+        await logs.annoncer("Interface déjà ouverte")
+        return await dire(action, "affirmation", poli=poli)
+    if not os.path.exists(CHEMIN_INTERFACE):
+        return await refuser(dire, "macro_echec", f"Interface introuvable : {CHEMIN_INTERFACE}")
+    try:
+        # navigateur par défaut de Windows
+        await asyncio.to_thread(os.startfile, CHEMIN_INTERFACE)
+    except OSError as erreur:
+        return await refuser(dire, "macro_echec", f"Interface : impossible de l'ouvrir ({erreur})")
+    await confirmer(dire, action, poli)
+
+
+# =====================================================================
 #  RÉACTIONS AUTOMATIQUES
 # =====================================================================
 _reactions = {"actives": macros.REACTIONS_AU_DEMARRAGE}
@@ -618,14 +647,55 @@ async def _fuite(dire, poli=False):
 
 
 # =====================================================================
-#  PROGRAMME : DÉCOLLAGE DE STATION
+#  PROGRAMME : DÉCOLLAGE (station ou surface d'une planète)
+#  Amarré (station, avant-poste, port planétaire) -> menu d'amarrage.
+#  Posé sur une planète sans être amarré -> poussée verticale.
 # =====================================================================
 async def _decollage(dire, poli=False):
     if etat_connu():
         if not drapeau("vaisseau"):
             return await refuser(dire, "refus_hors_vaisseau", "Décollage : impossible hors du vaisseau")
+        if drapeau("pose") and not drapeau("amarre"):
+            return await _decollage_planete(dire, poli)
         if not drapeau("amarre"):
-            return await refuser(dire, "refus_pas_amarre", "Décollage : le vaisseau n'est pas amarré")
+            return await refuser(dire, "refus_pas_amarre",
+                                 "Décollage : le vaisseau n'est ni amarré ni posé")
+    return await _decollage_station(dire, poli)
+
+
+async def _decollage_planete(dire, poli=False):
+    if not await touche_prete(dire, "poussee_haut", "Décollage de la planète"):
+        return
+    if not await preparer_jeu(dire):
+        return
+    await confirmer(dire, "decollage", poli)
+    corps = logs.ETAT["status"].get("corps") or "la surface"
+    await logs.annoncer(f"Décollage de {corps}…")
+    if not await fermer_panneaux():
+        return await refuser(dire, "macro_echec", "Décollage : un menu reste ouvert, ferme-le et réessaie")
+
+    # Poussée verticale par impulsions, jusqu'à ce que le jeu ne dise plus « posé »
+    fin = time.monotonic() + macros.DECOLLAGE_PLANETE_MAX
+    while drapeau("pose") and time.monotonic() < fin:
+        if not await appuyer("poussee_haut", duree=0.5):
+            return
+    if drapeau("pose"):
+        return await refuser(dire, "macro_echec",
+                             "Décollage : le vaisseau ne quitte pas le sol (touche « "
+                             f"{macros.nom_touche('poussee_haut')} » ?)")
+
+    # Un peu de hauteur avant de rentrer le train, pour ne pas retoucher le sol
+    await appuyer("poussee_haut", duree=macros.DECOLLAGE_PLANETE_MONTEE)
+    if drapeau("train"):
+        await appuyer("train")
+        await attendre(lambda: not drapeau("train"), 2)
+    altitude = logs.ETAT["status"].get("altitude")
+    hauteur = f" ({int(altitude)} m)" if isinstance(altitude, (int, float)) else ""
+    await logs.annoncer(f"Décollé de {corps}{hauteur}, train rentré : à toi les commandes", "succes")
+    await dire("decollage_a_vous")
+
+
+async def _decollage_station(dire, poli=False):
     if not await preparer_jeu(dire):
         return
     await confirmer(dire, "decollage", poli)
@@ -800,6 +870,181 @@ async def _autopilote_station(dire, poli=False):
     await _apontage(dire, annonce=False)
 
 
+# =====================================================================
+#  PROGRAMME : VOYAGE AUTOMATIQUE LE LONG DE LA ROUTE (sauts FSD)
+#  À chaque arrivée : piquer de ~90° pour ne plus viser l'étoile, avancer,
+#  relancer le FSD, puis cabrer d'autant pour revenir dans l'axe d'arrivée.
+# =====================================================================
+def _route_active():
+    """True si une route est tracée et qu'on n'en est pas encore au bout."""
+    etapes = logs.ETAT["route"]["etapes"]
+    return bool(etapes) and logs.ETAT["position"]["systeme"] != etapes[-1]["systeme"]
+
+
+def _sauts_restants():
+    route = logs.ETAT["route"]
+    if route["etapes"] and route.get("indice_actuel") is not None:
+        return len(route["etapes"]) - 1 - route["indice_actuel"]
+    return (route.get("prochain") or {}).get("sauts_restants")
+
+
+def _part_carburant():
+    carburant = logs.ETAT["status"].get("carburant")
+    maxi = logs.ETAT["vaisseau"].get("carburant_max")
+    return carburant / maxi if carburant is not None and maxi else None
+
+
+async def _autopilote(dire, poli=False):
+    """« Autopilote » : suit la route si elle mène à un autre système, sinon va à la station."""
+    if _route_active():
+        return await _voyage(dire, poli)
+    return await _autopilote_station(dire, poli)
+
+
+async def _gaz_croisiere():
+    """Gaz dans la zone bleue : c'est là que le vaisseau tourne le mieux en supercroisière."""
+    for touche in ("vitesse_75", "vitesse_max"):
+        if macros.touche_connue(touche):
+            return await appuyer(touche)
+
+
+async def _voyage_interrompu(dire):
+    await logs.annoncer("Voyage : interdiction ! Programme arrêté, à toi les commandes", "alerte")
+    await dire("autopilote_danger", "refus")
+
+
+async def _voyage(dire, poli=False):
+    if etat_connu():
+        if not drapeau("vaisseau"):
+            return await refuser(dire, "refus_hors_vaisseau", "Voyage : impossible hors du vaisseau")
+        if drapeau("amarre") or drapeau("pose"):
+            return await refuser(dire, "refus_amarre", "Voyage : décolle d'abord")
+    if not _route_active():
+        return await refuser(dire, "refus_pas_de_destination",
+                             "Voyage : aucune route. Trace-la dans la carte de la galaxie, "
+                             "puis redemande")
+    for touche, nom in (("saut", "FSD"), ("tangage_bas", "piquer"), ("tangage_haut", "cabrer")):
+        if not await touche_prete(dire, touche, f"Voyage ({nom})"):
+            return
+    if not await preparer_jeu(dire):
+        return
+    await confirmer(dire, "autopilote_route", poli)
+    if not await fermer_panneaux():
+        return await refuser(dire, "macro_echec", "Voyage : un menu reste ouvert, ferme-le et réessaie")
+    destination = logs.ETAT["route"]["etapes"][-1]["systeme"]
+    restants = _sauts_restants()
+    await logs.annoncer(f"Voyage : cap sur {destination}"
+                        + (f" ({restants} saut{'s' if restants > 1 else ''})" if restants else ""))
+
+    if drapeau("armes") and macros.touche_connue("armement"):
+        await appuyer("armement")            # le FSD ne charge pas armes sorties
+    if drapeau("train"):
+        await appuyer("train")
+    if drapeau("ecope"):
+        await appuyer("soute")
+
+    evenements = []
+    arreter_ecoute = logs.ecouter_evenements(
+        lambda e: evenements.append(e) if e.get("event") in ("StartJump", "FSDJump") else None)
+    try:
+        # En supercroisière, le vaisseau vient sans doute d'arriver face à l'étoile
+        face_etoile = drapeau("supercroisiere")
+        while _route_active():
+            part = _part_carburant()
+            if part is not None and part < macros.VOYAGE_CARBURANT_MIN:
+                await logs.annoncer(f"Voyage arrêté : carburant à {part:.0%}. Ravitaille-toi "
+                                    "(écope sur une étoile KGBFOAM), puis relance", "alerte")
+                return await dire("refus_carburant_voyage", "alerte_carburant")
+            evenements.clear()
+            if not await _un_saut(dire, face_etoile, evenements):
+                return
+            face_etoile = True
+    finally:
+        arreter_ecoute()
+
+    # Arrivée : on ne laisse pas le vaisseau filer droit sur l'étoile
+    await _gaz_croisiere()
+    await appuyer("tangage_bas", duree=macros.VOYAGE_DUREE_TANGAGE)
+    await logs.annoncer(f"Voyage terminé : bienvenue dans {destination}. À toi les commandes",
+                        "succes")
+    await dire("voyage_arrivee", "affirmation")
+
+
+async def _un_saut(dire, face_etoile, evenements):
+    """Un saut de la route. Renvoie True une fois arrivé dans le système suivant."""
+    def parti():
+        return drapeau("saut") or any(
+            e["event"] == "FSDJump" or e.get("JumpType") == "Hyperspace" for e in evenements)
+
+    # 1. S'écarter de l'étoile : piquer, puis avancer
+    if face_etoile:
+        await logs.annoncer("Voyage : dégagement de l'étoile")
+        await _gaz_croisiere()
+        if not await appuyer("tangage_bas", duree=macros.VOYAGE_DUREE_TANGAGE):
+            return False
+        fin = time.monotonic() + macros.VOYAGE_DUREE_AVANCE
+        while time.monotonic() < fin:
+            if drapeau("interdiction"):
+                await _voyage_interrompu(dire)
+                return False
+            await asyncio.sleep(0.5)
+
+    # 2. Relancer le FSD (il charge pendant qu'on se réaligne)
+    if drapeau("masse"):
+        await logs.annoncer("Voyage : masse verrouillée, éloigne-toi de l'objet massif", "attention")
+        if not await attendre(lambda: not drapeau("masse"), 120):
+            await refuser(dire, "refus_masse", "Voyage : toujours en masse verrouillée")
+            return False
+    await attendre(lambda: not drapeau("fsd_refroid"), 60)
+    await appuyer("saut")
+    if not await attendre(lambda: drapeau("fsd_charge") or parti(), 3):
+        await logs.annoncer(sans_reaction("Voyage : FSD", "saut"), "alerte")
+        await dire("macro_echec", "refus")
+        return False
+    debut_charge = time.monotonic()
+
+    # 3. Cabrer d'autant qu'on a piqué : retour dans l'axe d'arrivée, vers le système suivant
+    if face_etoile and not await appuyer("tangage_haut", duree=macros.VOYAGE_DUREE_TANGAGE):
+        return False
+
+    # 4. Le saut part tout seul une fois chargé et aligné
+    reste = macros.VOYAGE_ATTENTE_ALIGNEMENT - (time.monotonic() - debut_charge)
+    if not await attendre(parti, max(reste, 1)):
+        await logs.annoncer("Voyage : aligne-toi sur la cible (point plein au centre de la "
+                            "boussole), le saut partira tout seul", "attention")
+        await dire("voyage_alignement")
+        fin, sans_charge = time.monotonic() + 300, None
+        while not parti() and time.monotonic() < fin:
+            if drapeau("interdiction"):
+                await _voyage_interrompu(dire)
+                return False
+            # Charge annulée (cible masquée, trop long...) : on relance, sans jamais
+            # appuyer pendant une charge (un 2e appui l'annulerait).
+            if drapeau("fsd_charge") or drapeau("fsd_refroid"):
+                sans_charge = None
+            elif sans_charge is None:
+                sans_charge = time.monotonic()
+            elif time.monotonic() - sans_charge > 5:
+                await appuyer("saut")
+                sans_charge = None
+            await asyncio.sleep(0.25)
+        if not parti():
+            await refuser(dire, "macro_echec", "Voyage : pas de saut après 5 minutes, programme arrêté")
+            return False
+
+    # 5. Arrivée dans le système suivant
+    if not await attendre(lambda: any(e["event"] == "FSDJump" for e in evenements), 120):
+        await refuser(dire, "macro_echec", "Voyage : arrivée dans le système suivant non détectée")
+        return False
+    await attendre(lambda: drapeau("supercroisiere") and not drapeau("saut"), 15)
+    await asyncio.sleep(2)                  # le jeu rend les commandes peu après l'arrivée
+    restants = _sauts_restants()
+    if restants:
+        await logs.annoncer(f"Voyage : {logs.ETAT['position']['systeme']} — encore {restants} "
+                            f"saut{'s' if restants > 1 else ''}")
+    return True
+
+
 async def _services(dire, poli=False):
     if etat_connu() and not drapeau("amarre"):
         return await refuser(dire, "refus_pas_amarre", "Services : il faut être amarré à une station")
@@ -936,7 +1181,8 @@ PROGRAMMES = {
     "decollage": ("Décollage", _decollage),
     "apontage": ("Apontage", _apontage),
     "fuite": ("Fuite", _fuite),
-    "autopilote_station": ("Autopilote station", _autopilote_station),
+    "autopilote_station": ("Autopilote", _autopilote),
+    "autopilote_route": ("Voyage automatique", _voyage),
     "services": ("Services de la station", _services),
 }
 
@@ -946,4 +1192,5 @@ SPECIALES = {
     "chasseur": _chasseur,
     "drone": _drone,
     "reactions": _basculer_reactions,
+    "interface": _ouvrir_interface,
 }

@@ -26,6 +26,11 @@ def definir_instantane(fonction):
     _instantane = fonction
 
 
+def interfaces_ouvertes() -> int:
+    """Nombre d'interfaces web connectées en ce moment."""
+    return len(_clients)
+
+
 async def envoyer_donnees_web(donnees: dict):
     """Diffuse un message JSON à toutes les interfaces ouvertes (ne fait rien s'il n'y en a pas)."""
     if not _clients:

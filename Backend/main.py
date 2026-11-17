@@ -22,6 +22,7 @@ from module.cerveau import obtenir_chemin_audio
 from module.lecteur_logs import surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
 from module.voix import generer_et_jouer_voix
 from module.serveur_ws import demarrer_serveur_web
+from module.comprehension import trouver_action, contient_reveil, est_reveil_seul, vocabulaire_pour_whisper
 
 # --- CONFIGURATION AUTOMATIQUE DES PATHS NVIDIA POUR LE VENV ---
 venv_site_packages = next((p for p in sys.path if 'site-packages' in p), None)
@@ -61,17 +62,8 @@ def separer_politesse(texte):
 
 
 def detecter_action(texte_entendu):
-    """Trouve l'action dont le mot-clé reconnu est le plus précis (le plus long).
-    Ex. « réarme » (ravitaillement) l'emporte sur « arme » (énergie aux armes)."""
-    meilleure, longueur = None, 0
-    for cle_action, donnees in barks.items():
-        if cle_action in CLES_IGNOREES or not isinstance(donnees, dict):
-            continue
-        for mot_cle in donnees.get("mots_cles", []):
-            mot_cle = mot_cle.lower()
-            if mot_cle and mot_cle in texte_entendu and len(mot_cle) > longueur:
-                meilleure, longueur = cle_action, len(mot_cle)
-    return meilleure
+    """Trouve l'action demandée (correspondance exacte, puis approchée) : voir module/comprehension.py."""
+    return trouver_action(texte_entendu, barks, CLES_IGNOREES)
 
 # --- CHARGEMENT DES RÉPLIQUES ET PARAMÈTRES (BARKS) ---
 chemin_barks = "D:/Assistance-COVAS/Backend/data/barks.json" 
@@ -87,28 +79,47 @@ print("Chargement du modèle d'IA vocal local...")
 modele_vocal = WhisperModel(chemin_vers_fichiers, device="cuda", compute_type="float16")
 
 
+PROMPT_WHISPER = vocabulaire_pour_whisper(barks)
+
+# Le micro est calibré UNE fois au démarrage (puis le seuil s'adapte tout seul) :
+# recalibrer avant chaque phrase mangeait le début de la commande.
+reconnaisseur = sr.Recognizer()
+reconnaisseur.dynamic_energy_threshold = True
+reconnaisseur.pause_threshold = 0.7         # silence (s) qui marque la fin de la phrase
+reconnaisseur.non_speaking_duration = 0.4
+with sr.Microphone() as _source:
+    print("Calibrage du micro (silence, s'il vous plaît)...")
+    reconnaisseur.adjust_for_ambient_noise(_source, duration=1.0)
+
+
 def ecouter(silencieux=False):
     """Capte le son du micro et le transcrit localement avec Whisper"""
-    r = sr.Recognizer()
     with sr.Microphone() as source:
         if not silencieux:
             print("Écoute...")
-        r.adjust_for_ambient_noise(source, duration=0.3)
         try:
-            audio = r.listen(source, timeout=3, phrase_time_limit=7)
-            chemin_wav = "D:/Assistance-COVAS/Backend/data/temp.wav"
-            with open(chemin_wav, "wb") as f:
-                f.write(audio.get_wav_data())
-            
-            prompt_contexte = "COVAS, Elite Dangerous, pips, moteurs, boucliers, soute, train d'atterrissage."
-            
+            audio = reconnaisseur.listen(source, timeout=3, phrase_time_limit=7)
+            # Directement en mémoire, au format attendu par Whisper (16 kHz, mono, float32)
+            brut = audio.get_raw_data(convert_rate=16000, convert_width=2)
+            echantillons = np.frombuffer(brut, dtype=np.int16).astype(np.float32) / 32768.0
+
             segments, info = modele_vocal.transcribe(
-                chemin_wav, 
-                beam_size=3, 
-                language="fr", 
-                initial_prompt=prompt_contexte
+                echantillons,
+                language="fr",
+                beam_size=5,
+                temperature=0.0,
+                initial_prompt=PROMPT_WHISPER,
+                condition_on_previous_text=False,
+                without_timestamps=True,
+                no_speech_threshold=0.6,
+                # Ne transcrit que les passages où quelqu'un parle vraiment : évite que
+                # Whisper « invente » une phrase (voire une commande) sur un bruit.
+                vad_filter=True,
+                vad_parameters={"min_silence_duration_ms": 500, "speech_pad_ms": 300},
             )
-            texte = "".join([segment.text for segment in segments]).strip()
+            texte = "".join(s.text for s in segments if s.no_speech_prob < 0.6).strip()
+            if texte and not silencieux:
+                print(f"[Whisper] {texte}")
             return texte
         except sr.WaitTimeoutError:
             pass
@@ -192,17 +203,14 @@ class CovasBackend:
             if text:
                 text_min = text.lower()
                 
-                reveil_detecte = any(mot in text_min for mot in MOTS_REVEIL)
-                if not reveil_detecte:
+                if not contient_reveil(text_min, MOTS_REVEIL):
                     continue
 
                 print(f">>>> Mot de réveil détecté dans : {text}")
 
                 polite = False
 
-                texte_epure = text_min.replace(",", "").replace(".", "").replace("!", "").replace("?", "").strip()
-                
-                if texte_epure in MOTS_REVEIL:
+                if est_reveil_seul(text_min, MOTS_REVEIL):
                     print("Activation vocale. En attente de la commande...")
                     
                     chemin_reveil = await obtenir_chemin_audio("mots_reveil")

@@ -34,6 +34,9 @@ TOUCHES = {
     "vitesse_zero": "x",
     "vitesse_75": None,
     "vitesse_max": None,
+    "poussee_haut": "r",
+    "tangage_haut": None,
+    "tangage_bas": None,
     # Répartition d'énergie (pips)
     "pips_sys": "left",
     "pips_moteurs": "up",
@@ -110,6 +113,23 @@ SEQUENCE_DECOLLAGE = ["ui_haut"] * 4 + ["ui_bas"] * 2 + ["ui_selection"]
 # système à l'autre : tant que la liste est vide, le COVAS te demande de l'activer
 # toi-même. Exemple à essayer : ["ec_nav", "ui_selection", "ui_bas", "ui_selection", "ec_nav"]
 SEQUENCE_ASSISTANCE_SC = []
+
+# Décollage d'une planète : durée max. de poussée verticale pour quitter le sol, puis
+# durée de montée supplémentaire avant de rentrer le train (secondes).
+DECOLLAGE_PLANETE_MAX = 15
+DECOLLAGE_PLANETE_MONTEE = 2.5
+
+# --- VOYAGE AUTOMATIQUE (route tracée dans la carte de la galaxie) ----------
+# À chaque arrivée, le vaisseau fait face à l'étoile. Le COVAS pique du nez d'environ
+# 90°, avance pour s'écarter de l'étoile, relance le FSD, puis cabre exactement autant
+# pour revenir face à la direction d'arrivée (là où se trouve en général le système
+# suivant). Le retour est symétrique : même si la durée ne fait pas pile 90°, le nez
+# revient dans l'axe d'arrivée.
+VOYAGE_DUREE_TANGAGE = 4.0      # secondes de tangage pour ~90° (vaisseau lourd : augmenter)
+VOYAGE_DUREE_AVANCE = 30        # secondes de vol pour s'écarter de l'étoile
+VOYAGE_ATTENTE_ALIGNEMENT = 40  # secondes après l'appui sur le FSD (la charge en prend ~20) :
+                                # sans saut d'ici là, le COVAS te demande de t'aligner
+VOYAGE_CARBURANT_MIN = 0.25     # sous cette part du réservoir, le voyage s'arrête
 
 # Sortir le train tout seul dès que la station autorise l'apontage
 TRAIN_AUTO_APONTAGE = True

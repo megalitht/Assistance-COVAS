@@ -50,6 +50,9 @@ COMMANDES_JEU = {
     "vitesse_zero": ("SetSpeedZero", "Régler la vitesse à 0 %"),
     "vitesse_75": ("SetSpeed75", "Régler la vitesse à 75 %"),
     "vitesse_max": ("SetSpeed100", "Régler la vitesse à 100 %"),
+    "poussee_haut": ("UpThrustButton", "Poussée verticale vers le haut"),
+    "tangage_haut": ("PitchUpButton", "Tangage : cabrer (nez vers le haut)"),
+    "tangage_bas": ("PitchDownButton", "Tangage : piquer (nez vers le bas)"),
     # Énergie
     "pips_sys": ("IncreaseSystemsPower", "Énergie vers les systèmes"),
     "pips_moteurs": ("IncreaseEnginesPower", "Énergie vers les moteurs"),
@@ -117,7 +120,7 @@ _SPECIALES = {
 _AZERTY = {"a": "q", "q": "a", "z": "w", "w": "z", "m": ";", ",": "m", ";": ",", ":": ".", "!": "/"}
 
 ETAT = {"fichier": None, "disposition": None, "azerty": False, "lues": {}, "manquantes": {},
-        "assignees": {}}
+        "assignees": {}, "ecrit_jeu_lance": False}
 
 
 def dossier_binds():
@@ -126,28 +129,89 @@ def dossier_binds():
         "Options", "Bindings")
 
 
-def trouver_fichier():
-    """Le fichier .binds du profil choisi dans le jeu (sinon le plus récent)."""
-    dossier = dossier_binds()
-    fichiers = glob.glob(os.path.join(dossier, "*.binds"))
-    if not fichiers:
-        return None
-    profils = []
-    for nom in ("StartPreset.4.start", "StartPreset.start"):
+_FICHIERS_START = ("StartPreset.4.start", "StartPreset.start")
+
+
+def lire_profils():
+    """(fichier StartPreset, [profils]) : depuis Odyssey, 4 lignes (général, vaisseau,
+    VRS, à pied). Un profil sans fichier .binds ici est un profil intégré au jeu."""
+    for nom in _FICHIERS_START:
+        chemin = os.path.join(dossier_binds(), nom)
         try:
-            with open(os.path.join(dossier, nom), "r", encoding="utf-8") as f:
-                profils = [ligne.strip() for ligne in f if ligne.strip()]
-            break
+            with open(chemin, "r", encoding="utf-8-sig") as f:
+                return chemin, [ligne.strip() for ligne in f if ligne.strip()]
         except OSError:
             continue
-    # Depuis Odyssey : 4 lignes (général, vaisseau, VRS, à pied) ; on veut le vaisseau.
-    profil = profils[1] if len(profils) > 1 else (profils[0] if profils else None)
-    if profil:
-        du_profil = [f for f in fichiers
-                     if os.path.basename(f).lower().startswith(profil.lower() + ".")]
-        if du_profil:
-            fichiers = du_profil
+    return None, []
+
+
+def _profil_vaisseau(profils):
+    return profils[1] if len(profils) > 1 else (profils[0] if profils else None)
+
+
+def _fichier_du_profil(profil, fichiers):
+    return [f for f in fichiers if os.path.basename(f).lower().startswith(profil.lower() + ".")]
+
+
+def trouver_fichier():
+    """Le fichier .binds du profil choisi dans le jeu (sinon le plus récent)."""
+    fichiers = glob.glob(os.path.join(dossier_binds(), "*.binds"))
+    if not fichiers:
+        return None
+    profil = _profil_vaisseau(lire_profils()[1])
+    if profil and _fichier_du_profil(profil, fichiers):
+        fichiers = _fichier_du_profil(profil, fichiers)
     return max(fichiers, key=os.path.getmtime)
+
+
+def profil_integre():
+    """Nom du profil intégré au jeu utilisé pour le vaisseau, ou None si c'est un fichier
+    personnalisé. Dans ce cas, le jeu ne lit pas les touches écrites par le COVAS."""
+    profil = _profil_vaisseau(lire_profils()[1])
+    fichiers = glob.glob(os.path.join(dossier_binds(), "*.binds"))
+    if profil and not _fichier_du_profil(profil, fichiers):
+        return profil
+    return None
+
+
+def utiliser_profil_perso():
+    """Fait utiliser au jeu le fichier personnalisé (celui où le COVAS écrit) pour toutes
+    les catégories. À faire jeu fermé : le jeu réécrit ce fichier en quittant.
+    Renvoie un message d'explication."""
+    if _jeu_lance():
+        return "Ferme d'abord Elite Dangerous (il réécrit ses réglages en quittant)."
+    chemin, profils = lire_profils()
+    fichier = trouver_fichier()
+    if not chemin or not fichier:
+        return "Fichier StartPreset ou .binds introuvable."
+    perso = os.path.basename(fichier).split(".")[0]
+    if profils and all(p == perso for p in profils):
+        return f"Le jeu utilise déjà « {perso} » partout."
+    shutil.copy2(chemin, f"{chemin}.avant-covas-{time.strftime('%Y%m%d-%H%M%S')}.bak")
+    with open(chemin, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join([perso] * max(len(profils), 1)) + "\n")
+    return (f"Profils {' / '.join(profils)} remplacés par « {perso} » partout "
+            f"(sauvegarde faite). Lance le jeu et vérifie tes commandes.")
+
+
+def pourquoi_sans_effet(nom):
+    """Explication probable quand le jeu ne réagit pas à une touche virtuelle, sinon None."""
+    if not est_virtuelle(nom):
+        return None
+    integre = profil_integre()
+    if integre:
+        return (f"le vaisseau utilise le profil intégré « {integre} », qui ne contient pas les "
+                "touches virtuelles : jeu fermé, lance « python module/touches.py --profil-perso »")
+    if ETAT["ecrit_jeu_lance"]:
+        return "touche virtuelle ajoutée pendant que le jeu tournait : redémarre le jeu"
+    return None
+
+
+def est_virtuelle(nom):
+    """True si la touche de cette commande est une touche virtuelle (F13 à F24)."""
+    touche = ETAT["lues"].get(nom)
+    return bool(touche) and any(t in _VIRTUELLES + _MODIFICATEURS_VIRTUELS
+                                for t in [touche[0]] + list(touche[1]))
 
 
 def _convertir(nom_jeu, azerty):
@@ -312,6 +376,7 @@ def _assigner_virtuelles(fichier, racine, sauf):
         ETAT["manquantes"].pop(nom, None)
         print(f"[Touches] {libelle(nom)} -> touche virtuelle {' + '.join(mods + [touche]).upper()}")
     if _jeu_lance():
+        ETAT["ecrit_jeu_lance"] = True
         print("[Touches] Le jeu est lancé : redémarre-le pour qu'il charge les nouvelles touches "
               "(sinon il risque aussi de les effacer en enregistrant ses options).")
 
@@ -348,6 +413,12 @@ def charger(assigner=False, sauf=()):
           f"(clavier {'AZERTY' if azerty else 'QWERTY'}).")
     if assigner and ASSIGNER_TOUCHES_VIRTUELLES and ETAT["manquantes"]:
         _assigner_virtuelles(fichier, racine, set(sauf))
+    integre = profil_integre()
+    if integre and any(est_virtuelle(n) for n in ETAT["lues"]):
+        print(f"[Touches] ATTENTION : pour le vaisseau, le jeu utilise son profil intégré "
+              f"« {integre} », pas {os.path.basename(fichier)} : il ne voit pas les touches "
+              "virtuelles (F13-F24). Jeu fermé, lance   python module/touches.py --profil-perso"
+              "   ou choisis le profil « Custom » dans Options > Commandes.")
     return dict(ETAT["lues"])
 
 
@@ -358,7 +429,11 @@ def libelle(nom):
 
 if __name__ == "__main__":
     import sys
+    if "--profil-perso" in sys.argv:
+        print(utiliser_profil_perso())
+        sys.exit()
     charger(assigner="--assigner" in sys.argv)
+    print(f"\nProfils du jeu (général, vaisseau, VRS, à pied) : {' / '.join(lire_profils()[1])}")
     print(f"\nFichier : {ETAT['fichier']}\nDisposition : {ETAT['disposition']}\n")
     for nom, (touche, modificateurs) in sorted(ETAT["lues"].items()):
         print(f"  {nom:24} {' + '.join(modificateurs + [touche])}")

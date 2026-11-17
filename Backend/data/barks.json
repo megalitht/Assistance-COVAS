@@ -732,6 +732,8 @@
             "décolle",
             "décoller",
             "quitte la station",
+            "quitte la planète",
+            "quitte la surface",
             "on décolle",
             "largue les amarres"
         ],
@@ -798,11 +800,31 @@
             "data/son/Station/Services.wav"
         ]
     },
+    "interface": {
+        "mots_cles": [
+            "ouvre le panel",
+            "ouvre le pannel",
+            "ouvre le panelle",
+            "ouvrir le panel",
+            "affiche le panel",
+            "ouvre l'interface",
+            "ouvre le site",
+            "ouvre l'affichage",
+            "ouvre le tableau de bord"
+        ],
+        "reponses": [
+            "data/son/Affirmation/BienCommandant.wav",
+            "data/son/Affirmation/ToutSuite.wav"
+        ]
+    },
     "autopilote_station": {
         "mots_cles": [
             "autopilote",
-            "pilote automatique",
             "auto pilote",
+            "pilote automatique",
+            "pilotage automatique",
+            "pilote auto",
+            "pilotage auto",
             "emmène-moi à la station",
             "emmène moi à la station",
             "amène-nous à la station",
@@ -811,6 +833,39 @@
         "reponses": [
             "data/son/Autopilote/Station2.wav",
             "data/son/Autopilote/Station1.wav"
+        ]
+    },
+    "autopilote_route": {
+        "mots_cles": [
+            "suis la route",
+            "suit la route",
+            "suivre la route",
+            "voyage automatique",
+            "enchaîne les sauts",
+            "enchaine les sauts",
+            "emmène-moi à destination",
+            "emmène moi à destination"
+        ],
+        "reponses": [
+            "data/son/Autopilote/Route1.wav"
+        ]
+    },
+    "voyage_alignement": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Autopilote/Alignement.wav"
+        ]
+    },
+    "voyage_arrivee": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Autopilote/Arrivee.wav"
+        ]
+    },
+    "refus_carburant_voyage": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Refus/CarburantVoyage.wav"
         ]
     },
     "autopilote_assistance": {
