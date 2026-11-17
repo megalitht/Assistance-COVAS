@@ -10,8 +10,9 @@ touche clavier dans le jeu (ex. la vision nocturne, qui n'en a pas par défaut),
 le COVAS te le dit et te donne le nom du réglage à remplir dans Options > Commandes.
 
 TOUCHES VIRTUELLES : si une commande n'a aucune touche clavier, le COVAS lui en donne
-une tout seul, prise parmi F13 à F24. Ces touches existent pour Windows et pour le jeu,
-mais pas sur un clavier normal : tu ne peux pas les déclencher par erreur. Elles sont
+une tout seul, prise parmi F13 à F20 (seules ou avec Maj droite / Ctrl gauche). Ces
+touches existent pour Windows et pour le jeu, mais pas sur un clavier normal : tu ne
+peux pas les déclencher par erreur. Elles sont
 écrites dans le fichier .binds (une sauvegarde « .bak » est faite avant) et le jeu les
 prend en compte à son prochain lancement. Une manette ou une souris déjà assignée
 reste en place : la touche virtuelle va dans l'emplacement libre.
@@ -31,12 +32,15 @@ import xml.etree.ElementTree as ET
 # À changer seulement si les touches lues sont décalées (A/Q, Z/W, M inversés).
 CLAVIER = "auto"
 
-# Donner une touche virtuelle (F13 à F24) aux commandes qui n'ont pas de touche clavier
+# Donner une touche virtuelle (F13 à F20) aux commandes qui n'ont pas de touche clavier
 ASSIGNER_TOUCHES_VIRTUELLES = True
 
-# Touches virtuelles : d'abord seules, puis combinées avec F23 ou F24 (30 combinaisons)
-_VIRTUELLES = [f"f{n}" for n in range(13, 23)]
-_MODIFICATEURS_VIRTUELS = ["f23", "f24"]
+# Touches virtuelles (noms du jeu). Elite ne connaît que F13 à F20 : il efface F21 à F24
+# en réécrivant ses réglages. Ordre : F13…F20 seules, puis Maj droite + F13…F20, puis
+# Ctrl gauche + F13…F20 (24 combinaisons). Ctrl droit est évité : pydirectinput l'envoie mal.
+_VIRTUELLES = [f"Key_F{n}" for n in range(13, 21)]
+_MODIFICATEURS_VIRTUELS = ["Key_RightShift", "Key_LeftControl"]
+_INCONNUES_DU_JEU = {f"Key_F{n}" for n in range(21, 25)}
 
 # nom utilisé par le COVAS -> (nom de la commande dans le fichier .binds, libellé pour toi)
 COMMANDES_JEU = {
@@ -118,6 +122,21 @@ _SPECIALES = {
 # Clavier AZERTY : le jeu nomme la touche d'après la lettre imprimée dessus, alors que
 # pydirectinput vise un emplacement physique (celui d'un clavier américain).
 _AZERTY = {"a": "q", "q": "a", "z": "w", "w": "z", "m": ";", ",": "m", ";": ",", ":": ".", "!": "/"}
+
+# Clavier AZERTY : le jeu nomme parfois une touche par son caractère, avec ou sans Maj
+# (« 1 » ou « & », « ? » ou « , »…). On renvoie la touche du même emplacement physique.
+_AZERTY_CARACTERES = {}
+for _touche_us, _caracteres in {
+        "`": "² squared", "1": "& 1 ampersand", "2": "é 2 e_acute eacute",
+        "3": "\" 3 quotedbl doublequote", "4": "' 4", "5": "( 5 leftparenthesis",
+        "6": "6", "7": "è 7 e_grave egrave", "8": "_ 8 underline underscore",
+        "9": "ç 9 c_cedilla ccedilla", "0": "à 0 a_grave agrave",
+        "-": ") ° ring degree rightparenthesis", "=": "= + plus",
+        "[": "^ ¨ umlaut circumflex", "]": "$ £ dollar pound",
+        "'": "ù % u_grave ugrave percent", "\\": "* µ asterisk mu",
+        "m": ", ?", ",": "; .", ".": ": /", "/": "! § section exclamation"}.items():
+    for _c in _caracteres.split():
+        _AZERTY_CARACTERES[_c] = _touche_us
 
 ETAT = {"fichier": None, "disposition": None, "azerty": False, "lues": {}, "manquantes": {},
         "assignees": {}, "ecrit_jeu_lance": False}
@@ -210,8 +229,7 @@ def pourquoi_sans_effet(nom):
 def est_virtuelle(nom):
     """True si la touche de cette commande est une touche virtuelle (F13 à F24)."""
     touche = ETAT["lues"].get(nom)
-    return bool(touche) and any(t in _VIRTUELLES + _MODIFICATEURS_VIRTUELS
-                                for t in [touche[0]] + list(touche[1]))
+    return bool(touche) and touche[0] in {f"f{n}" for n in range(13, 25)}
 
 
 def _convertir(nom_jeu, azerty):
@@ -219,6 +237,8 @@ def _convertir(nom_jeu, azerty):
     if not nom_jeu or not nom_jeu.startswith("Key_"):
         return None
     nom = nom_jeu[4:].lower()
+    if azerty and nom in _AZERTY_CARACTERES:
+        return _AZERTY_CARACTERES[nom]
     if nom.startswith("numpad_") and nom[7:].isdigit():
         return "numpad" + nom[7:]
     if nom in _SPECIALES:
@@ -273,33 +293,56 @@ def _detecter_azerty(racine, disposition):
     return (disposition or "").lower().startswith(("fr", "be"))
 
 
-def _combinaisons_prises(racine):
-    """Ce que le fichier utilise déjà au clavier : ({(touche, (modificateurs))}, {modificateurs})."""
-    prises, modificateurs = set(), set()
+def _emplacements_clavier(racine):
     for affectation in racine.iter():
-        if affectation.tag not in ("Primary", "Secondary") or affectation.get("Device") != "Keyboard":
-            continue
-        mods = tuple(sorted(m.get("Key") for m in affectation.findall("Modifier")))
-        prises.add((affectation.get("Key"), mods))
-        modificateurs.update(mods)
-    return prises, modificateurs
+        if affectation.tag in ("Primary", "Secondary") and affectation.get("Device") == "Keyboard":
+            yield affectation
+
+
+def _modificateurs(affectation):
+    return tuple(sorted(m.get("Key") for m in affectation.findall("Modifier")))
+
+
+def _vider(emplacement):
+    for enfant in list(emplacement):
+        emplacement.remove(enfant)
+    emplacement.text = None
+    emplacement.attrib.clear()
+    emplacement.set("Device", "{NoDevice}")
+    emplacement.set("Key", "")
+
+
+def _reparer(racine):
+    """Retire les touches virtuelles que le jeu ne connaît pas (F21-F24) et les doublons
+    de touches virtuelles (le jeu a pu retirer un modificateur et créer un conflit).
+    Renvoie le nombre d'emplacements vidés : le COVAS les réassigne ensuite."""
+    vus, vides = set(), 0
+    for affectation in list(_emplacements_clavier(racine)):
+        mods = _modificateurs(affectation)
+        cle = affectation.get("Key")
+        if cle in _INCONNUES_DU_JEU or _INCONNUES_DU_JEU & set(mods):
+            _vider(affectation)
+            vides += 1
+        elif cle in _VIRTUELLES:
+            if (cle, mods) in vus:
+                _vider(affectation)
+                vides += 1
+            vus.add((cle, mods))
+    return vides
 
 
 def _combinaisons_libres(racine):
-    """Touches virtuelles libres, dans l'ordre : F13…F22 seules, puis F23+…, puis F24+…"""
-    prises, modificateurs_pris = _combinaisons_prises(racine)
-    touches_prises = {touche for touche, _ in prises}
+    """Combinaisons virtuelles pas encore utilisées dans le fichier, dans l'ordre."""
+    prises, modificateurs_pris = set(), set()
+    for affectation in _emplacements_clavier(racine):
+        mods = _modificateurs(affectation)
+        prises.add((affectation.get("Key"), mods))
+        modificateurs_pris.update(mods)
     candidates = [(t, ()) for t in _VIRTUELLES]
-    for m in _MODIFICATEURS_VIRTUELS:
-        # un modificateur ne doit pas servir de touche seule ailleurs (et inversement)
-        if "Key_" + m.upper() not in touches_prises:
-            candidates += [(t, (m,)) for t in _VIRTUELLES]
+    candidates += [(t, (m,)) for m in _MODIFICATEURS_VIRTUELS for t in _VIRTUELLES]
     for touche, mods in candidates:
-        cle_jeu = "Key_" + touche.upper()
-        mods_jeu = tuple("Key_" + m.upper() for m in mods)
-        if cle_jeu in modificateurs_pris or (cle_jeu, mods_jeu) in prises:
-            continue
-        yield touche, mods
+        if touche not in modificateurs_pris and (touche, mods) not in prises:
+            yield touche, mods
 
 
 def _emplacement_libre(racine, commande):
@@ -338,8 +381,8 @@ def _jeu_lance():
     return bool(ctypes.windll.user32.FindWindowW("FrontierDevelopmentsAppWinClass", None))
 
 
-def _assigner_virtuelles(fichier, racine, sauf):
-    """Donne une touche virtuelle aux commandes sans touche clavier, et l'écrit dans le jeu."""
+def _assigner_virtuelles(racine, sauf):
+    """Donne une touche virtuelle aux commandes sans touche clavier (dans `racine`)."""
     libres = _combinaisons_libres(racine)
     for nom in [n for n in ETAT["manquantes"] if n not in sauf]:
         commande = COMMANDES_JEU[nom][0]
@@ -355,30 +398,34 @@ def _assigner_virtuelles(fichier, racine, sauf):
         touche, mods = combinaison
         emplacement.attrib.clear()
         emplacement.set("Device", "Keyboard")
-        emplacement.set("Key", "Key_" + touche.upper())
+        emplacement.set("Key", touche)
         for m in mods:
             emplacement.text = "\n\t\t\t"
-            ET.SubElement(emplacement, "Modifier", Device="Keyboard",
-                          Key="Key_" + m.upper()).tail = "\n\t\t"
-        ETAT["assignees"][nom] = (touche, list(mods))
+            ET.SubElement(emplacement, "Modifier", Device="Keyboard", Key=m).tail = "\n\t\t"
+        ETAT["assignees"][nom] = racine.find(commande)
 
-    if not ETAT["assignees"]:
-        return
+
+def _enregistrer(fichier, racine, vides):
+    """Écrit les réparations et les nouvelles touches virtuelles dans le fichier du jeu."""
     try:
         _ecrire(fichier, racine)
     except OSError as erreur:
         print(f"[Touches] Impossible d'écrire {os.path.basename(fichier)} ({erreur}) : "
               "touches virtuelles non enregistrées.")
-        ETAT["assignees"] = {}
-        return
-    for nom, (touche, mods) in ETAT["assignees"].items():
-        ETAT["lues"][nom] = (touche, mods)
+        return False
+    if vides:
+        print(f"[Touches] {vides} touche(s) virtuelle(s) abîmée(s) par le jeu retirée(s) "
+              "(F21-F24 ou doublon).")
+    for nom, element in ETAT["assignees"].items():
+        ETAT["lues"][nom] = _touche_clavier(element, ETAT["azerty"])
         ETAT["manquantes"].pop(nom, None)
+        touche, mods = ETAT["lues"][nom]
         print(f"[Touches] {libelle(nom)} -> touche virtuelle {' + '.join(mods + [touche]).upper()}")
     if _jeu_lance():
         ETAT["ecrit_jeu_lance"] = True
         print("[Touches] Le jeu est lancé : redémarre-le pour qu'il charge les nouvelles touches "
               "(sinon il risque aussi de les effacer en enregistrant ses options).")
+    return True
 
 
 def charger(assigner=False, sauf=()):
@@ -401,6 +448,7 @@ def charger(assigner=False, sauf=()):
     disposition = racine.findtext("KeyboardLayout")
     azerty = _detecter_azerty(racine, disposition)
     ETAT.update(fichier=fichier, disposition=disposition, azerty=azerty)
+    vides = _reparer(racine) if assigner and ASSIGNER_TOUCHES_VIRTUELLES else 0
 
     for nom, (commande, libelle) in COMMANDES_JEU.items():
         element = racine.find(commande)
@@ -411,13 +459,16 @@ def charger(assigner=False, sauf=()):
             ETAT["manquantes"][nom] = libelle
     print(f"[Touches] {len(ETAT['lues'])} touches lues dans {os.path.basename(fichier)} "
           f"(clavier {'AZERTY' if azerty else 'QWERTY'}).")
-    if assigner and ASSIGNER_TOUCHES_VIRTUELLES and ETAT["manquantes"]:
-        _assigner_virtuelles(fichier, racine, set(sauf))
+    if assigner and ASSIGNER_TOUCHES_VIRTUELLES:
+        if ETAT["manquantes"]:
+            _assigner_virtuelles(racine, set(sauf))
+        if (vides or ETAT["assignees"]) and not _enregistrer(fichier, racine, vides):
+            ETAT["assignees"] = {}
     integre = profil_integre()
     if integre and any(est_virtuelle(n) for n in ETAT["lues"]):
         print(f"[Touches] ATTENTION : pour le vaisseau, le jeu utilise son profil intégré "
               f"« {integre} », pas {os.path.basename(fichier)} : il ne voit pas les touches "
-              "virtuelles (F13-F24). Jeu fermé, lance   python module/touches.py --profil-perso"
+              "virtuelles (F13-F20). Jeu fermé, lance   python module/touches.py --profil-perso"
               "   ou choisis le profil « Custom » dans Options > Commandes.")
     return dict(ETAT["lues"])
 

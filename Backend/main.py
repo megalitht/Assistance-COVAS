@@ -74,7 +74,11 @@ with open(chemin_barks, "r", encoding="utf-8") as fichier:
 MOTS_REVEIL = barks["mots_reveil"]["mots_cles"]
 
 # --- INITIALISATION IA (WHISPER) ---
-chemin_vers_fichiers = "D:/Assistance-COVAS/Backend/module/modele_vocal_fr"
+# large-v3-turbo comprend bien mieux le français que l'ancien modèle « small » ;
+# l'ancien reste utilisé en secours si le dossier du nouveau est absent.
+chemin_vers_fichiers = "D:/Assistance-COVAS/Backend/module/modele_vocal_turbo"
+if not os.path.exists(os.path.join(chemin_vers_fichiers, "model.bin")):
+    chemin_vers_fichiers = "D:/Assistance-COVAS/Backend/module/modele_vocal_fr"
 print("Chargement du modèle d'IA vocal local...")
 modele_vocal = WhisperModel(chemin_vers_fichiers, device="cuda", compute_type="float16")
 
