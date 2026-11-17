@@ -25,6 +25,7 @@
 
         <div class="bandeau-droite">
             <div class="horloge"><b data-v="heure">--:--</b><small data-v="date"></small></div>
+            <button type="button" class="selecteur-mode" data-action="stop" title="Annule le programme en cours (décollage, apontage, fuite, autopilote...)">Stop</button>
             <button type="button" class="selecteur-mode" id="selecteur-mode" title="Changer de vue : automatique, combat forcé, navigation forcée">
                 Vue <b data-v="mode-choisi">auto</b>
             </button>
@@ -54,15 +55,14 @@
                     <div><dt>Corps scannés</dt><dd data-v="corps">—</dd></div>
                     <div id="ligne-surface" hidden><dt>Surface</dt><dd data-v="surface">—</dd></div>
                 </dl>
-                <div class="actions une-colonne" id="bloc-appontage">
-                    <button type="button" data-action="appontage">Demander l'appontage</button>
-                </div>
                 <div id="bloc-station" hidden>
                     <h3>Station <span data-v="station-nom"></span></h3>
                     <p class="sous-titre" data-v="station-detail"></p>
                     <ul class="pastilles" id="pastilles-services"></ul>
                     <div class="actions une-colonne">
                         <button type="button" data-action="ravitaillement">Ravitailler, réparer, réarmer</button>
+                        <button type="button" data-action="services">Services de la station</button>
+                        <button type="button" data-action="decollage">Décollage</button>
                     </div>
                 </div>
             </section>
@@ -100,6 +100,36 @@
             <section class="panneau">
                 <h2>Systèmes de vol</h2>
                 <ul class="voyants" data-voyants="vol"></ul>
+            </section>
+            <section class="panneau">
+                <h2>Commandes</h2>
+                <h3>Cockpit</h3>
+                <div class="actions">
+                    <button type="button" data-action="train_atterrissage">Train</button>
+                    <button type="button" data-action="soute">Écope de soute</button>
+                    <button type="button" data-action="phares">Phares</button>
+                    <button type="button" data-action="nvg">Vision nocturne</button>
+                    <button type="button" data-action="armement">Points d'emport</button>
+                    <button type="button" data-action="hud">Cockpit combat / analyse</button>
+                    <button type="button" data-action="silencieux">Mode silencieux</button>
+                    <button type="button" data-action="mode_croisiere">Pips croisière</button>
+                </div>
+                <h3>Vol</h3>
+                <div class="actions">
+                    <button type="button" data-action="vitesse_zero">Vitesse zéro</button>
+                    <button type="button" data-action="plein_gaz">Plein gaz</button>
+                    <button type="button" data-action="carte_galaxie">Carte de la galaxie</button>
+                    <button type="button" data-action="carte_systeme">Carte du système</button>
+                    <button type="button" data-action="apontage">Demander l'apontage</button>
+                    <button type="button" data-action="autopilote_station">Autopilote station</button>
+                </div>
+                <h3>Minage et automatismes</h3>
+                <div class="actions">
+                    <button type="button" data-action="drone|prospection">Drone de prospection</button>
+                    <button type="button" data-action="drone|collecte">Drone de collecte</button>
+                    <button type="button" data-action="reactions|active">Réactions auto : activer</button>
+                    <button type="button" data-action="reactions|coupe">Réactions auto : couper</button>
+                </div>
             </section>
         </div>
 
@@ -215,6 +245,23 @@
                     <button type="button" data-action="boost">Boost</button>
                     <button type="button" data-action="mode_combat">Pips combat</button>
                     <button type="button" data-action="fsd">Charger le FSD</button>
+                    <button type="button" data-action="fuite">Fuite</button>
+                    <button type="button" data-action="armement">Points d'emport</button>
+                    <button type="button" data-action="puce_thermique">Puce thermique</button>
+                    <button type="button" data-action="leurres">Leurres</button>
+                    <button type="button" data-action="cible_menace">Cibler la menace</button>
+                    <button type="button" data-action="cible_hostile">Hostile suivant</button>
+                    <button type="button" data-action="sous_systeme|generateur">Viser le générateur</button>
+                    <button type="button" data-action="sous_systeme|fsd">Viser le FSD</button>
+                </div>
+            </section>
+            <section class="panneau">
+                <h2>Chasseur</h2>
+                <div class="actions">
+                    <button type="button" data-action="chasseur|attaque">Attaquer ma cible</button>
+                    <button type="button" data-action="chasseur|defends">Défendre</button>
+                    <button type="button" data-action="chasseur|position">Tenir la position</button>
+                    <button type="button" data-action="chasseur|rappel">Rappel</button>
                 </div>
             </section>
         </div>

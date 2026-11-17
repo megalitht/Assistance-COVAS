@@ -17,7 +17,7 @@ import winsound
 
 
 # Importation de nos modules personnalisés situés dans le sous-dossier 'module'
-from module.actions import executer_commande
+from module.actions import executer_commande, surveiller_reactions
 from module.cerveau import obtenir_chemin_audio
 from module.lecteur_logs import surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
 from module.voix import generer_et_jouer_voix
@@ -40,6 +40,24 @@ if venv_site_packages:
 
 # Clés de barks.json qui ne sont pas des commandes
 CLES_IGNOREES = {"mots_reveil", "politesse"}
+
+
+# Formules de politesse : on les repère, puis on les retire de la phrase pour qu'elles
+# ne gênent jamais la reconnaissance de la commande (« active le FSD s'il te plaît »).
+FORMULES_POLITESSE = ("s'il te plaît", "s'il te plait", "s'il te plaîs", "s'il vous plaît",
+                      "s'il vous plait", "si il te plaît", "si te plaît", "steuplaît",
+                      "stp", "svp")
+
+
+def separer_politesse(texte):
+    """Renvoie (phrase sans la formule de politesse, True si le commandant a été poli)."""
+    texte = texte.replace("\u2019", "'").replace("`", "'")     # apostrophes de Whisper
+    poli = False
+    for formule in FORMULES_POLITESSE:
+        if formule in texte:
+            poli = True
+            texte = texte.replace(formule, " ")
+    return " ".join(texte.split()), poli
 
 
 def detecter_action(texte_entendu):
@@ -130,6 +148,8 @@ class CovasBackend:
         while True:
             commande = await self.action_queue.get()
             action, texte, poli = commande if isinstance(commande, tuple) else (commande, "", False)
+            if "|" in action:          # bouton de l'interface : "chasseur|rappel"
+                action, texte = action.split("|", 1)
             print(f"[Action] Demande d'exécution pour : {action}")
             try:
                 await executer_commande(action, texte, self.dire, poli)
@@ -164,6 +184,7 @@ class CovasBackend:
         self.lancer_tache(surveiller_logs(self.tts_queue, obtenir_chemin_audio), "journal")
         self.lancer_tache(surveiller_status_json(), "Status.json")
         self.lancer_tache(surveiller_fichiers_auxiliaires(), "fichiers auxiliaires")
+        self.lancer_tache(surveiller_reactions(self.dire), "réactions automatiques")
 
         while True:
             text = await asyncio.to_thread(ecouter, silencieux=True)
@@ -196,12 +217,16 @@ class CovasBackend:
                         continue
                     text_min = text.lower()
 
-                # On détecte la politesse dans la commande finale
-                if "s'il te pla" in text_min or "stp" in text_min or "s'il te plaîs" in text_min:
-                    polite = True
+                # La politesse est notée puis retirée : la commande est toujours exécutée
+                text_min, polite = separer_politesse(text_min)
 
                 action_detectee = detecter_action(text_min)
-                
+                print(f"[Écoute] « {text_min} » -> {action_detectee or 'aucune commande reconnue'}"
+                      f"{' (poli)' if polite else ''}")
+
+                if not action_detectee and polite:
+                    await self.dire("commande_incomprise")
+
                 if action_detectee:
                     await self.action_queue.put((action_detectee, text_min, polite))
                     # On attend la fin de la commande et de la réponse avant de réécouter le micro
