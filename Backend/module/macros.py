@@ -267,17 +267,13 @@ def jeu_au_premier_plan() -> bool:
     return bool(fenetre) and user32.GetForegroundWindow() == fenetre
 
 
-def focaliser_jeu() -> bool:
-    """Met la fenêtre d'Elite Dangerous au premier plan pour que les touches arrivent
-    bien au jeu (par exemple après un clic sur l'interface du 2e écran).
-    Renvoie False si le jeu n'est pas lancé ou si Windows refuse."""
-    if os.name != "nt":
-        return True
+TITRE_INTERFACE = "COVAS — Assistance de bord"     # <title> de Frontend/interface.html
+
+
+def _premier_plan(fenetre) -> bool:
+    """Met une fenêtre Windows au premier plan (la restaure si elle est réduite)."""
     import ctypes
     user32 = ctypes.windll.user32
-    fenetre = user32.FindWindowW(FENETRE_JEU, None)
-    if not fenetre:
-        return False
     if user32.GetForegroundWindow() == fenetre:
         return True
     if user32.IsIconic(fenetre):
@@ -289,3 +285,41 @@ def focaliser_jeu() -> bool:
     user32.SetForegroundWindow(fenetre)
     time.sleep(0.3)
     return user32.GetForegroundWindow() == fenetre
+
+
+def focaliser_interface() -> bool:
+    """Ramène au premier plan la fenêtre du navigateur qui affiche l'interface.
+    Renvoie False si aucune fenêtre ne la montre (fermée, ou onglet pas affiché)."""
+    if os.name != "nt":
+        return False
+    import ctypes
+    from ctypes import wintypes
+    user32 = ctypes.windll.user32
+    trouvees = []
+
+    @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def examiner(fenetre, _):
+        longueur = user32.GetWindowTextLengthW(fenetre)
+        if longueur and user32.IsWindowVisible(fenetre):
+            titre = ctypes.create_unicode_buffer(longueur + 1)
+            user32.GetWindowTextW(fenetre, titre, longueur + 1)
+            if titre.value.startswith(TITRE_INTERFACE):
+                trouvees.append(fenetre)
+        return True
+
+    user32.EnumWindows(examiner, 0)
+    return bool(trouvees) and _premier_plan(trouvees[0])
+
+
+def focaliser_jeu() -> bool:
+    """Met la fenêtre d'Elite Dangerous au premier plan pour que les touches arrivent
+    bien au jeu (par exemple après un clic sur l'interface du 2e écran).
+    Renvoie False si le jeu n'est pas lancé ou si Windows refuse."""
+    if os.name != "nt":
+        return True
+    import ctypes
+    user32 = ctypes.windll.user32
+    fenetre = user32.FindWindowW(FENETRE_JEU, None)
+    if not fenetre:
+        return False
+    return _premier_plan(fenetre)

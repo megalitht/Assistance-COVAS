@@ -524,15 +524,49 @@ async def _drone(action, texte, dire, poli):
 # =====================================================================
 #  INTERFACE WEB (« ouvre le panel »)
 # =====================================================================
+def _navigateur_app():
+    """Chemin de Chrome ou d'Edge (ils savent ouvrir une page dans sa propre fenêtre)."""
+    import winreg
+    for exe in ("chrome.exe", "msedge.exe"):
+        for racine in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+            try:
+                with winreg.OpenKey(racine, r"Software\Microsoft\Windows\CurrentVersion"
+                                            rf"\App Paths\{exe}") as cle:
+                    chemin = winreg.QueryValue(cle, None)
+            except OSError:
+                continue
+            if chemin and os.path.exists(chemin.strip('"')):
+                return chemin.strip('"')
+    return None
+
+
+def _lancer_fenetre_interface():
+    """Ouvre l'interface dans sa propre fenêtre (mode application de Chrome/Edge), et non
+    dans un onglet : le COVAS peut ainsi toujours la retrouver par son titre.
+    À défaut, navigateur par défaut."""
+    import pathlib
+    import subprocess
+    navigateur = _navigateur_app() if os.name == "nt" else None
+    if navigateur:
+        subprocess.Popen([navigateur, f"--app={pathlib.Path(CHEMIN_INTERFACE).as_uri()}"])
+    else:
+        os.startfile(CHEMIN_INTERFACE)
+
+
 async def _ouvrir_interface(action, texte, dire, poli):
+    # Déjà ouverte : on ramène sa fenêtre devant les autres
+    if await asyncio.to_thread(macros.focaliser_interface):
+        await logs.annoncer("Interface ramenée au premier plan")
+        return await confirmer(dire, action, poli)
     if serveur_ws.interfaces_ouvertes():
-        await logs.annoncer("Interface déjà ouverte")
-        return await dire(action, "affirmation", poli=poli)
+        # Connectée mais introuvable : c'est un onglet caché d'un navigateur -> on ouvre
+        # une vraie fenêtre (tu peux fermer l'ancien onglet)
+        await logs.annoncer("Interface cachée dans un onglet : ouverture dans sa propre "
+                            "fenêtre (tu peux fermer l'ancien onglet)", "attention")
     if not os.path.exists(CHEMIN_INTERFACE):
         return await refuser(dire, "macro_echec", f"Interface introuvable : {CHEMIN_INTERFACE}")
     try:
-        # navigateur par défaut de Windows
-        await asyncio.to_thread(os.startfile, CHEMIN_INTERFACE)
+        await asyncio.to_thread(_lancer_fenetre_interface)
     except OSError as erreur:
         return await refuser(dire, "macro_echec", f"Interface : impossible de l'ouvrir ({erreur})")
     await confirmer(dire, action, poli)

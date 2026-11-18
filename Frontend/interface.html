@@ -39,7 +39,8 @@
         <span class="alerte-retour" data-v="alerte-retour"></span>
     </div>
 
-    <!-- ================= VUE NAVIGATION ================= -->
+    <!-- ================= VUE NAVIGATION =================
+         Quatre colonnes pleine hauteur : lieu et route | hologramme | commandes et journal | vaisseau -->
     <main class="vue vue-nav" aria-label="Navigation">
 
         <div class="colonne">
@@ -59,8 +60,8 @@
                     <h3>Station <span data-v="station-nom"></span></h3>
                     <p class="sous-titre" data-v="station-detail"></p>
                     <ul class="pastilles" id="pastilles-services"></ul>
-                    <div class="actions une-colonne">
-                        <button type="button" data-action="ravitaillement">Ravitailler, réparer, réarmer</button>
+                    <div class="actions">
+                        <button type="button" data-action="ravitaillement" class="large">Ravitailler, réparer, réarmer</button>
                         <button type="button" data-action="services">Services de la station</button>
                         <button type="button" data-action="decollage">Décollage</button>
                     </div>
@@ -86,6 +87,13 @@
                     <ul class="liste defile etapes" id="liste-proches"></ul>
                 </div>
             </section>
+
+            <section class="panneau">
+                <h2>Commandant</h2>
+                <dl class="fiche trois-colonnes" id="fiche-rangs"></dl>
+                <h3>Missions <span data-v="missions-nombre"></span></h3>
+                <ul class="liste defile courte" id="liste-missions"></ul>
+            </section>
         </div>
 
         <div class="colonne centre">
@@ -101,6 +109,9 @@
                 <h2>Systèmes de vol</h2>
                 <ul class="voyants" data-voyants="vol"></ul>
             </section>
+        </div>
+
+        <div class="colonne">
             <section class="panneau">
                 <h2>Commandes</h2>
                 <h3>Cockpit</h3>
@@ -122,7 +133,7 @@
                     <button type="button" data-action="carte_systeme">Carte du système</button>
                     <button type="button" data-action="apontage">Demander l'apontage</button>
                     <button type="button" data-action="autopilote_station">Autopilote station</button>
-                    <button type="button" data-action="autopilote_route" title="Enchaîne les sauts de la route tracée en évitant l'étoile à chaque arrivée">Voyage (route)</button>
+                    <button type="button" data-action="autopilote_route" class="large" title="Enchaîne les sauts de la route tracée en évitant l'étoile à chaque arrivée">Voyage (route)</button>
                 </div>
                 <h3>Minage et automatismes</h3>
                 <div class="actions">
@@ -131,6 +142,15 @@
                     <button type="button" data-action="reactions|active">Réactions auto : activer</button>
                     <button type="button" data-action="reactions|coupe">Réactions auto : couper</button>
                 </div>
+            </section>
+            <section class="panneau grandit">
+                <h2>Journal de bord</h2>
+                <div class="filtres" id="filtres-journal"></div>
+                <ol class="liste defile journal" id="liste-journal"></ol>
+            </section>
+            <section class="panneau">
+                <h2>Communications</h2>
+                <ol class="liste defile journal courte" id="liste-comms"></ol>
             </section>
         </div>
 
@@ -155,25 +175,10 @@
                 <ul class="liste defile courte" id="liste-soute"></ul>
             </section>
         </div>
-
-        <section class="panneau bas">
-            <h2>Commandant</h2>
-            <dl class="fiche trois-colonnes" id="fiche-rangs"></dl>
-            <h3>Missions <span data-v="missions-nombre"></span></h3>
-            <ul class="liste defile" id="liste-missions"></ul>
-        </section>
-        <section class="panneau bas">
-            <h2>Journal de bord</h2>
-            <div class="filtres" id="filtres-journal"></div>
-            <ol class="liste defile journal" id="liste-journal"></ol>
-        </section>
-        <section class="panneau bas">
-            <h2>Communications</h2>
-            <ol class="liste defile journal" id="liste-comms"></ol>
-        </section>
     </main>
 
-    <!-- ================= VUE COMBAT ================= -->
+    <!-- ================= VUE COMBAT =================
+         Cible et menaces | hologramme | énergie et tactique | état et modules -->
     <main class="vue vue-combat" aria-label="Combat">
 
         <div class="colonne">
@@ -226,22 +231,9 @@
                     <button type="button" data-action="reset">Équilibrer</button>
                 </div>
             </section>
-            <section class="panneau">
-                <h2>État du vaisseau</h2>
-                <ul class="voyants" data-voyants="combat"></ul>
-                <dl class="fiche deux-colonnes">
-                    <div><dt>Carburant</dt><dd data-v="carburant">—</dd></div>
-                    <div><dt>Verrière</dt><dd data-v="verriere">—</dd></div>
-                    <div><dt>Chasseur</dt><dd data-v="chasseur">—</dd></div>
-                    <div><dt>Fuite vers</dt><dd data-v="prochain-saut">—</dd></div>
-                </dl>
-            </section>
             <section class="panneau grandit">
-                <h2>Modules <small>les plus touchés d'abord</small></h2>
-                <div class="liste defile" id="liste-modules-combat"></div>
-            </section>
-            <section class="panneau">
-                <div class="actions">
+                <h2>Tactique</h2>
+                <div class="actions remplit">
                     <button type="button" data-action="lock">Verrouiller la cible</button>
                     <button type="button" data-action="boost">Boost</button>
                     <button type="button" data-action="mode_combat">Pips combat</button>
@@ -264,6 +256,23 @@
                     <button type="button" data-action="chasseur|position">Tenir la position</button>
                     <button type="button" data-action="chasseur|rappel">Rappel</button>
                 </div>
+            </section>
+        </div>
+
+        <div class="colonne">
+            <section class="panneau">
+                <h2>État du vaisseau</h2>
+                <ul class="voyants" data-voyants="combat"></ul>
+                <dl class="fiche deux-colonnes">
+                    <div><dt>Carburant</dt><dd data-v="carburant">—</dd></div>
+                    <div><dt>Verrière</dt><dd data-v="verriere">—</dd></div>
+                    <div><dt>Chasseur</dt><dd data-v="chasseur">—</dd></div>
+                    <div><dt>Fuite vers</dt><dd data-v="prochain-saut">—</dd></div>
+                </dl>
+            </section>
+            <section class="panneau grandit">
+                <h2>Modules <small>les plus touchés d'abord</small></h2>
+                <div class="liste defile" id="liste-modules-combat"></div>
             </section>
         </div>
     </main>
