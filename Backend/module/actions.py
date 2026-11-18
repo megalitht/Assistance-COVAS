@@ -22,6 +22,7 @@ import os
 import time
 import traceback
 
+from module import ecran
 from module import lecteur_logs as logs
 from module import macros
 from module import serveur_ws
@@ -34,7 +35,7 @@ from module.macros import normaliser
 
 # Bits de Status.json utilisés ici
 BIT = {"amarre": 0, "pose": 1, "train": 2, "boucliers": 3, "supercroisiere": 4, "armes": 6,
-       "feux": 8, "ecope": 9, "silencieux": 10, "masse": 16, "fsd_charge": 17,
+       "feux": 8, "ecope": 9, "silencieux": 10, "ecopage_carburant": 11, "masse": 16, "fsd_charge": 17,
        "fsd_refroid": 18, "surchauffe": 20, "danger": 22, "interdiction": 23, "vaisseau": 24,
        "chasseur": 25, "vrs": 26, "analyse": 27, "nvg": 28, "saut": 30}
 
@@ -977,9 +978,20 @@ async def _voyage(dire, poli=False):
     if drapeau("ecope"):
         await appuyer("soute")
 
+    if await asyncio.to_thread(ecran.ecran_lisible) is False:
+        await logs.annoncer("Voyage : l'écran du jeu est illisible (plein écran exclusif ?). "
+                            "Je ne verrai pas l'étoile, seule la chaleur sera surveillée. "
+                            "Passe le jeu en plein écran fenêtré", "attention")
+
     evenements = []
-    arreter_ecoute = logs.ecouter_evenements(
-        lambda e: evenements.append(e) if e.get("event") in ("StartJump", "FSDJump") else None)
+
+    def ecouter(e):
+        if e.get("event") in ("StartJump", "FSDJump"):
+            evenements.append(e)
+        elif e.get("event") == "HeatWarning":
+            _CHALEUR["alerte"] = time.monotonic()
+
+    arreter_ecoute = logs.ecouter_evenements(ecouter)
     try:
         # En supercroisière, le vaisseau vient sans doute d'arriver face à l'étoile
         face_etoile = drapeau("supercroisiere")
@@ -1004,31 +1016,118 @@ async def _voyage(dire, poli=False):
     await dire("voyage_arrivee", "affirmation")
 
 
+# Heure (time.monotonic) du dernier HeatWarning du journal pendant un voyage
+_CHALEUR = {"alerte": 0.0}
+
+
+def _trop_chaud():
+    """True si le vaisseau est trop près de l'étoile. Le jeu ne donne pas la température :
+    on se fie à la surchauffe (> 100 %), à l'écopage de carburant (on frôle l'étoile)
+    et aux alertes de chaleur des 10 dernières secondes."""
+    return (drapeau("surchauffe") or drapeau("ecopage_carburant")
+            or time.monotonic() - _CHALEUR["alerte"] < 10)
+
+
+async def _voler(dire, duree_min, duree_max=None):
+    """Avance tout droit au moins `duree_min` s, et tant que le vaisseau chauffe (jusqu'à
+    `duree_max`). False si une interdiction interrompt le vol."""
+    debut = time.monotonic()
+    duree_max = duree_max or duree_min
+    while True:
+        if drapeau("interdiction"):
+            await _voyage_interrompu(dire)
+            return False
+        ecoule = time.monotonic() - debut
+        if ecoule >= duree_max or (ecoule >= duree_min and not _trop_chaud()):
+            return True
+        await asyncio.sleep(0.5)
+
+
+async def _ecart(dire, duree_min, duree_max=None):
+    """Pique d'~90°, avance, puis cabre d'autant : le vaisseau se décale de côté
+    et garde le cap d'origine."""
+    await _gaz_croisiere()
+    if not await appuyer("tangage_bas", duree=macros.VOYAGE_DUREE_TANGAGE):
+        return False
+    if not await _voler(dire, duree_min, duree_max):
+        return False
+    return await appuyer("tangage_haut", duree=macros.VOYAGE_DUREE_TANGAGE)
+
+
+async def _attendre_voie_libre(dire):
+    """N'autorise le FSD que quand ni l'étoile (au centre de l'écran) ni la chaleur ne
+    gênent, et ce depuis VOYAGE_DELAI_VOIE_LIBRE secondes. Si l'étoile reste dans l'axe,
+    refait un écart ; au-delà de VOYAGE_CONTOURNEMENTS_MAX, laisse le commandant
+    contourner et saute dès que la voie se libère."""
+    fin = time.monotonic() + macros.VOYAGE_ATTENTE_VOIE_LIBRE
+    libre_depuis, ecarts, deja_dit = None, 0, set()
+
+    async def dire_une_fois(cle, texte):
+        if cle not in deja_dit:
+            deja_dit.add(cle)
+            await logs.annoncer(texte, "attention")
+
+    while True:
+        if drapeau("interdiction"):
+            await _voyage_interrompu(dire)
+            return False
+        devant = await asyncio.to_thread(ecran.etoile_devant)     # None : écran illisible
+        chaud = _trop_chaud()
+        maintenant = time.monotonic()
+
+        if not devant and not chaud:
+            libre_depuis = libre_depuis or maintenant
+            if maintenant - libre_depuis >= macros.VOYAGE_DELAI_VOIE_LIBRE:
+                return True
+        else:
+            libre_depuis = None
+            if devant and ecarts < macros.VOYAGE_CONTOURNEMENTS_MAX:
+                ecarts += 1
+                await logs.annoncer(f"Voyage : étoile dans l'axe, contournement ({ecarts}/"
+                                    f"{macros.VOYAGE_CONTOURNEMENTS_MAX})", "attention")
+                if not await _ecart(dire, macros.VOYAGE_DUREE_CONTOURNEMENT,
+                                    macros.VOYAGE_DUREE_AVANCE_MAX):
+                    return False
+                continue
+            if devant:
+                if "manuel" not in deja_dit:
+                    await dire("voyage_alignement")
+                await dire_une_fois("manuel", "Voyage : l'étoile masque toujours la cible. "
+                                              "Contourne-la, je saute dès que la voie est libre")
+            else:
+                await dire_une_fois("chaud", "Voyage : trop près de l'étoile, FSD en attente "
+                                             "le temps de refroidir")
+
+        if maintenant > fin:
+            await refuser(dire, "macro_echec", "Voyage : la voie ne s'est pas libérée, "
+                                               "programme arrêté. À toi les commandes")
+            return False
+        await asyncio.sleep(0.5)
+
+
 async def _un_saut(dire, face_etoile, evenements):
     """Un saut de la route. Renvoie True une fois arrivé dans le système suivant."""
     def parti():
         return drapeau("saut") or any(
             e["event"] == "FSDJump" or e.get("JumpType") == "Hyperspace" for e in evenements)
 
-    # 1. S'écarter de l'étoile : piquer, puis avancer
+    # 1. S'écarter de l'étoile : piquer, avancer (plus longtemps s'il fait chaud), cabrer
+    #    d'autant pour revenir dans l'axe d'arrivée, vers le système suivant
     if face_etoile:
         await logs.annoncer("Voyage : dégagement de l'étoile")
-        await _gaz_croisiere()
-        if not await appuyer("tangage_bas", duree=macros.VOYAGE_DUREE_TANGAGE):
+        if not await _ecart(dire, macros.VOYAGE_DUREE_AVANCE, macros.VOYAGE_DUREE_AVANCE_MAX):
             return False
-        fin = time.monotonic() + macros.VOYAGE_DUREE_AVANCE
-        while time.monotonic() < fin:
-            if drapeau("interdiction"):
-                await _voyage_interrompu(dire)
-                return False
-            await asyncio.sleep(0.5)
 
-    # 2. Relancer le FSD (il charge pendant qu'on se réaligne)
+    # 2. Pas de FSD tant que l'étoile est dans l'axe ou que le vaisseau chauffe
     if drapeau("masse"):
         await logs.annoncer("Voyage : masse verrouillée, éloigne-toi de l'objet massif", "attention")
         if not await attendre(lambda: not drapeau("masse"), 120):
             await refuser(dire, "refus_masse", "Voyage : toujours en masse verrouillée")
             return False
+    if not await _attendre_voie_libre(dire):
+        return False
+
+    # 3. Voie libre : lancer le FSD
     await attendre(lambda: not drapeau("fsd_refroid"), 60)
     await appuyer("saut")
     if not await attendre(lambda: drapeau("fsd_charge") or parti(), 3):
@@ -1036,10 +1135,6 @@ async def _un_saut(dire, face_etoile, evenements):
         await dire("macro_echec", "refus")
         return False
     debut_charge = time.monotonic()
-
-    # 3. Cabrer d'autant qu'on a piqué : retour dans l'axe d'arrivée, vers le système suivant
-    if face_etoile and not await appuyer("tangage_haut", duree=macros.VOYAGE_DUREE_TANGAGE):
-        return False
 
     # 4. Le saut part tout seul une fois chargé et aligné
     reste = macros.VOYAGE_ATTENTE_ALIGNEMENT - (time.monotonic() - debut_charge)
@@ -1058,7 +1153,8 @@ async def _un_saut(dire, face_etoile, evenements):
                 sans_charge = None
             elif sans_charge is None:
                 sans_charge = time.monotonic()
-            elif time.monotonic() - sans_charge > 5:
+            elif time.monotonic() - sans_charge > 5 and not _trop_chaud() \
+                    and not await asyncio.to_thread(ecran.etoile_devant):
                 await appuyer("saut")
                 sans_charge = None
             await asyncio.sleep(0.25)

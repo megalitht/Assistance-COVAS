@@ -121,15 +121,29 @@ DECOLLAGE_PLANETE_MONTEE = 2.5
 
 # --- VOYAGE AUTOMATIQUE (route tracée dans la carte de la galaxie) ----------
 # À chaque arrivée, le vaisseau fait face à l'étoile. Le COVAS pique du nez d'environ
-# 90°, avance pour s'écarter de l'étoile, relance le FSD, puis cabre exactement autant
-# pour revenir face à la direction d'arrivée (là où se trouve en général le système
-# suivant). Le retour est symétrique : même si la durée ne fait pas pile 90°, le nez
-# revient dans l'axe d'arrivée.
+# 90°, avance pour s'écarter de l'étoile (plus longtemps si le vaisseau chauffe), puis
+# cabre exactement autant pour revenir face à la direction d'arrivée (là où se trouve
+# en général le système suivant). Le retour est symétrique : même si la durée ne fait
+# pas pile 90°, le nez revient dans l'axe d'arrivée.
+# Ensuite, le FSD n'est lancé que quand la voie est libre : pas d'étoile au centre de
+# l'écran et pas de chaleur, depuis VOYAGE_DELAI_VOIE_LIBRE secondes. Si l'étoile est
+# toujours dans l'axe, le COVAS refait un écart (piquer, avancer, cabrer).
 VOYAGE_DUREE_TANGAGE = 4.0      # secondes de tangage pour ~90° (vaisseau lourd : augmenter)
-VOYAGE_DUREE_AVANCE = 30        # secondes de vol pour s'écarter de l'étoile
+VOYAGE_DUREE_AVANCE = 30        # secondes de vol (au moins) pour s'écarter de l'étoile
+VOYAGE_DUREE_AVANCE_MAX = 90    # ... prolongé tant que le vaisseau chauffe, jusqu'à ce maximum
+VOYAGE_DELAI_VOIE_LIBRE = 3     # secondes de voie libre (ni étoile devant, ni chaleur) avant le FSD
+VOYAGE_DUREE_CONTOURNEMENT = 12 # secondes de vol de chaque écart supplémentaire
+VOYAGE_CONTOURNEMENTS_MAX = 3   # écarts automatiques ; au-delà, le COVAS te laisse contourner
+VOYAGE_ATTENTE_VOIE_LIBRE = 180 # sans voie libre au bout de ce temps, le voyage s'arrête
 VOYAGE_ATTENTE_ALIGNEMENT = 40  # secondes après l'appui sur le FSD (la charge en prend ~20) :
                                 # sans saut d'ici là, le COVAS te demande de t'aligner
 VOYAGE_CARBURANT_MIN = 0.25     # sous cette part du réservoir, le voyage s'arrête
+
+# Détection de l'étoile à l'écran (module/ecran.py ; jeu en plein écran fenêtré).
+# Calibrage : `python -m module.ecran` depuis Backend/, le jeu au premier plan.
+ETOILE_ZONE = 0.20              # côté du carré central analysé (part de la hauteur d'écran)
+ETOILE_SEUIL_LUMIERE = 235      # un pixel compte comme « étoile » si R, G et B dépassent ça
+ETOILE_PART_OBSTRUCTION = 0.02  # au-delà de cette part de pixels blancs : étoile devant
 
 # Sortir le train tout seul dès que la station autorise l'apontage
 TRAIN_AUTO_APONTAGE = True
