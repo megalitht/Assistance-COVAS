@@ -13,17 +13,17 @@
             "et covas"
         ],
         "reponses": [
-            "data/son/reveil/A-T-ilCom.wav"
+            "data/son/reveil/A-T-ilCom.mp3"
         ],
         "easter_egg": [
-            "data/son/Easter-egg/EchangeRole.wav"
+            "data/son/Easter-egg/EchangeRole.mp3"
         ]
     },
     "système_vocal_opérationnel": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Demarrage/Système COVAS opérationnel.wav",
-            "data/son/Demarrage/SysCOVASOp.wav"
+            "data/son/Demarrage/Système COVAS opérationnel.mp3",
+            "data/son/Demarrage/SysCOVASOp.mp3"
         ]
     },
     "energie_mtr": {
@@ -34,11 +34,11 @@
             "propulsion"
         ],
         "reponses": [
-            "data/son/Macros/Alim/Moteur/AlimMoteur.wav",
-            "data/son/Macros/Alim/Moteur/MoteurA100.wav",
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/CommeSiCTFait.wav"
+            "data/son/Macros/Alim/Moteur/AlimMoteur.mp3",
+            "data/son/Macros/Alim/Moteur/MoteurA100.mp3",
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/CommeSiCTFait.mp3"
         ]
     },
     "energie_arm": {
@@ -48,11 +48,11 @@
             "tir"
         ],
         "reponses": [
-            "data/son/Cockpit/EnergieArmes.wav",
-            "data/son/Macros/Alim/Arm/Arm1.wav",
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/CommeSiCTFait.wav"
+            "data/son/Cockpit/EnergieArmes.mp3",
+            "data/son/Macros/Alim/Arm/Arm1.mp3",
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/CommeSiCTFait.mp3"
         ]
     },
     "energie_sys": {
@@ -65,12 +65,12 @@
             "system"
         ],
         "reponses": [
-            "data/son/Cockpit/EnergieSystemes.wav",
-            "data/son/Macros/Alim/Sys/Sys1.wav",
-            "data/son/Macros/Alim/Sys/Sys2.wav",
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/CommeSiCTFait.wav"
+            "data/son/Cockpit/EnergieSystemes.mp3",
+            "data/son/Macros/Alim/Sys/Sys1.mp3",
+            "data/son/Macros/Alim/Sys/Sys2.mp3",
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/CommeSiCTFait.mp3"
         ]
     },
     "train_atterrissage": {
@@ -81,12 +81,12 @@
             "letran"
         ],
         "reponses": [
-            "data/son/Macros/Deploiment/train/DéploymentTrain.wav",
-            "data/son/Macros/Deploiment/train/TrainDéployé.wav",
-            "data/son/Macros/Deploiment/train/TrainDéployé2.wav",
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/CommeSiCTFait.wav"
+            "data/son/Macros/Deploiment/train/DéploymentTrain.mp3",
+            "data/son/Macros/Deploiment/train/TrainDéployé.mp3",
+            "data/son/Macros/Deploiment/train/TrainDéployé2.mp3",
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/CommeSiCTFait.mp3"
         ]
     },
     "soute": {
@@ -96,11 +96,11 @@
             "écope"
         ],
         "reponses": [
-            "data/son/Macros/Deploiment/soute/DéploymentSoute.wav",
-            "data/son/Macros/Deploiment/soute/SouteDéployé.wav",
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/CommeSiCTFait.wav"
+            "data/son/Macros/Deploiment/soute/DéploymentSoute.mp3",
+            "data/son/Macros/Deploiment/soute/SouteDéployé.mp3",
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/CommeSiCTFait.mp3"
         ]
     },
     "mode_Combat": {
@@ -110,11 +110,11 @@
             "tir"
         ],
         "reponses": [
-            "data/son/Macros/modes/combat/activCombat.wav",
-            "data/son/Macros/modes/combat/activCombat2.wav",
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/CommeSiCTFait.wav"
+            "data/son/Macros/modes/combat/activCombat.mp3",
+            "data/son/Macros/modes/combat/activCombat2.mp3",
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/CommeSiCTFait.mp3"
         ]
     },
     "mode_Croisière": {
@@ -124,12 +124,12 @@
             "croisière"
         ],
         "reponses": [
-            "data/son/Macros/modes/croisière/ActivationCoisière.wav",
-            "data/son/Macros/modes/croisière/actvCois.wav",
-            "data/son/Macros/modes/croisière/modeCroisAct.wav",
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/CommeSiCTFait.wav"
+            "data/son/Macros/modes/croisière/ActivationCoisière.mp3",
+            "data/son/Macros/modes/croisière/actvCois.mp3",
+            "data/son/Macros/modes/croisière/modeCroisAct.mp3",
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/CommeSiCTFait.mp3"
         ]
     },
     "mode_récuperation": {
@@ -138,12 +138,12 @@
             "récup"
         ],
         "reponses": [
-            "data/son/Macros/modes/recup/MBouclierCom.wav",
-            "data/son/Macros/modes/recup/ModeRecup1.wav",
-            "data/son/Macros/modes/recup/ModeRecup2.wav",
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/CommeSiCTFait.wav"
+            "data/son/Macros/modes/recup/MBouclierCom.mp3",
+            "data/son/Macros/modes/recup/ModeRecup1.mp3",
+            "data/son/Macros/modes/recup/ModeRecup2.mp3",
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/CommeSiCTFait.mp3"
         ]
     },
     "lock": {
@@ -152,8 +152,8 @@
             "look"
         ],
         "reponses": [
-            "data/son/Cockpit/Lock2.wav",
-            "data/son/Cockpit/Lock1.wav"
+            "data/son/Cockpit/Lock2.mp3",
+            "data/son/Cockpit/Lock1.mp3"
         ]
     },
     "fsd": {
@@ -162,11 +162,11 @@
             "f.s.d"
         ],
         "reponses": [
-            "data/son/Macros/Deploiment/FSD/FSD1.wav",
-            "data/son/Macros/Deploiment/FSD/FSD3.wav",
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/CommeSiCTFait.wav"
+            "data/son/Macros/Deploiment/FSD/FSD1.mp3",
+            "data/son/Macros/Deploiment/FSD/FSD3.mp3",
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/CommeSiCTFait.mp3"
         ]
     },
     "NVG": {
@@ -177,10 +177,10 @@
             "infrarouge"
         ],
         "reponses": [
-            "data/son/Cockpit/NVG2.wav",
-            "data/son/Cockpit/NVG1.wav",
-            "data/son/Macros/Deploiment/NVG/NVG1.wav",
-            "data/son/Macros/Deploiment/NVG/NVG2.wav"
+            "data/son/Cockpit/NVG2.mp3",
+            "data/son/Cockpit/NVG1.mp3",
+            "data/son/Macros/Deploiment/NVG/NVG1.mp3",
+            "data/son/Macros/Deploiment/NVG/NVG2.mp3"
         ]
     },
     "politesse": {
@@ -191,11 +191,11 @@
             "svp"
         ],
         "reponses": [
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav"
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3"
         ],
         "easter_egg": [
-            "data/son/Easter-egg/SVP.wav"
+            "data/son/Easter-egg/SVP.mp3"
         ]
     },
     "boost": {
@@ -206,81 +206,81 @@
             "Proust"
         ],
         "reponses": [
-            "data/son/Cockpit/Boost2.wav",
-            "data/son/Cockpit/Boost1.wav"
+            "data/son/Cockpit/Boost2.mp3",
+            "data/son/Cockpit/Boost1.mp3"
         ]
     },
     "bienvenue": {
         "mots_cles": [],
         "reponses": [
-            "data/son/interact/BienvenueCommandant.wav"
+            "data/son/interact/BienvenueCommandant.mp3"
         ]
     },
     "alerte_degats": {
         "mots_cles": [],
         "reponses": [
-            "data/son/interact/AttDegat.wav"
+            "data/son/interact/AttDegat.mp3"
         ]
     },
     "alerte_blindage": {
         "mots_cles": [],
         "reponses": [
-            "data/son/interact/AttDegat.wav"
+            "data/son/interact/AttDegat.mp3"
         ]
     },
     "alerte_bouclier": {
         "mots_cles": [],
         "reponses": [
-            "data/son/interact/AttDegat.wav"
+            "data/son/interact/AttDegat.mp3"
         ]
     },
     "bouclier_retabli": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Alertes/BouclierRetabli2.wav",
-            "data/son/Alertes/BouclierRetabli1.wav"
+            "data/son/Alertes/BouclierRetabli2.mp3",
+            "data/son/Alertes/BouclierRetabli1.mp3"
         ]
     },
     "alerte_attaque": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Alertes/Attaque2.wav",
-            "data/son/Alertes/Attaque1.wav"
+            "data/son/Alertes/Attaque2.mp3",
+            "data/son/Alertes/Attaque1.mp3"
         ]
     },
     "alerte_interdiction": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Alertes/Interdiction2.wav",
-            "data/son/Alertes/Interdiction1.wav"
+            "data/son/Alertes/Interdiction2.mp3",
+            "data/son/Alertes/Interdiction1.mp3"
         ]
     },
     "alerte_surchauffe": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Alertes/Surchauffe2.wav",
-            "data/son/Alertes/Surchauffe1.wav"
+            "data/son/Alertes/Surchauffe2.mp3",
+            "data/son/Alertes/Surchauffe1.mp3"
         ]
     },
     "alerte_carburant": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Alertes/Carburant2.wav",
-            "data/son/Alertes/Carburant1.wav"
+            "data/son/Alertes/Carburant2.mp3",
+            "data/son/Alertes/Carburant1.mp3"
         ]
     },
     "verriere_brisee": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Alertes/VerriereBrisee.wav"
+            "data/son/Alertes/VerriereBrisee.mp3"
         ]
     },
     "kill_confirme": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Alertes/Kill3.wav",
-            "data/son/Alertes/Kill2.wav",
-            "data/son/Alertes/Kill1.wav"
+            "data/son/Alertes/Kill3.mp3",
+            "data/son/Alertes/Kill2.mp3",
+            "data/son/Alertes/Kill1.mp3"
         ]
     },
     "ravitaillement": {
@@ -294,127 +294,127 @@
             "recharge le vaisseau"
         ],
         "reponses": [
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/AVosOrdre.wav"
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/AVosOrdre.mp3"
         ]
     },
     "ravitaillement_termine": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Station/RavitaillementTermine2.wav",
-            "data/son/Station/RavitaillementTermine1.wav"
+            "data/son/Station/RavitaillementTermine2.mp3",
+            "data/son/Station/RavitaillementTermine1.mp3"
         ]
     },
     "ravitaillement_inutile": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Station/RavitaillementInutile.wav"
+            "data/son/Station/RavitaillementInutile.mp3"
         ]
     },
     "refus": {
         "mots_cles": [],
         "reponses": [
-            "data/son/interact/VisiblementPas.wav"
+            "data/son/interact/VisiblementPas.mp3"
         ]
     },
     "train_deja_sorti": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/TrainDejaSorti.wav"
+            "data/son/Refus/TrainDejaSorti.mp3"
         ]
     },
     "train_deja_rentre": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/TrainDejaRentre.wav"
+            "data/son/Refus/TrainDejaRentre.mp3"
         ]
     },
     "soute_deja_ouverte": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/SouteDejaOuverte.wav"
+            "data/son/Refus/SouteDejaOuverte.mp3"
         ]
     },
     "soute_deja_fermee": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/SouteDejaFermee.wav"
+            "data/son/Refus/SouteDejaFermee.mp3"
         ]
     },
     "refus_supercroisiere": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/Supercroisiere.wav"
+            "data/son/Refus/Supercroisiere.mp3"
         ]
     },
     "refus_amarre": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/Amarre.wav"
+            "data/son/Refus/Amarre.mp3"
         ]
     },
     "refus_pose": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/Pose.wav"
+            "data/son/Refus/Pose.mp3"
         ]
     },
     "refus_pas_amarre": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/PasAmarre.wav"
+            "data/son/Refus/PasAmarre.mp3"
         ]
     },
     "refus_pas_de_services": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/PasDeServices.wav"
+            "data/son/Refus/PasDeServices.mp3"
         ]
     },
     "refus_hors_vaisseau": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/HorsVaisseau.wav"
+            "data/son/Refus/HorsVaisseau.mp3"
         ]
     },
     "refus_masse": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/Masse.wav"
+            "data/son/Refus/Masse.mp3"
         ]
     },
     "refus_jeu_absent": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/JeuAbsent.wav"
+            "data/son/Refus/JeuAbsent.mp3"
         ]
     },
     "macro_echec": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/MacroEchec2.wav",
-            "data/son/Refus/MacroEchec1.wav"
+            "data/son/Refus/MacroEchec2.mp3",
+            "data/son/Refus/MacroEchec1.mp3"
         ]
     },
     "affirmation": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav",
-            "data/son/Affirmation/CommeSiCTFait.wav"
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3",
+            "data/son/Affirmation/CommeSiCTFait.mp3"
         ]
     },
     "nvg_deja_active": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Cockpit/NVGDejaActive.wav"
+            "data/son/Cockpit/NVGDejaActive.mp3"
         ]
     },
     "nvg_deja_coupee": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Cockpit/NVGDejaCoupee.wav"
+            "data/son/Cockpit/NVGDejaCoupee.mp3"
         ]
     },
     "phares": {
@@ -426,20 +426,20 @@
             "feux du vaisseau"
         ],
         "reponses": [
-            "data/son/Cockpit/Phares2.wav",
-            "data/son/Cockpit/Phares1.wav"
+            "data/son/Cockpit/Phares2.mp3",
+            "data/son/Cockpit/Phares1.mp3"
         ]
     },
     "phares_deja_allumes": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Cockpit/PharesDejaAllumes.wav"
+            "data/son/Cockpit/PharesDejaAllumes.mp3"
         ]
     },
     "phares_deja_eteints": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Cockpit/PharesDejaEteints.wav"
+            "data/son/Cockpit/PharesDejaEteints.mp3"
         ]
     },
     "armement": {
@@ -457,20 +457,20 @@
             "range l'armement"
         ],
         "reponses": [
-            "data/son/Cockpit/Armement2.wav",
-            "data/son/Cockpit/Armement1.wav"
+            "data/son/Cockpit/Armement2.mp3",
+            "data/son/Cockpit/Armement1.mp3"
         ]
     },
     "armement_deja_sorti": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Cockpit/ArmementDejaSorti.wav"
+            "data/son/Cockpit/ArmementDejaSorti.mp3"
         ]
     },
     "armement_deja_rentre": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Cockpit/ArmementDejaRentre.wav"
+            "data/son/Cockpit/ArmementDejaRentre.mp3"
         ]
     },
     "hud": {
@@ -485,20 +485,20 @@
             "affichage analyse"
         ],
         "reponses": [
-            "data/son/Cockpit/Hud2.wav",
-            "data/son/Cockpit/Hud1.wav"
+            "data/son/Cockpit/Hud2.mp3",
+            "data/son/Cockpit/Hud1.mp3"
         ]
     },
     "hud_deja_analyse": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Cockpit/HudDejaAnalyse.wav"
+            "data/son/Cockpit/HudDejaAnalyse.mp3"
         ]
     },
     "hud_deja_combat": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Cockpit/HudDejaCombat.wav"
+            "data/son/Cockpit/HudDejaCombat.mp3"
         ]
     },
     "silencieux": {
@@ -509,20 +509,20 @@
             "furtivité"
         ],
         "reponses": [
-            "data/son/Cockpit/Silencieux2.wav",
-            "data/son/Cockpit/Silencieux1.wav"
+            "data/son/Cockpit/Silencieux2.mp3",
+            "data/son/Cockpit/Silencieux1.mp3"
         ]
     },
     "silencieux_deja_actif": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Cockpit/SilencieuxDejaActif.wav"
+            "data/son/Cockpit/SilencieuxDejaActif.mp3"
         ]
     },
     "silencieux_deja_coupe": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Cockpit/SilencieuxDejaCoupe.wav"
+            "data/son/Cockpit/SilencieuxDejaCoupe.mp3"
         ]
     },
     "vitesse_zero": {
@@ -535,8 +535,8 @@
             "immobilise"
         ],
         "reponses": [
-            "data/son/Cockpit/VitesseZero2.wav",
-            "data/son/Cockpit/VitesseZero1.wav"
+            "data/son/Cockpit/VitesseZero2.mp3",
+            "data/son/Cockpit/VitesseZero1.mp3"
         ]
     },
     "plein_gaz": {
@@ -549,8 +549,8 @@
             "pleine puissance"
         ],
         "reponses": [
-            "data/son/Cockpit/PleinGaz2.wav",
-            "data/son/Cockpit/PleinGaz1.wav"
+            "data/son/Cockpit/PleinGaz2.mp3",
+            "data/son/Cockpit/PleinGaz1.mp3"
         ]
     },
     "carte_galaxie": {
@@ -561,7 +561,7 @@
             "galaxy map"
         ],
         "reponses": [
-            "data/son/Cockpit/CarteGalaxie.wav"
+            "data/son/Cockpit/CarteGalaxie.mp3"
         ]
     },
     "carte_systeme": {
@@ -572,7 +572,7 @@
             "carte locale"
         ],
         "reponses": [
-            "data/son/Cockpit/CarteSysteme.wav"
+            "data/son/Cockpit/CarteSysteme.mp3"
         ]
     },
     "reset": {
@@ -583,8 +583,8 @@
             "pips au centre"
         ],
         "reponses": [
-            "data/son/Cockpit/Reset2.wav",
-            "data/son/Cockpit/Reset1.wav"
+            "data/son/Cockpit/Reset2.mp3",
+            "data/son/Cockpit/Reset1.mp3"
         ]
     },
     "fuite": {
@@ -598,15 +598,15 @@
             "retraite"
         ],
         "reponses": [
-            "data/son/Combat/Fuite2.wav",
-            "data/son/Combat/Fuite1.wav"
+            "data/son/Combat/Fuite2.mp3",
+            "data/son/Combat/Fuite1.mp3"
         ]
     },
     "fuite_reussie": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Combat/FuiteReussie2.wav",
-            "data/son/Combat/FuiteReussie1.wav"
+            "data/son/Combat/FuiteReussie2.mp3",
+            "data/son/Combat/FuiteReussie1.mp3"
         ]
     },
     "puce_thermique": {
@@ -618,8 +618,8 @@
             "purge thermique"
         ],
         "reponses": [
-            "data/son/Combat/PuceThermique2.wav",
-            "data/son/Combat/PuceThermique1.wav"
+            "data/son/Combat/PuceThermique2.mp3",
+            "data/son/Combat/PuceThermique1.mp3"
         ]
     },
     "leurres": {
@@ -631,8 +631,8 @@
             "contre-mesures"
         ],
         "reponses": [
-            "data/son/Combat/Leurres2.wav",
-            "data/son/Combat/Leurres1.wav"
+            "data/son/Combat/Leurres2.mp3",
+            "data/son/Combat/Leurres1.mp3"
         ]
     },
     "cible_menace": {
@@ -645,8 +645,8 @@
             "cible mon agresseur"
         ],
         "reponses": [
-            "data/son/Combat/CibleMenace2.wav",
-            "data/son/Combat/CibleMenace1.wav"
+            "data/son/Combat/CibleMenace2.mp3",
+            "data/son/Combat/CibleMenace1.mp3"
         ]
     },
     "cible_hostile": {
@@ -658,8 +658,8 @@
             "prochain ennemi"
         ],
         "reponses": [
-            "data/son/Combat/CibleHostile2.wav",
-            "data/son/Combat/CibleHostile1.wav"
+            "data/son/Combat/CibleHostile2.mp3",
+            "data/son/Combat/CibleHostile1.mp3"
         ]
     },
     "sous_systeme": {
@@ -672,14 +672,14 @@
             "module ennemi"
         ],
         "reponses": [
-            "data/son/Combat/SousSysteme2.wav",
-            "data/son/Combat/SousSysteme1.wav"
+            "data/son/Combat/SousSysteme2.mp3",
+            "data/son/Combat/SousSysteme1.mp3"
         ]
     },
     "refus_pas_de_cible": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/PasDeCible.wav"
+            "data/son/Refus/PasDeCible.mp3"
         ]
     },
     "rapport_avarie": {
@@ -699,7 +699,7 @@
             "rapport"
         ],
         "reponses": [
-            "data/son/Combat/RapportAvarie.wav"
+            "data/son/Combat/RapportAvarie.mp3"
         ]
     },
     "chasseur": {
@@ -709,20 +709,20 @@
             "escadrille"
         ],
         "reponses": [
-            "data/son/Combat/Chasseur2.wav",
-            "data/son/Combat/Chasseur1.wav"
+            "data/son/Combat/Chasseur2.mp3",
+            "data/son/Combat/Chasseur1.mp3"
         ]
     },
     "refus_pas_de_chasseur": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/PasDeChasseur.wav"
+            "data/son/Refus/PasDeChasseur.mp3"
         ]
     },
     "refus_ordre_inconnu": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/OrdreInconnu.wav"
+            "data/son/Refus/OrdreInconnu.mp3"
         ]
     },
     "drone": {
@@ -737,20 +737,20 @@
             "drone collecteur"
         ],
         "reponses": [
-            "data/son/Combat/Drone2.wav",
-            "data/son/Combat/Drone1.wav"
+            "data/son/Combat/Drone2.mp3",
+            "data/son/Combat/Drone1.mp3"
         ]
     },
     "refus_drone_non_regle": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/DroneNonRegle.wav"
+            "data/son/Refus/DroneNonRegle.mp3"
         ]
     },
     "refus_pas_de_module": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/PasDeModule.wav"
+            "data/son/Refus/PasDeModule.mp3"
         ]
     },
     "decollage": {
@@ -765,21 +765,21 @@
             "largue les amarres"
         ],
         "reponses": [
-            "data/son/Station/Decollage2.wav",
-            "data/son/Station/Decollage1.wav"
+            "data/son/Station/Decollage2.mp3",
+            "data/son/Station/Decollage1.mp3"
         ]
     },
     "decollage_a_vous": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Station/DecollageAVous.wav"
+            "data/son/Station/DecollageAVous.mp3"
         ]
     },
     "decollage_degage": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Station/DecollageDegage2.wav",
-            "data/son/Station/DecollageDegage1.wav"
+            "data/son/Station/DecollageDegage2.mp3",
+            "data/son/Station/DecollageDegage1.mp3"
         ]
     },
     "apontage": {
@@ -793,27 +793,27 @@
             "amarrage"
         ],
         "reponses": [
-            "data/son/Station/Apontage2.wav",
-            "data/son/Station/Apontage1.wav"
+            "data/son/Station/Apontage2.mp3",
+            "data/son/Station/Apontage1.mp3"
         ]
     },
     "apontage_accorde": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Station/ApontageAccorde2.wav",
-            "data/son/Station/ApontageAccorde1.wav"
+            "data/son/Station/ApontageAccorde2.mp3",
+            "data/son/Station/ApontageAccorde1.mp3"
         ]
     },
     "apontage_refuse": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Station/ApontageRefuse.wav"
+            "data/son/Station/ApontageRefuse.mp3"
         ]
     },
     "apontage_expire": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Station/ApontageExpire.wav"
+            "data/son/Station/ApontageExpire.mp3"
         ]
     },
     "services": {
@@ -824,7 +824,7 @@
             "menu de la station"
         ],
         "reponses": [
-            "data/son/Station/Services.wav"
+            "data/son/Station/Services.mp3"
         ]
     },
     "interface": {
@@ -840,8 +840,8 @@
             "ouvre le tableau de bord"
         ],
         "reponses": [
-            "data/son/Affirmation/BienCommandant.wav",
-            "data/son/Affirmation/ToutSuite.wav"
+            "data/son/Affirmation/BienCommandant.mp3",
+            "data/son/Affirmation/ToutSuite.mp3"
         ]
     },
     "autopilote_station": {
@@ -858,8 +858,8 @@
             "conduis-nous à la station"
         ],
         "reponses": [
-            "data/son/Autopilote/Station2.wav",
-            "data/son/Autopilote/Station1.wav"
+            "data/son/Autopilote/Station2.mp3",
+            "data/son/Autopilote/Station1.mp3"
         ]
     },
     "autopilote_route": {
@@ -874,43 +874,43 @@
             "emmène moi à destination"
         ],
         "reponses": [
-            "data/son/Autopilote/Route1.wav"
+            "data/son/Autopilote/Route1.mp3"
         ]
     },
     "voyage_alignement": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Autopilote/Alignement.wav"
+            "data/son/Autopilote/Alignement.mp3"
         ]
     },
     "voyage_arrivee": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Autopilote/Arrivee.wav"
+            "data/son/Autopilote/Arrivee.mp3"
         ]
     },
     "refus_carburant_voyage": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/CarburantVoyage.wav"
+            "data/son/Refus/CarburantVoyage.mp3"
         ]
     },
     "autopilote_assistance": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Autopilote/Assistance.wav"
+            "data/son/Autopilote/Assistance.mp3"
         ]
     },
     "autopilote_danger": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Autopilote/Danger.wav"
+            "data/son/Autopilote/Danger.mp3"
         ]
     },
     "refus_pas_de_destination": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/PasDeDestination.wav"
+            "data/son/Refus/PasDeDestination.mp3"
         ]
     },
     "stop": {
@@ -922,20 +922,20 @@
             "interromps"
         ],
         "reponses": [
-            "data/son/Autopilote/Stop2.wav",
-            "data/son/Autopilote/Stop1.wav"
+            "data/son/Autopilote/Stop2.mp3",
+            "data/son/Autopilote/Stop1.mp3"
         ]
     },
     "stop_rien": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Autopilote/StopRien.wav"
+            "data/son/Autopilote/StopRien.mp3"
         ]
     },
     "refus_programme_en_cours": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/ProgrammeEnCours.wav"
+            "data/son/Refus/ProgrammeEnCours.mp3"
         ]
     },
     "reactions": {
@@ -951,43 +951,43 @@
     "reactions_actives": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Autopilote/ReactionsActives.wav"
+            "data/son/Autopilote/ReactionsActives.mp3"
         ]
     },
     "reactions_coupees": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Autopilote/ReactionsCoupees.wav"
+            "data/son/Autopilote/ReactionsCoupees.mp3"
         ]
     },
     "reaction_surchauffe": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Autopilote/ReactionSurchauffe.wav"
+            "data/son/Autopilote/ReactionSurchauffe.mp3"
         ]
     },
     "reaction_bouclier": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Autopilote/ReactionBouclier.wav"
+            "data/son/Autopilote/ReactionBouclier.mp3"
         ]
     },
     "reaction_interdiction": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Autopilote/ReactionInterdiction.wav"
+            "data/son/Autopilote/ReactionInterdiction.mp3"
         ]
     },
     "refus_touche_absente": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/ToucheAbsente.wav"
+            "data/son/Refus/ToucheAbsente.mp3"
         ]
     },
     "commande_incomprise": {
         "mots_cles": [],
         "reponses": [
-            "data/son/Refus/Incomprise.wav"
+            "data/son/Refus/Incomprise.mp3"
         ]
     }
 }

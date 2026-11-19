@@ -42,6 +42,7 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 
+from module import sons
 from module.comprehension import (SEUIL_APPROCHE, meilleure_approche, normaliser, present,
                                   similarite, trouver_action_detail)
 
@@ -779,11 +780,11 @@ def texte_de(replique, etat):
 
 
 def chemin_enregistrement(replique):
-    """Chemin complet du .wav enregistré, ou None (synthèse, ou fichier pas encore créé)."""
+    """Chemin complet du son enregistré (.wav ou .mp3, quelle que soit l'extension écrite),
+    ou None (synthèse, ou fichier pas encore créé)."""
     if replique.get("voix") == "synthese" or not replique.get("_fichier"):
         return None
-    chemin = os.path.join(DOSSIER_BACKEND, *replique["_fichier"].split("/"))
-    return chemin if os.path.isfile(chemin) else None
+    return sons.trouver(os.path.join(DOSSIER_BACKEND, *replique["_fichier"].split("/")))
 
 
 async def chemin_audio(replique, texte, synthetiser=None):

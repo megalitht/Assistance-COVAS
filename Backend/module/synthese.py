@@ -10,10 +10,14 @@ de barks.json.
        (Piper absent, voix absente) : le COVAS reste alors muet et l'écran suffit.
 
 Voix (hors ligne, sur le processeur : la carte graphique reste à Whisper), dans modele_synthese/ :
-    fr_FR-siwis-medium : féminine, parle vers 223 Hz
-    fr_FR-tom-medium   : masculine, parle vers 139 Hz (presque la hauteur des enregistrements)
-Changer VOIX ci-dessous ; chaque voix a ses réglages (REGLAGES_VOIX). Pour retélécharger :
-    python -m piper.download_voices fr_FR-tom-medium --download-dir module/modele_synthese
+    fr_FR-siwis-low    : féminine, ~218 Hz, choisie à l'oreille le 2026-11-19 (profil « fidele »)
+Autres voix déjà réglées (REGLAGES_VOIX), à retélécharger pour les essayer, puis changer VOIX :
+    fr_FR-siwis-medium : féminine, ~230 Hz
+    fr_FR-tom-medium   : masculine, ~139 Hz, assez plate
+    python -m piper.download_voices fr_FR-siwis-low --download-dir module/modele_synthese
+
+Les répliques fixes de data/SCRIPT_VOIX.md sont fabriquées avec cette même voix par
+module/repliques.py (python -m module.repliques).
 
 Effet calqué sur les répliques enregistrées du COVAS (data/son), mesurées sur les 36 fichiers :
   1. hauteur    : la voix est redécoupée période par période (PSOLA) pour aller vers
@@ -44,7 +48,7 @@ import wave
 import numpy as np
 
 DOSSIER_MODELES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "modele_synthese")
-VOIX = "fr_FR-siwis-medium"
+VOIX = "fr_FR-siwis-low"
 
 # Diction : intonation libre (noise_scale, valeur de Piper : pas de voix blasée) mais durées
 # régulières (noise_w_scale bas : pas de syllabe traînée ni hachée) ; length_scale < 1 = plus rapide
@@ -73,15 +77,16 @@ EFFET_BASE = {
 # Réglages propres à chaque voix : dose des résonances et égalisation (Hz, dB), mesurées pour que
 # la voix traitée retrouve la courbe moyenne et l'empreinte des enregistrements
 # (12 phrases du COVAS dites par Piper ; égalisation interpolée entre les points).
+_EGALISATION_SIWIS = (
+    (40, -21.5), (100, -15.5), (126, -30.0), (159, -30.0), (200, -20.0), (252, -15.5),
+    (317, -7.0), (400, 4.0), (504, 1.5), (635, -2.5), (800, -11.0), (1008, -3.0),
+    (1270, -1.0), (1600, -3.5), (2016, -3.0), (2540, -3.0), (3200, 2.0), (4032, 10.5),
+    (5080, 5.5), (6400, -5.5), (8063, -12.0), (10159, -19.0), (11000, -31.0),
+)
 REGLAGES_VOIX = {
-    "fr_FR-siwis-medium": {
-        "egalisation": (
-            (40, -21.5), (100, -15.5), (126, -30.0), (159, -30.0), (200, -20.0), (252, -15.5),
-            (317, -7.0), (400, 4.0), (504, 1.5), (635, -2.5), (800, -11.0), (1008, -3.0),
-            (1270, -1.0), (1600, -3.5), (2016, -3.0), (2540, -3.0), (3200, 2.0), (4032, 10.5),
-            (5080, 5.5), (6400, -5.5), (8063, -12.0), (10159, -19.0), (11000, -31.0),
-        ),
-    },
+    "fr_FR-siwis-medium": {"egalisation": _EGALISATION_SIWIS},
+    # siwis-low : mêmes réglages que siwis-medium, c'est ce rendu-là qui a été choisi à l'écoute
+    "fr_FR-siwis-low": {"egalisation": _EGALISATION_SIWIS},
     "fr_FR-tom-medium": {       # voix plus riche en harmoniques : résonances moins dosées
         "peigne_dose": 0.22,
         "echo_droit_gain": 0.4,
@@ -113,6 +118,8 @@ def reglages(profil=None, voix=None):
 
 def egalisation(voix=None):
     return REGLAGES_VOIX.get(voix or VOIX, {}).get("egalisation", ((40, 0.0), (20000, 0.0)))
+
+
 VOLUME_RMS = 0.05               # niveau moyen des .wav enregistrés du COVAS (~0,045)
 PAS_HAUTEUR = 0.005             # une mesure de hauteur toutes les 5 ms
 
@@ -211,7 +218,7 @@ def _resserrer(x, taux, garde_ms):
     return sortie
 
 
-def _rogner(x, taux, seuil_db=-40.0, marge_s=0.02):
+def _rogner(x, taux, seuil_db=-50.0, marge_s=0.04):
     """Retire le silence que Piper laisse avant et après chaque phrase (les phrases s'enchaînent)."""
     if not len(x):
         return x
@@ -544,13 +551,20 @@ def _ecrire_wav(chemin, x, taux):
         f.writeframes(donnees.tobytes())
 
 
-def synthetiser_fichier(texte, chemin=None, effet=True):
-    """Version bloquante : texte -> .wav. Renvoie le chemin, ou None si la synthèse est indisponible."""
+def synthetiser_audio(texte, effet=True):
+    """Version bloquante : texte -> (échantillons, taux) avec la voix et le profil réglés ci-dessus,
+    ou (None, None) si la synthèse est indisponible."""
     audio, taux = _voix_brute(texte)
     if audio is None:
+        return None, None
+    return (robotiser(audio, taux) if effet else audio), taux
+
+
+def synthetiser_fichier(texte, chemin=None, effet=True):
+    """Version bloquante : texte -> .wav. Renvoie le chemin, ou None si la synthèse est indisponible."""
+    audio, taux = synthetiser_audio(texte, effet)
+    if audio is None:
         return None
-    if effet:
-        audio = robotiser(audio, taux)
     if chemin is None:
         os.makedirs(DOSSIER_SORTIE, exist_ok=True)
         chemin = os.path.join(DOSSIER_SORTIE, f"replique-{next(_compteur) % FICHIERS_TOURNANTS}.wav")

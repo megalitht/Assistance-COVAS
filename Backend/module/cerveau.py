@@ -3,16 +3,19 @@ import json
 import os
 import random
 
+from module import sons
+
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHEMIN_BARKS = os.path.join(DOSSIER_BACKEND, "data", "barks.json")
-CHEMIN_SVP = os.path.join(DOSSIER_BACKEND, "data", "son", "Easter-egg", "SVP.wav")
+CHEMIN_SVP = os.path.join(DOSSIER_BACKEND, "data", "son", "Easter-egg", "SVP.mp3")
 
 
 def _existants(chemins):
     """Garde seulement les fichiers audio déjà enregistrés : barks.json peut ainsi lister
-    à l'avance des répliques qui ne sont pas encore prêtes (voir SCRIPT_VOIX.md)."""
-    complets = [os.path.join(DOSSIER_BACKEND, c) for c in chemins or [] if c]
-    return [c for c in complets if os.path.exists(c)]
+    à l'avance des répliques qui ne sont pas encore prêtes (voir SCRIPT_VOIX.md).
+    L'extension écrite n'importe pas : un .wav déposé à la place du .mp3 est trouvé aussi."""
+    trouves = (sons.trouver(os.path.join(DOSSIER_BACKEND, c)) for c in chemins or [] if c)
+    return [c for c in trouves if c]
 
 
 async def obtenir_chemin_audio(action: str, polite: bool = False) -> str:
@@ -21,8 +24,9 @@ async def obtenir_chemin_audio(action: str, polite: bool = False) -> str:
     Gère la politesse (30%) et les easter eggs génériques (15%).
     La réplique ne remplace jamais la commande : elle est seulement jouée avec elle.
     """
-    if polite and random.random() < 0.30 and os.path.exists(CHEMIN_SVP):
-        return CHEMIN_SVP
+    svp = sons.trouver(CHEMIN_SVP)
+    if polite and svp and random.random() < 0.30:
+        return svp
 
     try:
         with open(CHEMIN_BARKS, "r", encoding="utf-8") as f:

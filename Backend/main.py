@@ -33,6 +33,7 @@ from module import lecteur_logs as logs
 from module.lecteur_logs import DOSSIER_ED, surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
 from module.voix import generer_et_jouer_voix
 from module import synthese
+from module import sons
 from module import conversation
 from module import serveur_ws
 from module.serveur_ws import demarrer_serveur_web
@@ -183,7 +184,7 @@ class CovasBackend:
         while True:
             texte_a_dire = await self.tts_queue.get()
             nom = texte_a_dire
-            if os.path.isfile(nom):                       # chemin d'un .wav : on garde le nom
+            if os.path.isfile(nom):                       # chemin d'un son : on garde le nom
                 nom = os.path.splitext(os.path.basename(nom))[0]
             t.ligne("COVAS", nom, t.CYAN)
 
@@ -266,10 +267,10 @@ class CovasBackend:
 
     async def dire(self, *cles, poli=False):
         """Joue la première réplique disponible parmi les clés de barks.json données.
-        Accepte aussi le chemin d'un .wav (réplique fabriquée par la synthèse vocale)."""
+        Accepte aussi le chemin d'un son (.wav fabriqué par la synthèse vocale, .mp3...)."""
         for cle in cles:
-            if cle and cle.lower().endswith(".wav") and os.path.isfile(cle):
-                await self.tts_queue.put(cle)
+            if sons.est_son(cle) and sons.trouver(cle):
+                await self.tts_queue.put(sons.trouver(cle))
                 return True
             chemin = await obtenir_chemin_audio(cle, polite=poli)
             if chemin:

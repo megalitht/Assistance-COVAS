@@ -1,0 +1,607 @@
+{
+  "data/son/Alertes/Attaque1.mp3": {
+    "texte": "Nous sommes attaqués !",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/Attaque2.mp3": {
+    "texte": "Tirs ennemis, commandant !",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/BouclierRetabli1.mp3": {
+    "texte": "Boucliers rétablis.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/BouclierRetabli2.mp3": {
+    "texte": "Les boucliers sont de nouveau en ligne, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/Carburant1.mp3": {
+    "texte": "Niveau de carburant bas.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/Carburant2.mp3": {
+    "texte": "Commandant, il faut faire le plein rapidement.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/Interdiction1.mp3": {
+    "texte": "Interdiction en cours !",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/Interdiction2.mp3": {
+    "texte": "On nous arrache de la supercroisière, commandant !",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/Kill1.mp3": {
+    "texte": "Cible détruite.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/Kill2.mp3": {
+    "texte": "Ennemi éliminé. Joli tir, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/Kill3.mp3": {
+    "texte": "Une menace de moins.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/Surchauffe1.mp3": {
+    "texte": "Alerte, surchauffe !",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/Surchauffe2.mp3": {
+    "texte": "Température critique, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Alertes/VerriereBrisee.mp3": {
+    "texte": "Verrière brisée ! Oxygène de secours activé.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/Alignement.mp3": {
+    "texte": "Alignez-vous sur la cible, commandant. Le saut partira tout seul.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/Arrivee.mp3": {
+    "texte": "Destination atteinte. À vous les commandes.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/Assistance.mp3": {
+    "texte": "Activez l'assistance de supercroisière, commandant. Je m'occupe du reste.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/Danger.mp3": {
+    "texte": "Menace détectée. Autopilote coupé, à vous les commandes !",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/ReactionBouclier.mp3": {
+    "texte": "Boucliers tombés ! Énergie aux systèmes.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/ReactionInterdiction.mp3": {
+    "texte": "Interdiction ! Je renforce les boucliers.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/ReactionSurchauffe.mp3": {
+    "texte": "Surchauffe ! Je largue une puce thermique.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/ReactionsActives.mp3": {
+    "texte": "Réactions automatiques activées. Je veille, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/ReactionsCoupees.mp3": {
+    "texte": "Réactions automatiques désactivées.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/Route1.mp3": {
+    "texte": "Route verrouillée. J'enchaîne les sauts, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/Station1.mp3": {
+    "texte": "Autopilote engagé. Cap sur la destination.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/Station2.mp3": {
+    "texte": "Je prends la suite, commandant. Direction la station.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/Stop1.mp3": {
+    "texte": "Programme interrompu.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/Stop2.mp3": {
+    "texte": "J'arrête tout, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Autopilote/StopRien.mp3": {
+    "texte": "Aucun programme en cours, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Armement1.mp3": {
+    "texte": "Points d'emport.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Armement2.mp3": {
+    "texte": "Armement, à vos ordres.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/ArmementDejaRentre.mp3": {
+    "texte": "Les armes sont déjà rentrées.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/ArmementDejaSorti.mp3": {
+    "texte": "Les armes sont déjà déployées, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Boost1.mp3": {
+    "texte": "Accélération !",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Boost2.mp3": {
+    "texte": "Postcombustion.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/CarteGalaxie.mp3": {
+    "texte": "Carte de la galaxie.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/CarteSysteme.mp3": {
+    "texte": "Carte du système.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/EnergieArmes.mp3": {
+    "texte": "Énergie aux armes.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/EnergieSystemes.mp3": {
+    "texte": "Énergie aux systèmes.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Hud1.mp3": {
+    "texte": "Changement de mode du cockpit.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Hud2.mp3": {
+    "texte": "Affichage basculé, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/HudDejaAnalyse.mp3": {
+    "texte": "Le cockpit est déjà en mode analyse.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/HudDejaCombat.mp3": {
+    "texte": "Le cockpit est déjà en mode combat.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Lock1.mp3": {
+    "texte": "Cible verrouillée.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Lock2.mp3": {
+    "texte": "Verrouillage.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/NVG1.mp3": {
+    "texte": "Vision nocturne.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/NVG2.mp3": {
+    "texte": "Je bascule la vision nocturne, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/NVGDejaActive.mp3": {
+    "texte": "La vision nocturne est déjà active, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/NVGDejaCoupee.mp3": {
+    "texte": "La vision nocturne est déjà coupée.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Phares1.mp3": {
+    "texte": "Phares.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Phares2.mp3": {
+    "texte": "Je m'occupe des phares, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/PharesDejaAllumes.mp3": {
+    "texte": "Les phares sont déjà allumés.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/PharesDejaEteints.mp3": {
+    "texte": "Les phares sont déjà éteints.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/PleinGaz1.mp3": {
+    "texte": "Poussée à fond !",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/PleinGaz2.mp3": {
+    "texte": "Poussée maximale, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Reset1.mp3": {
+    "texte": "Énergie équilibrée.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Reset2.mp3": {
+    "texte": "Répartition par défaut, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Silencieux1.mp3": {
+    "texte": "Mode silencieux.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/Silencieux2.mp3": {
+    "texte": "Je bascule le mode silencieux. Surveillez la chaleur, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/SilencieuxDejaActif.mp3": {
+    "texte": "Le mode silencieux est déjà actif.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/SilencieuxDejaCoupe.mp3": {
+    "texte": "Le mode silencieux est déjà coupé.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/VitesseZero1.mp3": {
+    "texte": "Vitesse zéro.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Cockpit/VitesseZero2.mp3": {
+    "texte": "Moteurs à l'arrêt, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/Chasseur1.mp3": {
+    "texte": "Ordre transmis au chasseur.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/Chasseur2.mp3": {
+    "texte": "Le pilote a reçu vos ordres, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/CibleHostile1.mp3": {
+    "texte": "Ennemi suivant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/CibleHostile2.mp3": {
+    "texte": "Cible suivante.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/CibleMenace1.mp3": {
+    "texte": "Je cible la menace principale.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/CibleMenace2.mp3": {
+    "texte": "Agresseur verrouillé.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/Drone1.mp3": {
+    "texte": "Drone lancé.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/Drone2.mp3": {
+    "texte": "Lancement du drone, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/Fuite1.mp3": {
+    "texte": "On dégage ! Énergie aux boucliers, je charge le FSD.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/Fuite2.mp3": {
+    "texte": "Manœuvre d'évasion. Accrochez-vous, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/FuiteReussie1.mp3": {
+    "texte": "Nous sommes hors de portée, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/FuiteReussie2.mp3": {
+    "texte": "Évasion réussie.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/Leurres1.mp3": {
+    "texte": "Leurres lancés.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/Leurres2.mp3": {
+    "texte": "Contre-mesures.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/PuceThermique1.mp3": {
+    "texte": "Puce thermique larguée.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/PuceThermique2.mp3": {
+    "texte": "Purge de chaleur.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/RapportAvarie.mp3": {
+    "texte": "Rapport d'avarie à l'écran, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/SousSysteme1.mp3": {
+    "texte": "Je cherche le sous-système.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Combat/SousSysteme2.mp3": {
+    "texte": "Ciblage du module, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/Amarre.mp3": {
+    "texte": "Impossible, le vaisseau est amarré.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/CarburantVoyage.mp3": {
+    "texte": "Carburant insuffisant pour continuer, commandant. Voyage suspendu.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/DroneNonRegle.mp3": {
+    "texte": "Je ne sais pas dans quel groupe de tir se trouve ce drone, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/HorsVaisseau.mp3": {
+    "texte": "Vous n'êtes pas aux commandes du vaisseau, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/Incomprise.mp3": {
+    "texte": "Je n'ai pas compris la commande, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/JeuAbsent.mp3": {
+    "texte": "Je ne trouve pas la fenêtre du jeu, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/MacroEchec1.mp3": {
+    "texte": "La manœuvre a échoué, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/MacroEchec2.mp3": {
+    "texte": "Le vaisseau n'a pas répondu.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/Masse.mp3": {
+    "texte": "Masse verrouillée. Éloignez-vous avant d'activer le FSD.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/OrdreInconnu.mp3": {
+    "texte": "Je n'ai pas compris l'ordre, commandant. Précisez.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/PasAmarre.mp3": {
+    "texte": "Il faut d'abord être amarré à une station, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/PasDeChasseur.mp3": {
+    "texte": "Aucun chasseur n'est déployé, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/PasDeCible.mp3": {
+    "texte": "Aucune cible verrouillée, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/PasDeDestination.mp3": {
+    "texte": "Aucune destination n'est ciblée, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/PasDeModule.mp3": {
+    "texte": "Ce module n'est pas installé sur le vaisseau.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/PasDeServices.mp3": {
+    "texte": "Cette station ne propose pas ce service.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/Pose.mp3": {
+    "texte": "Impossible, le vaisseau est posé.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/ProgrammeEnCours.mp3": {
+    "texte": "Un programme est déjà en cours. Dites stop pour l'annuler.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/SouteDejaFermee.mp3": {
+    "texte": "L'écope de soute est déjà fermée.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/SouteDejaOuverte.mp3": {
+    "texte": "L'écope de soute est déjà ouverte.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/Supercroisiere.mp3": {
+    "texte": "Impossible en supercroisière, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/ToucheAbsente.mp3": {
+    "texte": "Aucune touche n'est assignée à cette commande, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/TrainDejaRentre.mp3": {
+    "texte": "Le train est déjà rentré.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Refus/TrainDejaSorti.mp3": {
+    "texte": "Le train est déjà sorti, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/Apontage1.mp3": {
+    "texte": "Je demande l'autorisation d'apponter.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/Apontage2.mp3": {
+    "texte": "Demande d'appontage envoyée à la station.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/ApontageAccorde1.mp3": {
+    "texte": "Appontage autorisé, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/ApontageAccorde2.mp3": {
+    "texte": "La station nous attend. Plateforme attribuée.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/ApontageExpire.mp3": {
+    "texte": "Notre autorisation d'appontage a expiré.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/ApontageRefuse.mp3": {
+    "texte": "La station refuse l'appontage, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/Decollage1.mp3": {
+    "texte": "Procédure de décollage engagée.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/Decollage2.mp3": {
+    "texte": "Je libère les pinces, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/DecollageAVous.mp3": {
+    "texte": "Train rentré. À vous les commandes pour la sortie.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/DecollageDegage1.mp3": {
+    "texte": "Dégagé de la station.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/DecollageDegage2.mp3": {
+    "texte": "Nous sommes hors de la zone de la station. Bon vol, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/RavitaillementInutile.mp3": {
+    "texte": "Réservoir plein et coque intacte. Rien à faire, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/RavitaillementTermine1.mp3": {
+    "texte": "Ravitaillement terminé, commandant.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/RavitaillementTermine2.mp3": {
+    "texte": "Le vaisseau est prêt à repartir.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  },
+  "data/son/Station/Services.mp3": {
+    "texte": "Services de la station.",
+    "voix": "fr_FR-siwis-low",
+    "profil": "fidele"
+  }
+}

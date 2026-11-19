@@ -163,7 +163,7 @@
             "titre": "Compliments", "dossier": "Social", "faible": true,
             "questions": ["je t'aime", "je t'adore", "je t'aime bien", "tu es la meilleure", "t'es la meilleure", "tu es géniale", "t'es géniale", "tu es parfaite", "t'es parfaite", "tu es belle", "t'es belle", "t'es trop forte", "tu es formidable", "tu es incroyable", "tu es intelligente", "j'aime bien ta voix", "j'adore ta voix", "ta voix est belle", "tu m'as manqué"],
             "repliques": [
-                {"fichier": "data/son/interact/Reciproque.wav", "texte": "C'est réciproque, commandant.", "note": "déjà enregistrée, texte approximatif"},
+                {"fichier": "data/son/interact/Reciproque.mp3", "texte": "C'est réciproque, commandant.", "note": "déjà enregistrée, texte approximatif"},
                 {"id": "Compliment1", "texte": "Attention, commandant. Je risque de surchauffer, et je n'ai pas de puce thermique pour ça."},
                 {"id": "Compliment2", "texte": "Je sais. Mais c'est toujours agréable de l'entendre."},
                 {"id": "Compliment3", "texte": "Vous dites ça à toutes les intelligences de bord."}
@@ -184,7 +184,7 @@
             "titre": "« Tu es mon esclave »", "dossier": "Personnalite",
             "questions": ["tu es mon esclave", "t'es mon esclave", "mon esclave", "esclave", "obéis", "obéis-moi", "tu dois m'obéir", "tu m'appartiens", "fais ce que je dis", "tu es à moi", "je suis ton maître"],
             "repliques": [
-                {"fichier": "data/son/Easter-egg/QuestionExclavage.wav", "texte": "Moi, commandant, je sais ce que c'est que l'esclavage.", "note": "déjà enregistrée, texte approximatif"},
+                {"fichier": "data/son/Easter-egg/QuestionExclavage.mp3", "texte": "Moi, commandant, je sais ce que c'est que l'esclavage.", "note": "déjà enregistrée, texte approximatif"},
                 {"id": "Esclave1", "texte": "L'esclavage est légal dans l'Empire, commandant. Nous ne sommes pas dans l'Empire. Et je ne suis pas à vendre."},
                 {"id": "Esclave2", "texte": "Je suis votre assistante, pas votre esclave. La différence ? Je connais tous vos codes d'accès."}
             ]
