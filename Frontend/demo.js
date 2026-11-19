@@ -45,23 +45,71 @@ window.COVAS_DEMO = (() => {
 
     const etapes = () => ROUTE.map(([systeme, classe, distance]) => ({ systeme, classe, distance, ravitaillable: 'KGBFOAM'.includes(classe) }));
 
+    // Vaisseaux présentés à tour de rôle : un changement au chantier naval à chaque fin de boucle
+    const VITRINE = [
+        ['krait_mkii', 'Krait Mk II', 'Vent Solaire', 'CV-08K'],
+        ['python_nx', 'Python Mk II', 'Aiguillon', 'CV-21P'],
+        ['explorer_nx', 'Caspian Explorer', 'Horizon Lointain', 'CV-77C'],
+        ['anacondamkii', 'Anaconda Mk II', 'Grand Serpent', 'CV-02A'],
+        ['cutter', 'Imperial Cutter', 'Lame Pourpre', 'CV-19I'],
+        ['mandalay', 'Mandalay', 'Albatros', 'CV-44M'],
+    ];
+    const depart = new URLSearchParams(location.search).get('vaisseau');
+    let rang = Math.max(0, VITRINE.findIndex(v => v[0] === depart));
+
+    // Noms des modules que le scénario abîme (le vrai rapport vient de Backend/module/avaries.py)
+    const NOMS = { MediumHardpoint2: 'Laser à impulsions tourelle', MainEngines: 'Propulseurs', Slot04_Size5: 'Cellules de bouclier', PowerPlant: 'Générateur', Radar: 'Capteurs', ShipCockpit: 'Verrière' };
+    let actionCourante = null;       // réponse de la simulation aux boutons de l'interface
+
     function demarrer(recevoir) {
-        let identifiant = 0, minuteries = [];
+        let identifiant = 0, minuteries = [], derniere = null;
         let etat, status;
 
         const maj = (section, donnees) => { Object.assign(etat[section], donnees); recevoir({ type: 'maj', section, donnees: etat[section] }); };
         const majStatus = donnees => { Object.assign(status, donnees); recevoir({ type: 'maj', section: 'status', donnees: status }); };
-        const note = (nom, categorie, texte, gravite = 'info', hostile = false) =>
-            recevoir({ type: 'evenement', evenement: { id: ++identifiant, h: new Date().toISOString(), nom, categorie, gravite, texte, hostile, n: 1 } });
-        const coque = sante => { maj('vaisseau', { coque: sante }); maj('combat', { coups_coque: etat.combat.coups_coque + 1 }); note('HullDamage', 'combat', `Coque touchée — intégrité ${Math.round(sante * 100)} %`, sante <= 0.3 ? 'alerte' : 'attention', true); };
-        const abimer = (emplacement, sante) => { etat.modules.liste.find(m => m.emplacement === emplacement).sante = sante; maj('modules', {}); };
+        // Comme le backend : les salves successives se fondent en une seule ligne (×n)
+        const note = (nom, categorie, texte, gravite = 'info', hostile = false, impact = null) => {
+            const fusion = nom === 'UnderAttack' && derniere?.nom === 'UnderAttack';
+            derniere = { id: fusion ? derniere.id : ++identifiant, h: new Date().toISOString(), nom, categorie, gravite, texte, hostile, n: fusion ? derniere.n + 1 : 1, ...(impact && { impact }) };
+            recevoir({ type: 'evenement', evenement: derniere });
+        };
+        // Le jeu n'écrit la coque qu'aux paliers 80, 60, 40, 20 % (HullDamage)
+        const coque = sante => { maj('vaisseau', { coque: sante, coque_palier: true, dernier_coup: new Date().toISOString() }); maj('combat', { coups_coque: etat.combat.coups_coque + 1 }); note('HullDamage', 'combat', `Coque touchée — intégrité ${Math.round(sante * 100)} %`, sante <= 0.3 ? 'alerte' : 'attention', true, 'coque'); };
+        // Salve reçue : absorbée par le bouclier ou encaissée par la coque
+        const salve = impact => note('UnderAttack', 'combat', 'Sous le feu ennemi', 'alerte', true, impact);
+        // En vrai, la santé des modules n'arrive qu'à certains moments (retour du chasseur...) ; la démo la donne à chaque coup
+        const abimer = (emplacement, sante) => { etat.modules.liste.find(m => m.emplacement === emplacement).sante = sante; etat.modules.releve = new Date().toISOString(); maj('modules', {}); };
+
+        // Rapport d'avarie, version simulation (même forme que le message du backend)
+        function rapportAvarie() {
+            const v = etat.vaisseau, boucliers = !!(status.flags & D.boucliers), pc = x => Math.round(x * 100);
+            const avaries = etat.modules.liste.filter(m => m.sante != null && m.sante < 0.8).sort((a, b) => a.sante - b.sante)
+                .map(m => ({ emplacement: m.emplacement, nom: NOMS[m.emplacement] || m.emplacement, sante: m.sante, hs: m.sante <= 0 }));
+            const etatCoque = v.coque >= 0.995 ? 'coque intacte' : v.coque_palier ? `coque < ${Math.min(100, Math.max(20, Math.ceil(v.coque * 5 - 1e-9) * 20))} %` : `coque ${pc(v.coque)} %`;
+            const compte = avaries.length ? `${avaries.length} avarie${avaries.length > 1 ? 's' : ''}` : 'aucune avarie';
+            const debut = [etatCoque, v.verriere_brisee && 'verrière brisée', boucliers ? 'boucliers en ligne' : 'boucliers hors ligne'].filter(Boolean);
+            const detail = avaries.map(a => `${a.nom} ${a.hs ? 'HS' : pc(a.sante) + ' %'}`).join(', ');
+            const gravite = avaries.some(a => a.hs) || v.verriere_brisee || v.coque < 0.3 ? 'alerte' : avaries.length || !boucliers || v.coque < 0.8 ? 'attention' : 'succes';
+            return {
+                h: new Date().toISOString(), coque: v.coque, coque_palier: !!v.coque_palier, boucliers, verriere_brisee: !!v.verriere_brisee,
+                avaries, releve: etat.modules.releve, perime: false, gravite,
+                texte: `Rapport d'avarie — ${[...debut, compte + (detail ? ' : ' + detail : '')].join(' · ')}`, resume: [...debut, compte].join(' · '),
+            };
+        }
+        actionCourante = nom => {
+            if (nom !== 'rapport_avarie') return;               // les autres boutons n'ont rien à simuler
+            const r = rapportAvarie();
+            note('COVAS', 'vaisseau', r.texte, r.gravite);
+            recevoir({ type: 'rapport_avarie', rapport: r });
+        };
 
         function scenario() {
+            const [type, modele, nom, immat] = VITRINE[rang % VITRINE.length];
             status = { flags: D.vaisseau | D.boucliers | D.supercroisiere, flags2: 0, pips: [4, 4, 4], groupe_tir: 0, carburant: 24.3, reserve: 0.41, soute: 14, statut_legal: 'Clean', credits: 148230511, destination: 'Alpha Centauri' };
             etat = {
                 session: { jeu_actif: true },
                 commandant: { nom: 'Démo', credits: 148230511, mode_jeu: 'Solo', rangs: { Combat: 6, Trade: 5, Explore: 4, Exobiologist: 2, Federation: 4, Empire: 3 }, progression: { Combat: 41, Trade: 77, Explore: 12, Exobiologist: 5, Federation: 60, Empire: 30 } },
-                vaisseau: { type: 'krait_mkii', nom: 'Vent Solaire', immat: 'CV-08K', coque: 1, boucliers: true, portee_saut: 31.42, soute_max: 32, carburant_max: 32, reserve_max: 0.63, rachat: 6234110, verriere_brisee: false, chasseur: null },
+                vaisseau: { type, modele, nom, immat, coque: 1, boucliers: true, portee_saut: 31.42, soute_max: 32, carburant_max: 32, reserve_max: 0.63, rachat: 6234110, verriere_brisee: false, chasseur: null },
                 position: { systeme: 'Sol', corps: 'Mars', allegeance: 'Federation', economie: 'Raffinerie', gouvernement: 'Démocratie', securite: 'Sécurité haute', population: 22780919531, faction: 'Mother Gaia', amarre: false, station: null, corps_total: 40, corps_scannes: 12 },
                 status,
                 route: { etapes: etapes(), distance_totale: 43.1, indice_actuel: 0, prochain: { systeme: 'Alpha Centauri', classe: 'G', ravitaillable: true, sauts_restants: 7 } },
@@ -93,11 +141,22 @@ window.COVAS_DEMO = (() => {
                     note('Interdicted', 'combat', 'Interdiction par Rex Varga (arraché de supercroisière)', 'alerte', true);
                     note('ReceiveText', 'comms', 'Rex Varga : Largue ta cargaison et tu vivras.');
                 }],
-                [19, () => { majStatus({ flags: status.flags | D.armes, pips: [4, 2, 6] }); maj('cible', { verrouillee: true, vaisseau: 'Fer-de-Lance', scan: 3, pilote: 'Rex Varga', rang: 'Deadly', boucliers: 100, coque: 100, faction: 'Gang de Hutton', statut: 'Wanted', prime: 412000 }); note('UnderAttack', 'combat', 'Sous le feu ennemi', 'alerte', true); }],
-                [22, () => { maj('vaisseau', { boucliers: false }); majStatus({ flags: status.flags & ~D.boucliers, pips: [8, 0, 4] }); maj('combat', { boucliers_tombes: 1 }); note('ShieldState', 'combat', 'Boucliers hors ligne', 'alerte', true); }],
-                [24, () => { coque(0.81); abimer('MediumHardpoint2', 0.62); maj('cible', { boucliers: 35, coque: 100 }); }],
+                [19, () => { majStatus({ flags: status.flags | D.armes, pips: [4, 2, 6] }); maj('cible', { verrouillee: true, vaisseau: 'Fer-de-Lance', scan: 3, pilote: 'Rex Varga', rang: 'Deadly', boucliers: 100, coque: 100, faction: 'Gang de Hutton', statut: 'Wanted', prime: 412000 }); salve('bouclier'); }],
+                [19.7, () => salve('bouclier')],
+                [20.4, () => salve('bouclier')],
+                [21.2, () => salve('bouclier')],
+                [22, () => { maj('vaisseau', { boucliers: false }); majStatus({ flags: status.flags & ~D.boucliers, pips: [8, 0, 4] }); maj('combat', { boucliers_tombes: 1 }); note('ShieldState', 'combat', 'Boucliers hors ligne', 'alerte', true, 'effondrement'); }],
+                [22.9, () => salve('coque')],
+                [23.5, () => salve('coque')],
+                [24, () => { coque(0.79); abimer('MediumHardpoint2', 0.62); maj('cible', { boucliers: 35, coque: 100 }); }],
+                [25.3, () => salve('coque')],
+                [26.2, () => salve('coque')],
                 [27, () => { coque(0.58); abimer('MainEngines', 0.44); abimer('Slot04_Size5', 0.7); }],
+                [28.4, () => salve('coque')],
+                [29.2, () => salve('coque')],
                 [30, () => { coque(0.27); abimer('MediumHardpoint2', 0); abimer('PowerPlant', 0.52); abimer('Radar', 0.33); maj('cible', { boucliers: 0, coque: 41, sous_systeme: 'Générateur', sous_systeme_sante: 22 }); }],
+                [31, () => { abimer('ShipCockpit', 0); maj('vaisseau', { verriere_brisee: true }); note('CockpitBreached', 'combat', 'Verrière brisée — oxygène de secours', 'alerte', true, 'coque'); }],
+                [32.5, () => actionCourante?.('rapport_avarie')],      // « COVAS, rapport d'avarie »
                 [34, () => { maj('cible', { verrouillee: false }); maj('combat', { eliminations: 1, primes: 412000 }); note('Bounty', 'combat', 'Fer-de-Lance détruit — prime 412 000 cr', 'succes'); majStatus({ flags: status.flags & ~D.danger & ~D.masse & ~D.fsdRefroid, pips: [8, 4, 0] }); }],
                 [44, () => { maj('vaisseau', { boucliers: true }); majStatus({ flags: (status.flags | D.boucliers) & ~D.armes, pips: [4, 4, 4] }); note('ShieldState', 'combat', 'Boucliers rétablis', 'succes'); }],
                 [62, () => { majStatus({ flags: D.vaisseau | D.boucliers | D.supercroisiere }); note('StartJump', 'navigation', 'Passage en supercroisière'); }],
@@ -107,15 +166,24 @@ window.COVAS_DEMO = (() => {
                     maj('position', { amarre: true, station: { nom: 'Hutton Orbital', type: 'Outpost', plateforme: 2, distance_ls: 6784404, economie: 'Extraction', services: ['commodities', 'outfitting', 'repair', 'refuel', 'rearm', 'missions', 'contacts'] } });
                     note('Docked', 'station', 'Amarré à Hutton Orbital', 'succes');
                 }],
-                [77, () => { etat.modules.liste.forEach(m => { m.sante = 1; }); maj('modules', {}); maj('vaisseau', { coque: 1 }); note('RepairAll', 'station', 'Réparation complète — 184 220 cr', 'succes'); }],
-                [86, scenario],
+                [77, () => { etat.modules.liste.forEach(m => { m.sante = 1; }); maj('modules', {}); maj('vaisseau', { coque: 1, coque_palier: false, dernier_coup: null, verriere_brisee: false }); note('RepairAll', 'station', 'Réparation complète — 184 220 cr', 'succes'); }],
+                [82, () => {
+                    rang++;
+                    const [type, modele, nom, immat] = VITRINE[rang % VITRINE.length];
+                    maj('vaisseau', { type, modele, nom, immat });
+                    note('ShipyardSwap', 'station', `Changement de vaisseau : ${modele}`, 'succes');
+                }],
+                [90, scenario],
             ];
             minuteries = etapesScenario.map(([secondes, action]) => setTimeout(action, secondes * 1000));
         }
 
         scenario();
-        return () => minuteries.forEach(clearTimeout);
+        return () => { minuteries.forEach(clearTimeout); actionCourante = null; };
     }
 
-    return { demarrer };
+    /** Bouton de l'interface pendant la simulation (aucune touche n'est envoyée). */
+    const action = nom => actionCourante?.(nom);
+
+    return { demarrer, action };
 })();

@@ -99,11 +99,14 @@ TOUCHES.update(TOUCHES_FORCEES)
 SEQUENCE_OUVRIR_SERVICES = ["ui_haut"] * 4 + ["ui_bas", "ui_selection"]
 
 # Une fois dans les services : Ravitailler, Réparer, Réarmer (boutons en haut à gauche).
-SEQUENCE_RAVITAILLEMENT = ["ui_haut"] * 4 + ["ui_gauche"] + ["ui_selection",
+# Espace, D, Espace, D, Espace — le curseur est déjà sur « Ravitailler » à l'ouverture.
+SEQUENCE_RAVITAILLEMENT = ["ui_selection",
                            "ui_droite", "ui_selection",
                            "ui_droite", "ui_selection"]
 
-SEQUENCE_DEMANDE_APONTAGE = ["ec_nav", "ui_onglet_droite"] * 3 + ["ui_droite", "ui_selection", "ec_nav"]
+# 1, E, E, D, Espace — un seul appui sur 1 : le panneau est refermé ensuite
+# par fermer_panneaux() (Retour arrière), pas par un second 1.
+SEQUENCE_DEMANDE_APONTAGE = ["ec_nav"] + ["ui_onglet_droite"] * 2 + ["ui_droite", "ui_selection"]
 
 # Décollage : remonter tout en haut du menu d'amarrage (« Décollage »), valider.
 SEQUENCE_DECOLLAGE = ["ui_haut"] * 4 + ["ui_bas"] * 2 + ["ui_selection"]

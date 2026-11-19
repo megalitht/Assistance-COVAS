@@ -30,6 +30,7 @@ from module.cerveau import obtenir_chemin_audio
 from module import touches
 from module.lecteur_logs import DOSSIER_ED, surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
 from module.voix import generer_et_jouer_voix
+from module import synthese
 from module.serveur_ws import demarrer_serveur_web
 from module.comprehension import trouver_action, contient_reveil, est_reveil_seul, vocabulaire_pour_whisper
 t.ok("Modules de bord chargés.", t.CYAN)
@@ -169,8 +170,12 @@ class CovasBackend:
             self.tts_queue.task_done()
 
     async def dire(self, *cles, poli=False):
-        """Joue la première réplique disponible parmi les clés de barks.json données."""
+        """Joue la première réplique disponible parmi les clés de barks.json données.
+        Accepte aussi le chemin d'un .wav (réplique fabriquée par la synthèse vocale)."""
         for cle in cles:
+            if cle and cle.lower().endswith(".wav") and os.path.isfile(cle):
+                await self.tts_queue.put(cle)
+                return True
             chemin = await obtenir_chemin_audio(cle, polite=poli)
             if chemin:
                 await self.tts_queue.put(chemin)
@@ -199,11 +204,11 @@ class CovasBackend:
         tache = asyncio.create_task(coroutine, name=nom)
         self.taches.add(tache)
 
-        def fin_de_tache(t):
-            self.taches.discard(t)
-            if not t.cancelled() and t.exception():
+        def fin_de_tache(finie):
+            self.taches.discard(finie)
+            if not finie.cancelled() and finie.exception():
                 t.erreur("ERREUR", f"La tâche « {nom} » s'est arrêtée :")
-                traceback.print_exception(t.exception())
+                traceback.print_exception(finie.exception())
 
         tache.add_done_callback(fin_de_tache)
         return tache
@@ -247,6 +252,8 @@ class CovasBackend:
         self.lancer_tache(surveiller_status_json(), "Status.json")
         self.lancer_tache(surveiller_fichiers_auxiliaires(), "fichiers auxiliaires")
         self.lancer_tache(surveiller_reactions(self.dire), "réactions automatiques")
+        # Voix de synthèse (rapport d'avarie) chargée d'avance : le premier rapport part sans attendre
+        self.lancer_tache(asyncio.to_thread(synthese.charger), "synthèse vocale")
 
         await self.verifier_systemes(serveur_web)
         await asyncio.sleep(0.3)        # laisse les modules annoncer leur démarrage

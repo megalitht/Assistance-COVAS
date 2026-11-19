@@ -25,6 +25,7 @@ from collections import deque
 from datetime import datetime, timezone
 
 from module import edsm
+from module.avaries import nommer
 from module.serveur_ws import definir_instantane, envoyer_donnees_web
 
 # --- CHEMINS D'ACCÈS ---
@@ -47,8 +48,10 @@ DELAI_MEME_SON = 8               # secondes avant de rejouer le même fichier au
 TAILLE_HISTORIQUE = 200          # lignes de journal de bord gardées en mémoire
 
 # Drapeaux de Status.json utilisés ici (la liste complète est décodée par l'interface)
+DRAPEAU_BOUCLIERS = 1 << 3
 DRAPEAU_CARBURANT_BAS = 1 << 19
 DRAPEAU_SURCHAUFFE = 1 << 20
+DRAPEAU_DANS_LE_VAISSEAU = 1 << 24
 
 CLASSES_RAVITAILLABLES = set("KGBFOAM")
 EMPLACEMENTS_COSMETIQUES = ("paintjob", "decal", "shipname", "shipid", "shipkit", "bobble",
@@ -79,7 +82,10 @@ def _reinitialiser_etat():
         "session": {"jeu_actif": False, "journal": None, "version": None},
         "commandant": {"nom": None, "credits": None, "mode_jeu": None,
                        "rangs": {}, "progression": {}},
+        # coque_palier : la coque vient d'un HullDamage (écrit seulement à 80, 60, 40, 20 %) ;
+        # dernier_coup : horodatage du dernier coup reçu sur la coque (relevé des modules dépassé ?)
         "vaisseau": {"type": None, "modele": None, "nom": None, "immat": None, "coque": None,
+                     "coque_palier": False, "dernier_coup": None,
                      "boucliers": None, "portee_saut": None, "soute_max": None,
                      "carburant_max": None, "reserve_max": None, "rachat": None, "masse": None,
                      "verriere_brisee": False, "chasseur": None},
@@ -116,11 +122,11 @@ def ecouter_evenements(fonction):
     return lambda: _ecouteurs.discard(fonction)
 
 
-async def annoncer(texte, gravite="info"):
+async def annoncer(texte, gravite="info", categorie="covas"):
     """Message du COVAS lui-même, affiché dans le journal de bord de l'interface."""
     ligne = {"id": next(_identifiants),
              "h": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-             "nom": "COVAS", "categorie": "covas", "gravite": gravite, "texte": texte,
+             "nom": "COVAS", "categorie": categorie, "gravite": gravite, "texte": texte,
              "hostile": False, "n": 1}
     HISTORIQUE.append(ligne)
     print(f"[COVAS] {texte}")
@@ -141,16 +147,20 @@ def _touche(*sections):
     _lot["sections"].update(sections)
 
 
-def _note(e, categorie, texte, gravite="info", hostile=False, fusion=False):
+def _note(e, categorie, texte, gravite="info", hostile=False, fusion=False, impact=None):
     """Ajoute une ligne au journal de bord de l'interface.
 
     gravite : info | succes | attention | alerte
     hostile : True = l'interface bascule en vue combat
     fusion  : True = remplace la ligne précédente si c'est le même événement (compteur ×n)
+    impact  : coup reçu par le vaisseau, montré sur l'hologramme :
+              "bouclier" (absorbé), "effondrement" (boucliers tombés) ou "coque"
     """
     ligne = {"id": next(_identifiants), "h": e.get("timestamp"), "nom": e.get("event"),
              "categorie": categorie, "gravite": gravite, "texte": texte,
              "hostile": hostile, "n": 1}
+    if impact:
+        ligne["impact"] = impact
     if fusion and HISTORIQUE and HISTORIQUE[-1]["nom"] == ligne["nom"]:
         precedente = HISTORIQUE.pop()
         ligne["id"], ligne["n"] = precedente["id"], precedente["n"] + 1
@@ -300,7 +310,7 @@ def _equipement(e):
     carburant = e.get("FuelCapacity") or {}
     ETAT["vaisseau"].update(
         type=e.get("Ship"), nom=e.get("ShipName"), immat=e.get("ShipIdent"),
-        coque=e.get("HullHealth"), portee_saut=e.get("MaxJumpRange"),
+        coque=e.get("HullHealth"), coque_palier=False, portee_saut=e.get("MaxJumpRange"),
         soute_max=e.get("CargoCapacity"), carburant_max=carburant.get("Main"),
         reserve_max=carburant.get("Reserve"), rachat=e.get("Rebuy"), masse=e.get("UnladenMass"))
     liste = []
@@ -330,18 +340,26 @@ def _modules_par_objet(nom_objet):
     return [m for m in ETAT["modules"]["liste"] if m["objet"] == cle]
 
 
+def _coup_sur_la_coque(e):
+    """Retient l'heure du coup : un relevé des modules plus ancien n'est plus fiable."""
+    ETAT["vaisseau"]["dernier_coup"] = e.get("timestamp")
+    _touche("vaisseau")
+
+
 @_sur("HullDamage")
 def _degats_coque(e):
+    # Écrit seulement au passage des paliers 80, 60, 40 et 20 % (pas à chaque coup)
     sante = e.get("Health", 1.0)
     if e.get("Fighter"):
         _note(e, "combat", f"Chasseur touché — coque {_pourcent(sante)}", "attention", hostile=True)
         return
-    ETAT["vaisseau"]["coque"] = sante
+    ETAT["vaisseau"].update(coque=sante, coque_palier=True)
     ETAT["combat"]["coups_coque"] += 1
+    _coup_sur_la_coque(e)
     _touche("vaisseau", "combat")
     critique = sante <= 0.30
     _note(e, "combat", f"Coque touchée — intégrité {_pourcent(sante)}",
-          "alerte" if critique else "attention", hostile=True)
+          "alerte" if critique else "attention", hostile=True, impact="coque")
     _parle("alerte_blindage" if critique else "alerte_degats")
 
 
@@ -356,15 +374,31 @@ def _etat_boucliers(e):
     else:
         ETAT["combat"]["boucliers_tombes"] += 1
         _touche("combat")
-        _note(e, "combat", "Boucliers hors ligne", "alerte", hostile=True)
+        _note(e, "combat", "Boucliers hors ligne", "alerte", hostile=True, impact="effondrement")
         _parle("alerte_bouclier")
+
+
+def _impact_sur_le_vaisseau(cible):
+    """Ce qu'encaisse le vaisseau quand on lui tire dessus : "bouclier", "coque" ou None.
+    Le jeu ne le dit pas : on le déduit des boucliers (Status.json, en temps réel)."""
+    drapeaux = ETAT["status"].get("flags") or 0
+    if cible == "Fighter":
+        return None                                   # c'est le chasseur qui est visé
+    if cible != "Mothership" and drapeaux and not drapeaux & DRAPEAU_DANS_LE_VAISSEAU:
+        return None                                   # « You » : à pied, en VRS ou en chasseur
+    boucliers = bool(drapeaux & DRAPEAU_BOUCLIERS) if drapeaux else ETAT["vaisseau"]["boucliers"]
+    return "coque" if boucliers is False else "bouclier"
 
 
 @_sur("UnderAttack")
 def _sous_le_feu(e):
+    # Écrit à chaque salve reçue (souvent plusieurs fois par seconde), sans dire où
     cible = {"Fighter": "chasseur", "Mothership": "vaisseau mère"}.get(e.get("Target"))
+    impact = _impact_sur_le_vaisseau(e.get("Target"))
+    if impact == "coque":
+        _coup_sur_la_coque(e)
     _note(e, "combat", f"Sous le feu ({cible})" if cible else "Sous le feu ennemi",
-          "alerte", hostile=True, fusion=True)
+          "alerte", hostile=True, fusion=True, impact=impact)
     _parle("alerte_attaque")
 
 
@@ -386,9 +420,16 @@ def _arret_systemes(e):
 
 @_sur("CockpitBreached")
 def _verriere(e):
+    # La verrière casse quand son intégrité tombe à zéro : seul module dont on apprend
+    # l'état au moment même où il est touché.
     ETAT["vaisseau"]["verriere_brisee"] = True
-    _touche("vaisseau")
-    _note(e, "combat", "Verrière brisée — oxygène de secours", "alerte", hostile=True)
+    for module in ETAT["modules"]["liste"]:
+        if module["emplacement"].lower() == "shipcockpit":
+            module["sante"] = 0.0
+            _touche("modules")
+    _coup_sur_la_coque(e)
+    _note(e, "combat", "Verrière brisée — oxygène de secours", "alerte", hostile=True,
+          impact="coque")
     _parle("verriere_brisee")
 
 
@@ -406,7 +447,7 @@ def _mort(e):
 
 @_sur("Resurrect")
 def _resurrection(e):
-    ETAT["vaisseau"].update(coque=1.0, verriere_brisee=False)
+    ETAT["vaisseau"].update(coque=1.0, coque_palier=False, dernier_coup=None, verriere_brisee=False)
     _touche("vaisseau")
     _note(e, "systeme", f"Vaisseau racheté — {_credits(e.get('Cost'))}", "attention")
 
@@ -423,15 +464,20 @@ def _reparation_afmu(e):
 
 @_sur("RebootRepair")
 def _redemarrage(e):
-    _note(e, "vaisseau", f"Redémarrage/réparation : {len(e.get('Modules') or [])} module(s)",
-          "attention")
+    # Le jeu donne les emplacements des modules à 0 % remis en route (santé inconnue ensuite)
+    emplacements = {(s or "").lower() for s in e.get("Modules") or []}
+    noms = [nommer(m["objet"])[0] for m in ETAT["modules"]["liste"]
+            if m["emplacement"].lower() in emplacements]
+    detail = ", ".join(noms) if noms else f"{len(emplacements)} module(s)"
+    _note(e, "vaisseau", f"Redémarrage/réparation : {detail}", "attention")
 
 
 @_sur("RepairAll")
 def _reparation_totale(e):
-    ETAT["vaisseau"].update(coque=1.0, verriere_brisee=False)
+    ETAT["vaisseau"].update(coque=1.0, coque_palier=False, dernier_coup=None, verriere_brisee=False)
     for module in ETAT["modules"]["liste"]:
         module["sante"] = 1.0
+    ETAT["modules"]["releve"] = e.get("timestamp")      # tout est à 100 % : relevé à jour
     _touche("vaisseau", "modules")
     _note(e, "station", f"Réparation complète — {_credits(e.get('Cost'))}", "succes")
 
@@ -441,7 +487,7 @@ def _reparation(e):
     objets = e.get("Items") or [e.get("Item")]
     for objet in objets:
         if (objet or "").lower() in ("hull", "all"):
-            ETAT["vaisseau"]["coque"] = 1.0
+            ETAT["vaisseau"].update(coque=1.0, coque_palier=False)
         if (objet or "").lower() == "all":
             for module in ETAT["modules"]["liste"]:
                 module["sante"] = 1.0

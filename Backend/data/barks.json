@@ -675,6 +675,26 @@
             "data/son/Refus/PasDeCible.wav"
         ]
     },
+    "rapport_avarie": {
+        "mots_cles": [
+            "rapport d'avarie",
+            "état des avaries",
+            "avarie",
+            "dégâts",
+            "rapport de dégâts",
+            "rapport des dégâts",
+            "bilan des dégâts",
+            "état du vaisseau",
+            "état des modules",
+            "état de la coque",
+            "état des boucliers",
+            "état des systèmes",
+            "rapport"
+        ],
+        "reponses": [
+            "data/son/Combat/RapportAvarie.wav"
+        ]
+    },
     "chasseur": {
         "mots_cles": [
             "chasseur",

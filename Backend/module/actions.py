@@ -22,10 +22,12 @@ import os
 import time
 import traceback
 
+from module import avaries
 from module import ecran
 from module import lecteur_logs as logs
 from module import macros
 from module import serveur_ws
+from module import synthese
 from module import touches
 
 # Page de l'interface (le « panel »), ouverte par la commande vocale « ouvre le panel »
@@ -1303,6 +1305,20 @@ async def _ravitaillement(dire, poli=False):
 
 
 # =====================================================================
+#  RAPPORT D'AVARIE (aucune touche : on lit l'état du vaisseau, voir module/avaries.py)
+# =====================================================================
+async def _rapport_avarie(action, texte, dire, poli):
+    """Coque, boucliers, modules endommagés : affiché dans l'interface, puis lu à voix haute
+    par la synthèse vocale (le texte change à chaque fois, aucun .wav ne peut le contenir)."""
+    rapport = avaries.construire_rapport(logs.ETAT)
+    await logs.annoncer(rapport["texte"], rapport["gravite"], categorie="vaisseau")
+    await serveur_ws.envoyer_donnees_web({"type": "rapport_avarie", "rapport": rapport})
+    chemin = await synthese.synthetiser(rapport["voix"])
+    if not chemin or not await dire(chemin):
+        await dire("rapport_avarie", poli=poli)     # synthèse indisponible : réplique enregistrée
+
+
+# =====================================================================
 #  TABLES DES COMMANDES (remplies ici car les fonctions sont définies plus haut)
 # =====================================================================
 # clé de barks.json -> (nom affiché, fonction(dire, poli) qui fabrique le programme)
@@ -1323,4 +1339,5 @@ SPECIALES = {
     "drone": _drone,
     "reactions": _basculer_reactions,
     "interface": _ouvrir_interface,
+    "rapport_avarie": _rapport_avarie,
 }

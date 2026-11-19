@@ -281,49 +281,131 @@ h3 span { color: var(--creme); text-transform: none; letter-spacing: 0; }
 .ligne-module[data-etat="critique"] .valeur, .ligne-module[data-etat="hs"] .valeur, .ligne-module[data-etat="hs"] .nom { color: var(--rouge); }
 .ligne-module[data-etat="coupe"] .nom, .ligne-module[data-etat="coupe"] .valeur { color: var(--eteint); }
 .ligne-module.survol { background: var(--accent-doux); }
+/* Module qui vient de perdre de l'intégrité, ou cité par le dernier rapport d'avarie */
+.ligne-module.signalee { background: rgba(255, 58, 28, 0.11); box-shadow: inset 3px 0 var(--creme); padding-left: 0.45rem; }
+.ligne-module.touchee { background: rgba(255, 58, 28, 0.24); box-shadow: inset 3px 0 var(--rouge); padding-left: 0.45rem; }
+.ligne-module.touchee .nom { color: var(--creme); font-weight: 600; }
 
-/* ================= HOLOGRAMME ================= */
+/* Résumé du dernier rapport d'avarie, en tête des panneaux Modules */
+.rapport-resume { font-size: 0.82rem; line-height: 1.25; color: var(--creme); padding: 0.25rem 0.5rem; border-left: 3px solid var(--jaune); background: rgba(255, 210, 63, 0.08); }
+.rapport-resume[data-gravite="alerte"] { border-left-color: var(--rouge); background: rgba(255, 58, 28, 0.14); }
+.rapport-resume[data-gravite="succes"], .rapport-resume[data-gravite="info"] { border-left-color: var(--orange); background: var(--accent-doux); }
+
+/* ================= HOLOGRAMME =================
+   Dessiné par hologramme.js : trois calques SVG superposés (fond, plan, effets).
+   Les traits ne grossissent pas avec le zoom (non-scaling-stroke) : épaisseurs en pixels. */
 .hologramme {
     position: relative;
     flex: 1;
     min-height: 0;
     display: flex;
     justify-content: center;
+    --holo-trait: #ffc58a;
+    --holo-arete: #ffe2bf;
 }
-.vaisseau {
+body[data-mode="combat"] .hologramme { --holo-trait: #ffab96; --holo-arete: #ffd9cf; }
+
+.holo {
+    position: relative;
+    width: 100%;
     height: 100%;
-    max-width: 100%;
-    overflow: visible;
-    filter: drop-shadow(0 0 0.5rem var(--lueur));
-    animation: flotte 7s ease-in-out infinite alternate;
+    animation: holo-flotte 8s ease-in-out infinite alternate, holo-scintille 11s linear infinite;
+    will-change: transform, opacity;
 }
-.socle ellipse { fill: none; stroke: var(--trait); stroke-width: 0.6; stroke-dasharray: 2 7; }
-.coque path { fill: rgba(255, 122, 20, 0.05); stroke: var(--accent); stroke-width: 1.6; stroke-linejoin: round; transition: stroke 0.4s; }
-.coque path.fin { fill: none; stroke-width: 0.7; opacity: 0.55; }
-body[data-mode="combat"] .coque path { fill: rgba(255, 58, 28, 0.06); }
+.holo-calque { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.holo-calque * { vector-effect: non-scaling-stroke; }
+/* Le plan détaillé a son propre calque composité : il n'est repeint qu'au changement de vaisseau */
+.holo-plan { filter: drop-shadow(0 0 0.3rem var(--lueur)); will-change: transform; }
 
-.bouclier-anneau { fill: rgba(159, 220, 255, 0.04); stroke: var(--glace); stroke-width: 1.4; stroke-dasharray: 5 5; transition: opacity 0.4s; }
-.hologramme[data-boucliers="non"] .bouclier-anneau { opacity: 0.12; stroke: var(--rouge); stroke-dasharray: 1 12; }
+/* Fond : grille métrique et lumière du projecteur */
+.holo-grille path { fill: none; stroke: var(--accent); stroke-width: 1px; shape-rendering: crispEdges; }
+.holo-grille .mineur { opacity: 0.045; }
+.holo-grille .majeur { opacity: 0.1; }
+.holo-stop-lumiere { stop-color: var(--accent); stop-opacity: 0.11; }
+.holo-stop-vide { stop-color: var(--accent); stop-opacity: 0; }
 
-.zone rect { fill: var(--noir); stroke: var(--orange); stroke-width: 1.4; transform-box: fill-box; transform-origin: center; transform: rotate(45deg); }
-.zone text { font-size: 11px; fill: var(--ambre); letter-spacing: 0.06em; display: none; paint-order: stroke; stroke: var(--noir); stroke-width: 3px; stroke-linejoin: round; }
-.hologramme.grand .zone text { display: block; }
-/* Les étiquettes des zones dépassent à droite de la silhouette : on leur réserve la place */
-.hologramme.grand { padding-right: 6rem; }
-.zone[data-etat="ok"] rect { fill: var(--orange); }
+/* Bouclier */
+.bouclier-anneau { fill: none; stroke: var(--glace); stroke-width: 1.3px; stroke-dasharray: 3 7; opacity: 0.7; animation: bouclier-ondule 18s linear infinite; transition: opacity 0.4s, stroke 0.4s; }
+.bouclier-voile { fill: rgba(159, 220, 255, 0.035); stroke: rgba(159, 220, 255, 0.12); stroke-width: 9px; transition: opacity 0.4s; }
+.hologramme[data-boucliers="non"] .bouclier-anneau { opacity: 0.3; stroke: var(--rouge); stroke-dasharray: 1 12; animation: none; }
+.hologramme[data-boucliers="non"] .bouclier-voile { opacity: 0; }
+
+/* Plan du vaisseau */
+.holo-stop-centre { stop-color: var(--accent); stop-opacity: 0.22; }
+.holo-stop-milieu { stop-color: var(--accent); stop-opacity: 0.1; }
+.holo-stop-bord { stop-color: var(--accent); stop-opacity: 0.05; }
+.holo-trame-ligne { fill: var(--holo-trait); opacity: 0.09; }
+.holo-details { fill: none; stroke: var(--accent); stroke-width: 0.7px; stroke-linejoin: round; stroke-linecap: round; opacity: 0.5; }
+.holo-traits { fill: none; stroke: var(--holo-trait); stroke-width: 0.9px; stroke-linejoin: round; stroke-linecap: round; opacity: 0.78; }
+.holo-halo { fill: none; stroke: var(--accent); stroke-width: 8px; stroke-linejoin: round; opacity: 0.13; }
+.holo-contour { fill: none; stroke: var(--holo-arete); stroke-width: 1.5px; stroke-linejoin: round; transition: stroke 0.2s; }
+
+/* Effets : balayage périodique, front d'apparition */
+.holo-stop-bande { stop-color: var(--accent); stop-opacity: 0.16; }
+.holo-stop-front { stop-color: var(--holo-arete); stop-opacity: 0.4; }
+.holo-balayage { animation: holo-balayage 9s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+.holo-front { stroke: var(--holo-arete); stroke-width: 2px; opacity: 0; filter: drop-shadow(0 0 4px var(--accent)); }
+.holo-apparition .holo-balayage { visibility: hidden; }
+
+/* Cotes et légende */
+.holo-cote-trait { fill: none; stroke: var(--marron-3); stroke-width: 1px; opacity: 0.8; stroke-dasharray: none; }
+.holo-cote-texte { fill: var(--ambre); text-anchor: middle; letter-spacing: 0.08em; }
+.holo-cote-grille { fill: var(--marron-3); text-anchor: end; }
+.holo-legende { position: absolute; left: 0.3rem; top: 0.2rem; display: grid; gap: 0.1rem; pointer-events: none; z-index: 1; }
+.holo-legende b { font-size: 0.98rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--creme); text-shadow: 0 0 0.8rem var(--lueur); }
+.holo-legende span { font-size: 0.74rem; letter-spacing: 0.04em; color: var(--marron-3); }
+body[data-mode="combat"] .holo-legende span { color: #9c4a36; }
+
+/* Repères de modules et étiquettes (vue combat) */
+.zone rect { fill: var(--noir); stroke: var(--orange); stroke-width: 1.3px; transform-box: fill-box; transform-origin: center; transform: rotate(45deg); }
+.zone text { fill: var(--ambre); letter-spacing: 0.06em; paint-order: stroke; stroke: var(--noir); stroke-width: 3px; stroke-linejoin: round; }
+.zone-renvoi { fill: none; stroke: var(--trait); stroke-width: 1px; }
+/* Module en bon état : repère discret ; les avaries, elles, doivent sauter aux yeux */
+.zone[data-etat="ok"] rect { fill: rgba(7, 4, 3, 0.55); stroke: var(--holo-trait); }
 .zone[data-etat="attention"] rect { fill: var(--jaune); stroke: var(--jaune); }
 .zone[data-etat="attention"] text { fill: var(--jaune); }
-.zone[data-etat="critique"] rect, .zone[data-etat="hs"] rect { fill: var(--rouge); stroke: var(--rouge); }
+.zone[data-etat="attention"] .zone-renvoi { stroke: rgba(255, 210, 63, 0.55); }
+/* Critique : rouge fixe. HS : rouge fixe à cœur noir (le module ne répond plus). */
+.zone[data-etat="critique"] rect { fill: var(--rouge); stroke: var(--creme); filter: drop-shadow(0 0 4px var(--rouge)); }
+.zone[data-etat="hs"] rect { fill: var(--noir); stroke: var(--rouge); stroke-width: 3px; filter: drop-shadow(0 0 5px var(--rouge)); }
 .zone[data-etat="critique"] text, .zone[data-etat="hs"] text { fill: var(--rouge); font-weight: 600; }
-.zone[data-etat="hs"] rect { animation: clignote 0.7s steps(2) infinite; }
+.zone[data-etat="critique"] .zone-renvoi, .zone[data-etat="hs"] .zone-renvoi { stroke: rgba(255, 58, 28, 0.7); }
 .zone[data-etat="coupe"] rect, .zone[data-etat="vide"] rect { stroke: var(--eteint); }
 .zone[data-etat="coupe"] text, .zone[data-etat="vide"] text { fill: var(--eteint); }
-.zone.survol rect { stroke: var(--creme); stroke-width: 3; }
+.zone.survol rect { stroke: var(--creme); stroke-width: 3px; }
+.zone.survol .zone-renvoi { stroke: var(--creme); }
 
-.impact circle { fill: none; stroke: var(--creme); stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; }
+/* Avaries : voyants d'impact.
+   Module touché : son repère clignote rouge / noir 2,5 fois par seconde pendant 4 s (relancé à chaque
+   coup), avec une lueur rouge sur la coque autour de lui (découpée à la silhouette) ; ensuite, rouge
+   fixe s'il est critique ou HS. Coup sans module connu : toute la silhouette clignote rouge / noir.
+   Tout est dans le calque « effets » : le plan détaillé n'est jamais repeint.
+   Rythme sous 3 éclats par seconde : au-delà, les flashs rouges deviennent pénibles, voire dangereux. */
+.hologramme { --avarie: 1; }
+.hologramme:not(.grand) { --avarie: 0.55; }     /* vue navigation : plus discret */
+/* Cœur plus chaud que la coque (déjà rouge en vue combat) : la lueur doit ressortir */
+.holo-stop-lueur-coeur { stop-color: #ff8a5c; stop-opacity: 0.95; }
+.holo-stop-lueur-milieu { stop-color: var(--rouge); stop-opacity: 0.5; }
+.holo-stop-lueur-bord { stop-color: var(--rouge); stop-opacity: 0; }
+.zone-lueur { opacity: 0; }
+.zone-lueur[data-etat="critique"], .zone-lueur[data-etat="hs"] { opacity: calc(0.5 * var(--avarie)); }
+.alerte-coque { fill: var(--rouge); opacity: 0; }
+.zone.voyant rect { animation: voyant-repere 0.4s linear infinite; }
+.zone.voyant text { fill: var(--rouge); font-weight: 600; }
+.zone-lueur.voyant { animation: voyant-lueur 0.4s linear infinite; }
+.alerte-coque.voyant { animation: voyant-coque 0.4s linear infinite; }
+/* Bouclier : la bulle s'illumine quand elle encaisse, vire au rouge quand elle tombe */
+.bouclier-voile.eclat { animation: eclat-bouclier 0.7s ease-out; }
+.bouclier-voile.effondrement { animation: effondrement-voile 1.3s ease-out; }
+.hologramme .bouclier-anneau.effondrement { animation: effondrement-anneau 1.3s ease-out; }
+
+/* Impacts : ondes (bleu glacé sur le bouclier, crème sur la coque). Le contour du plan ne change
+   plus de couleur : il est dans le calque statique, le repeindre à chaque coup coûterait cher. */
+.impact circle { fill: none; stroke: var(--creme); stroke-width: 2px; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.impact[data-sur="bouclier"] circle { stroke: var(--glace); }
 .hologramme.touche .impact circle { animation: onde 0.9s ease-out; }
 .hologramme.touche .impact circle + circle { animation-delay: 0.18s; }
-.hologramme.touche .coque path { stroke: var(--creme); }
+.hologramme.touche-forte .holo { animation: holo-flotte 8s ease-in-out infinite alternate, holo-parasite 0.5s steps(3) 2; }
 
 /* ================= JAUGES ================= */
 .jauges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.25fr); gap: 1rem; align-items: end; }
@@ -395,13 +477,71 @@ body[data-liaison="hors-ligne"] .voile { display: grid; }
 
 /* ================= ANIMATIONS ================= */
 @keyframes clignote { 50% { opacity: 0.35; } }
-@keyframes flotte { to { transform: translateY(-0.5rem); } }
+@keyframes holo-flotte { to { transform: translateY(-0.45rem); } }
+/* Scintillement : de rares baisses de luminosité, comme une projection instable */
+@keyframes holo-scintille {
+    0%, 41%, 43.5%, 77%, 78.2%, 100% { opacity: 1; }
+    42% { opacity: 0.72; }
+    42.6% { opacity: 0.93; }
+    77.6% { opacity: 0.8; }
+}
+@keyframes holo-parasite {
+    0% { transform: translate(0.25rem, 0); opacity: 0.75; }
+    50% { transform: translate(-0.3rem, 0.1rem); opacity: 1; }
+    100% { transform: translate(0, 0); }
+}
+/* Bande de balayage : traverse le vaisseau du nez à la poupe puis attend (unités du plan, nez à 0, poupe à 1000) */
+@keyframes holo-balayage {
+    0% { transform: translateY(0); }
+    55%, 100% { transform: translateY(1320px); }
+}
+@keyframes bouclier-ondule { to { stroke-dashoffset: -200; } }
 @keyframes onde { 0% { opacity: 0.9; transform: scale(0.4); } 100% { opacity: 0; transform: scale(6); } }
+/* Voyants d'avarie : moitié rouge, moitié noir, sans fondu (comme un voyant qui s'allume et s'éteint) */
+@keyframes voyant-repere {
+    0%, 50% { fill: var(--rouge); stroke: var(--creme); }
+    50.01%, 100% { fill: var(--noir); stroke: var(--rouge); }
+}
+@keyframes voyant-lueur {
+    0%, 50% { opacity: calc(0.95 * var(--avarie)); }
+    50.01%, 100% { opacity: 0; }
+}
+@keyframes voyant-coque {
+    0%, 50% { fill: var(--rouge); opacity: calc(0.34 * var(--avarie)); }
+    50.01%, 100% { fill: #000; opacity: calc(0.5 * var(--avarie)); }
+}
+@keyframes eclat-bouclier {
+    0% { fill: rgba(159, 220, 255, 0.11); stroke: rgba(214, 241, 255, 0.85); }
+    100% { fill: rgba(159, 220, 255, 0.035); stroke: rgba(159, 220, 255, 0.12); }
+}
+@keyframes effondrement-voile {
+    0%, 15% { opacity: 1; fill: rgba(255, 58, 28, 0.16); stroke: rgba(255, 58, 28, 0.75); }
+    100% { opacity: 0; fill: rgba(255, 58, 28, 0); stroke: rgba(255, 58, 28, 0); }
+}
+@keyframes effondrement-anneau {
+    0%, 15% { opacity: 1; stroke: var(--rouge); stroke-width: 3px; }
+    100% { opacity: 0.3; stroke: var(--rouge); stroke-width: 1.3px; }
+}
 @keyframes secousse { 20% { transform: translate(-0.3rem, 0.15rem); } 50% { transform: translate(0.3rem, -0.15rem); } 80% { transform: translate(-0.15rem, 0); } }
 body.secoue .vue-combat { animation: secousse 0.3s; }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
+    /* L'hologramme garde ses effets lumineux (scintillement, balayage, bouclier) : c'est son rendu même.
+       Pas de déplacement d'ensemble (le flottement reste coupé). Pour le figer aussi, supprimer ces trois lignes. */
+    .holo { animation: holo-scintille 11s linear infinite !important; }
+    .holo-balayage { animation: holo-balayage 9s cubic-bezier(0.45, 0, 0.55, 1) infinite !important; }
+    .bouclier-anneau { animation: bouclier-ondule 18s linear infinite !important; }
+    .hologramme[data-boucliers="non"] .bouclier-anneau { animation: none !important; }
+    /* Avaries et impacts : ce sont des alertes, pas de la décoration. Ils jouent toujours. */
+    .zone.voyant rect { animation: voyant-repere 0.4s linear infinite !important; }
+    .zone-lueur.voyant { animation: voyant-lueur 0.4s linear infinite !important; }
+    .alerte-coque.voyant { animation: voyant-coque 0.4s linear infinite !important; }
+    .bouclier-voile.eclat { animation: eclat-bouclier 0.7s ease-out !important; }
+    .bouclier-voile.effondrement { animation: effondrement-voile 1.3s ease-out !important; }
+    .hologramme .bouclier-anneau.effondrement { animation: effondrement-anneau 1.3s ease-out !important; }
+    .hologramme.touche .impact circle { animation: onde 0.9s ease-out !important; }
+    .hologramme.touche .impact circle + circle { animation-delay: 0.18s !important; }
 }
 
 /* Petits écrans (téléphone, fenêtre étroite) : tout passe en une colonne qui défile */

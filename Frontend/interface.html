@@ -17,7 +17,7 @@
 
         <dl class="identite">
             <div><dt>Commandant</dt><dd data-v="cmdr">—</dd></div>
-            <div><dt>Vaisseau</dt><dd><span data-v="vaisseau-nom">—</span> <small data-v="vaisseau-modele"></small></dd></div>
+            <div><dt>Vaisseau</dt><dd><span data-v="vaisseau-nom">—</span> <small data-v="vaisseau-modele-entete"></small></dd></div>
             <div><dt>Système</dt><dd data-v="systeme">—</dd></div>
             <div><dt>Crédits</dt><dd data-v="credits">—</dd></div>
             <div><dt>Statut légal</dt><dd data-v="statut-legal">—</dd></div>
@@ -168,6 +168,7 @@
             </section>
             <section class="panneau grandit">
                 <h2>Modules <small data-v="modules-releve"></small></h2>
+                <p class="rapport-resume" data-rapport hidden></p>
                 <div class="liste defile" id="liste-modules"></div>
             </section>
             <section class="panneau">
@@ -246,6 +247,7 @@
                     <button type="button" data-action="cible_hostile">Hostile suivant</button>
                     <button type="button" data-action="sous_systeme|generateur">Viser le générateur</button>
                     <button type="button" data-action="sous_systeme|fsd">Viser le FSD</button>
+                    <button type="button" data-action="rapport_avarie" class="large" title="Coque, boucliers et modules endommagés, lus à voix haute (aucune touche envoyée au jeu)">Rapport d'avarie</button>
                 </div>
             </section>
             <section class="panneau">
@@ -272,6 +274,7 @@
             </section>
             <section class="panneau grandit">
                 <h2>Modules <small>les plus touchés d'abord</small></h2>
+                <p class="rapport-resume" data-rapport hidden></p>
                 <div class="liste defile" id="liste-modules-combat"></div>
             </section>
         </div>
@@ -289,26 +292,8 @@
         </div>
     </div>
 
-    <!-- Silhouette générique du vaisseau, clonée dans les deux vues -->
-    <template id="gabarit-vaisseau">
-        <svg viewBox="0 0 400 560" class="vaisseau" aria-hidden="true">
-            <g class="socle">
-                <ellipse cx="200" cy="300" rx="188" ry="250"/>
-                <ellipse cx="200" cy="300" rx="150" ry="205"/>
-            </g>
-            <path class="bouclier-anneau" d="M200 18 C330 70 372 250 360 420 C352 500 300 545 200 548 C100 545 48 500 40 420 C28 250 70 70 200 18Z"/>
-            <g class="coque">
-                <path d="M200 34 L226 96 L246 176 L262 292 L344 398 L352 452 L278 470 L264 522 L136 522 L122 470 L48 452 L56 398 L138 292 L154 176 L174 96 Z"/>
-                <path class="fin" d="M200 104 L217 160 L200 190 L183 160 Z"/>
-                <path class="fin" d="M200 34 L200 104 M200 190 L200 522 M154 176 L246 176 M138 292 L262 292 M122 470 L278 470"/>
-                <path class="fin" d="M138 292 L122 470 M262 292 L278 470 M56 398 L122 420 M344 398 L278 420 M174 96 L226 96"/>
-                <path class="fin" d="M146 522 L146 540 L186 540 L186 522 M214 522 L214 540 L254 540 L254 522"/>
-            </g>
-            <g class="zones"></g>
-            <g class="impact"><circle cx="200" cy="300" r="40"/><circle cx="200" cy="300" r="40"/></g>
-        </svg>
-    </template>
-
+    <!-- Hologramme : vue de dessus du vaisseau, plans dans vaisseaux/<type>.js -->
+    <script src="hologramme.js"></script>
     <script src="demo.js"></script>
     <script src="interface.js"></script>
 </body>
