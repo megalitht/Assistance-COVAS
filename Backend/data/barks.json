@@ -49,7 +49,7 @@
         ],
         "reponses": [
             "data/son/Cockpit/EnergieArmes.wav",
-            "",
+            "data/son/Macros/Alim/Arm/Arm1.wav",
             "data/son/Affirmation/BienCommandant.wav",
             "data/son/Affirmation/ToutSuite.wav",
             "data/son/Affirmation/CommeSiCTFait.wav"
@@ -66,6 +66,8 @@
         ],
         "reponses": [
             "data/son/Cockpit/EnergieSystemes.wav",
+            "data/son/Macros/Alim/Sys/Sys1.wav",
+            "data/son/Macros/Alim/Sys/Sys2.wav",
             "data/son/Affirmation/BienCommandant.wav",
             "data/son/Affirmation/ToutSuite.wav",
             "data/son/Affirmation/CommeSiCTFait.wav"
@@ -91,7 +93,6 @@
         "mots_cles": [
             "soute",
             "cargo",
-            "suite.",
             "écope"
         ],
         "reponses": [
@@ -177,7 +178,9 @@
         ],
         "reponses": [
             "data/son/Cockpit/NVG2.wav",
-            "data/son/Cockpit/NVG1.wav"
+            "data/son/Cockpit/NVG1.wav",
+            "data/son/Macros/Deploiment/NVG/NVG1.wav",
+            "data/son/Macros/Deploiment/NVG/NVG2.wav"
         ]
     },
     "politesse": {
@@ -447,7 +450,11 @@
             "rentre les armes",
             "range les armes",
             "déploie les armes",
-            "armes dehors"
+            "armes dehors",
+            "sors l'armement",
+            "déploie l'armement",
+            "rentre l'armement",
+            "range l'armement"
         ],
         "reponses": [
             "data/son/Cockpit/Armement2.wav",

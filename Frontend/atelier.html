@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>COVAS — Atelier des plans</title>
+    <link rel="stylesheet" href="interface.css">
+    <style>
+        /* Atelier : une capture du jeu (vue de dessus) -> plan d'hologramme vaisseaux/<id>.js */
+        body.atelier { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100vh; overflow: hidden; }
+        .atelier .bandeau { gap: 1.6rem; }
+        .atelier .bandeau-droite { margin-left: auto; display: flex; gap: 0.6rem; }
+        .atelier .bandeau a { color: var(--creme); text-decoration: none; border: 1px solid var(--trait); padding: 0.45rem 0.9rem; background: var(--accent-doux); }
+        .atelier .bandeau a:hover { background: var(--accent); color: var(--noir); }
+        .atelier-vue { display: grid; grid-template-columns: 22rem minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; padding: 0.9rem 1.2rem; min-height: 0; }
+        .reglages { display: flex; flex-direction: column; gap: 0.7rem; overflow-y: auto; font-size: 0.9rem; color: var(--ambre); }
+        .reglages label { display: flex; gap: 0.5rem; align-items: center; }
+        .reglages select, .reglages input[type="range"] { flex: 1; min-width: 0; }
+        .reglages select { font: inherit; color: var(--creme); background: var(--marron-1); border: 1px solid var(--trait); padding: 0.3rem; }
+        .reglages button { cursor: pointer; border: 1px solid var(--trait); background: var(--accent-doux); padding: 0.45rem 0.8rem; color: var(--creme); font: inherit; }
+        .reglages button:hover:not(:disabled) { background: var(--accent); color: var(--noir); }
+        .reglages button:disabled { opacity: 0.4; cursor: default; }
+        .reglages .boutons { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .reglages h2 { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+        .reglages p, .reglages li { color: var(--ambre); font-size: 0.82rem; line-height: 1.35; }
+        .reglages ol { list-style: decimal; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.25rem; }
+        .depot { border: 1px dashed var(--trait); padding: 0.9rem; text-align: center; color: var(--creme); background: rgba(0, 0, 0, 0.25); }
+        .depot.survol { border-color: var(--accent); background: var(--accent-doux); }
+        .depot input { display: block; margin: 0.5rem auto 0; color: var(--ambre); font: inherit; font-size: 0.8rem; }
+        .colonne-vue { display: flex; flex-direction: column; gap: 0.5rem; min-height: 0; }
+        .colonne-vue h2 { font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+        #vue-source { width: 100%; flex: 1; min-height: 0; object-fit: contain; background: #000; border: 1px solid var(--trait); cursor: crosshair; }
+        .colonne-vue .hologramme { flex: 1; min-height: 0; }
+        #etat { color: var(--creme); font-size: 0.85rem; min-height: 1.2em; }
+        @media (max-width: 1100px) {
+            body.atelier { height: auto; overflow: auto; display: block; }
+            .atelier-vue { display: flex; flex-direction: column; }
+            #vue-source, .colonne-vue .hologramme { height: 26rem; flex: none; }
+        }
+    </style>
+</head>
+<body class="atelier" data-mode="nav" data-liaison="simulation">
+    <header class="bandeau">
+        <div class="marque">
+            <strong>COVAS</strong>
+            <span class="liaison">Atelier des plans</span>
+        </div>
+        <p id="etat">Dépose une capture du jeu prise du dessus.</p>
+        <div class="bandeau-droite">
+            <a href="hangar.html">Hangar</a>
+            <a href="interface.html">Interface de bord</a>
+        </div>
+    </header>
+
+    <main class="atelier-vue" id="atelier">
+        <section class="reglages" aria-label="Réglages">
+            <h2>1 · La capture</h2>
+            <ol>
+                <li>En jeu, ouvre la caméra libre (Caméra du vaisseau / mode caméra libre).</li>
+                <li>Place-la au-dessus du vaisseau, bien à la verticale, loin d'une étoile : fond noir, coque éclairée, champ de vision étroit.</li>
+                <li>Capture (F10), puis dépose l'image ici (ou colle-la avec Ctrl+V).</li>
+            </ol>
+            <div class="depot" id="depot">
+                Dépose la capture ici
+                <input type="file" id="fichier" accept="image/*">
+            </div>
+
+            <h2>2 · Le vaisseau</h2>
+            <label>Vaisseau <select id="choix-vaisseau"></select></label>
+
+            <h2>3 · Réglages</h2>
+            <label>Fond <select id="fond">
+                <option value="couleur">couleur du fond (espace, fond uni)</option>
+                <option value="teinte">teinte seulement (sol avec ombres)</option>
+            </select></label>
+            <label><input type="checkbox" id="seuil-auto" checked> Seuil automatique</label>
+            <label>Seuil <input type="range" id="seuil" min="4" max="200" value="40"> <b id="valeur-seuil">—</b></label>
+            <label><input type="checkbox" id="symetrie" checked> Rendre symétrique (gauche = droite)</label>
+            <label><input type="checkbox" id="dessous"> Capture prise par-dessous</label>
+            <label><input type="checkbox" id="inverser"> Inverser nez et poupe</label>
+            <label><input type="checkbox" id="proportions"> Proportions du catalogue (capture prise de biais)</label>
+            <label>Lignes de détail <input type="range" id="niveaux" min="0" max="12" value="6"></label>
+            <div class="boutons">
+                <button type="button" id="recadrer">Recadrer (2 clics)</button>
+                <button type="button" id="placer-axe">Placer l'axe (2 clics)</button>
+                <button type="button" id="axe-auto">Axe automatique</button>
+            </div>
+            <p>L'axe (pointillé bleu) est trouvé par symétrie ; le point jaune marque le nez. S'il se trompe, « Placer l'axe » : clique sur le nez, puis sur le milieu de la poupe.</p>
+
+            <h2>4 · Le plan</h2>
+            <button type="button" id="telecharger" disabled>Télécharger le plan (.js)</button>
+            <p>Range le fichier téléchargé dans <code>Frontend/vaisseaux/</code> : il remplace l'ancien plan du vaisseau.</p>
+        </section>
+
+        <section class="colonne-vue">
+            <h2>Capture et détourage</h2>
+            <canvas id="vue-source" width="16" height="9"></canvas>
+        </section>
+
+        <section class="colonne-vue">
+            <h2>Hologramme obtenu</h2>
+            <div class="hologramme" id="apercu" data-hologramme data-boucliers="non"></div>
+        </section>
+    </main>
+
+    <script src="hologramme.js"></script>
+    <script src="atelier.js"></script>
+</body>
+</html>

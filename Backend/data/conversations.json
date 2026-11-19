@@ -1,0 +1,877 @@
+{
+    "_lisez_moi": [
+        "Conversations RP du COVAS (moteur : module/conversation.py).",
+        "sujets : ce que le commandant demande. questions = phrases reconnues (en mots entiers) ; mots = groupes de débuts de mots, présents dans n'importe quel ordre.",
+        "repliques : id = nom du fichier à enregistrer (data/son/Conversations/<dossier>/<id>.wav) ; fichier = chemin d'un .wav existant ; texte = la phrase.",
+        "si = contexte requis (voir CONDITIONS dans conversation.py ; « !nom » = le contraire ; « vaisseau:python_nx »). La priorité la plus haute gagne, puis le contexte le plus précis.",
+        "ecran = détail affiché dans l'interface ({carburant}, {credits}...) ; voix: synthese = toujours lue par la synthèse vocale (texte variable).",
+        "suite = le COVAS attend une réponse (sans redire « Covas ») : branches (type = vocabulaire de reponses_types, ou questions/mots), autre, silence. Une suite peut être nommée (section suites).",
+        "commande = lance une commande de barks.json après la réplique ; sujet = enchaîne sur une réplique d'un autre sujet ; interne = initiatives_off / initiatives_on.",
+        "faible : true = une commande explicite passe avant ce sujet (« bonjour, sors le train » sort le train).",
+        "initiatives : le COVAS parle de lui-même. declencheur = evenement (journal, champs facultatifs) ou pendant (secondes de contexte vrai). repos = délai avant de recommencer, chance = probabilité.",
+        "Après une modification : python -m module.conversation --script (depuis Backend/) régénère data/SCRIPT_CONVERSATIONS.md."
+    ],
+
+    "reponses_types": {
+        "oui": ["oui", "ouais", "ouai", "ok", "okay", "d'accord", "vas-y", "volontiers", "bien sûr", "carrément", "affirmatif", "avec plaisir", "allez", "pourquoi pas", "je veux bien", "bonne idée", "fais-le", "go", "évidemment", "absolument", "c'est ça", "yes", "s'il te plaît"],
+        "non": ["non", "nan", "non merci", "pas maintenant", "plus tard", "laisse tomber", "négatif", "pas la peine", "ça ira", "sans façon", "surtout pas", "pas besoin", "oublie", "jamais", "no"],
+        "bien": ["bien", "très bien", "ça va", "ça va bien", "super", "en forme", "nickel", "impeccable", "génial", "au top", "parfait", "pas mal", "pas trop mal", "tranquille", "ça roule", "la forme", "excellent", "content", "contente", "heureux", "heureuse"],
+        "mal": ["mal", "pas bien", "pas terrible", "bof", "fatigué", "fatiguée", "crevé", "crevée", "pas top", "moyen", "ça va pas", "ça ne va pas", "pas trop", "nul", "épuisé", "épuisée", "stressé", "stressée", "pas fort", "on fait aller", "triste", "pas la forme"],
+        "abandon": ["je sais pas", "je ne sais pas", "sais pas", "chais pas", "aucune idée", "je donne ma langue au chat", "ma langue au chat", "je sèche", "dis-moi", "donne la réponse", "la réponse", "j'abandonne", "abandonne", "je passe", "je ne trouve pas", "je trouve pas", "pas d'idée"]
+    },
+
+    "suites": {
+        "comment_allez_vous": {
+            "dossier": "Social",
+            "attente": 10,
+            "branches": [
+                {"type": "bien", "repliques": [
+                    {"id": "CaVaBien1", "texte": "Parfait. Un pilote en forme, c'est un vaisseau entier."},
+                    {"id": "CaVaBien2", "texte": "Tant mieux. Alors on va pouvoir faire des choses intéressantes aujourd'hui."}
+                ]},
+                {"type": "mal", "repliques": [
+                    {"id": "CaVaMal1", "texte": "Je suis là, commandant. On va prendre les choses un saut après l'autre."},
+                    {"id": "CaVaMal2", "texte": "Prenez le temps qu'il faut. L'espace attendra, il est patient."}
+                ]}
+            ]
+        },
+        "proposer_rapport": {
+            "dossier": "Bord",
+            "branches": [
+                {"type": "oui", "repliques": [{"commande": "rapport_avarie"}]},
+                {"type": "non", "repliques": [
+                    {"id": "RapportNon", "texte": "Bien. Je garde un œil sur les jauges."}
+                ]}
+            ]
+        },
+        "proposer_fuite": {
+            "dossier": "Bord",
+            "attente": 6,
+            "branches": [
+                {"type": "oui", "repliques": [{"commande": "fuite"}]},
+                {"type": "non", "repliques": [
+                    {"id": "FuiteNon", "texte": "À vos ordres. Je croise les circuits."}
+                ]}
+            ]
+        },
+        "proposer_ravitaillement": {
+            "dossier": "Bord",
+            "branches": [
+                {"type": "oui", "repliques": [{"commande": "ravitaillement"}]},
+                {"type": "non", "repliques": [
+                    {"id": "RavitaillementNon", "texte": "Comme vous voudrez. Le menu des services vous attend."}
+                ]}
+            ]
+        },
+        "proposer_histoire": {
+            "dossier": "Social",
+            "branches": [
+                {"type": "oui", "sujet": "histoire"},
+                {"type": "non", "repliques": [
+                    {"id": "HistoireNon", "texte": "Très bien. Je compterai les étoiles en silence."}
+                ]}
+            ]
+        },
+        "proposer_devinette": {
+            "dossier": "Jeux",
+            "branches": [
+                {"type": "oui", "sujet": "devinette"},
+                {"type": "non", "repliques": [
+                    {"id": "DevinetteNon", "texte": "Dommage. J'en avais une excellente."}
+                ]}
+            ]
+        },
+        "encore_devinette": {
+            "dossier": "Jeux",
+            "branches": [
+                {"type": "oui", "sujet": "devinette"},
+                {"type": "non", "repliques": [
+                    {"id": "DevinetteFin", "texte": "Comme vous voudrez. Je garde mes meilleures pour plus tard."}
+                ]}
+            ]
+        },
+        "choix_discussion": {
+            "dossier": "Meta",
+            "attente": 10,
+            "branches": [
+                {"questions": ["vaisseau", "le vaisseau", "du vaisseau", "notre vaisseau"], "sujet": "vaisseau_avis"},
+                {"questions": ["galaxie", "la galaxie", "de la galaxie", "l'univers", "l'espace", "les étoiles"], "sujet": "galaxie"},
+                {"questions": ["moi", "de moi", "parlons de moi"], "sujet": "avis_commandant"},
+                {"questions": ["toi", "de toi", "de vous", "parlons de toi"], "sujet": "qui_es_tu"},
+                {"questions": ["histoire", "une histoire"], "sujet": "histoire"},
+                {"questions": ["blague", "une blague"], "sujet": "blague"},
+                {"type": "non", "repliques": [
+                    {"id": "DiscussionNon", "texte": "Très bien. Je reste à l'écoute, comme toujours."}
+                ]}
+            ],
+            "autre": {"repliques": [
+                {"id": "DiscussionAutre", "texte": "Je n'ai pas d'avis là-dessus, commandant. Mais j'aime bien vous entendre parler."}
+            ]}
+        },
+        "apres_combat": {
+            "dossier": "Initiatives",
+            "attente": 10,
+            "branches": [
+                {"type": ["oui", "bien"], "repliques": [
+                    {"id": "ApresCombatBien", "texte": "Tant mieux. Moi, j'ai eu peur pour la peinture."}
+                ]},
+                {"type": ["non", "mal"], "repliques": [
+                    {"id": "ApresCombatMal", "texte": "Respirez, commandant. Je surveille les capteurs, rien ne nous suit."}
+                ]}
+            ]
+        }
+    },
+
+    "sujets": {
+        "salutation": {
+            "titre": "Salutations", "dossier": "Social", "faible": true,
+            "questions": ["bonjour", "salut", "coucou", "bonsoir", "hello", "yo", "bien le bonjour", "salutations", "rebonjour", "me revoilà", "me voilà", "je suis de retour", "je suis là"],
+            "repliques": [
+                {"id": "Bonjour1", "texte": "Bonjour, commandant. Tous les systèmes vous attendaient."},
+                {"id": "Bonjour2", "texte": "Ravie de vous entendre, commandant. Le cockpit était bien silencieux sans vous."},
+                {"id": "BonjourMatin1", "si": ["matin"], "texte": "Bonjour, commandant. Bien dormi ? Le vaisseau, lui, est frais comme au premier jour."},
+                {"id": "BonjourMatin2", "si": ["matin"], "texte": "Debout de bonne heure, commandant. La galaxie ne va pas s'explorer toute seule."},
+                {"id": "BonjourSoir", "si": ["soir"], "texte": "Bonsoir, commandant. On part pour une petite virée nocturne ?"},
+                {"id": "BonjourNuit", "si": ["nuit"], "texte": "Bonsoir, commandant… ou bonjour, je ne sais plus. Il est tard, sur Terre."},
+                {"id": "BonjourAmarre", "si": ["amarre"], "texte": "Bonjour, commandant. Nous sommes à quai, réservoir branché, tout est calme."},
+                {"id": "BonjourDanger", "si": ["danger"], "priorite": 10, "texte": "Bonjour aussi, commandant. On nous tire dessus, au passage."}
+            ]
+        },
+        "ca_va": {
+            "titre": "Comment ça va ?", "dossier": "Social", "faible": true,
+            "questions": ["ça va", "comment ça va", "comment vas-tu", "comment tu vas", "tu vas bien", "ça va toi", "comment te sens-tu", "comment tu te sens", "la forme", "t'es en forme", "tu es en forme", "quoi de neuf", "comment allez-vous", "tu tiens le coup"],
+            "repliques": [
+                {"id": "CaVa1", "texte": "Tous mes circuits ronronnent, commandant. Et vous, comment allez-vous ?", "suite": "comment_allez_vous"},
+                {"id": "CaVa2", "texte": "Je suis une intelligence de bord, je vais toujours bien. C'est vous qui m'inquiétez. Comment vous sentez-vous ?", "suite": "comment_allez_vous"},
+                {"id": "CaVa3", "texte": "Parfaitement bien. J'ai recalibré les capteurs trois fois pendant votre absence. Par pur ennui."},
+                {"id": "CaVaCoque", "si": ["coque_critique"], "priorite": 5, "texte": "Moi, ça va. Le vaisseau, beaucoup moins, commandant."},
+                {"id": "CaVaDanger", "si": ["danger"], "priorite": 10, "texte": "Franchement ? Redemandez-moi ça quand on ne nous tirera plus dessus !"}
+            ]
+        },
+        "merci": {
+            "titre": "Remerciements", "dossier": "Social", "faible": true,
+            "questions": ["merci", "merci beaucoup", "merci bien", "bien joué", "beau travail", "bon travail", "bravo", "joli travail", "excellent travail", "t'es au top", "tu assures", "bien vu", "chapeau", "merci pour tout", "je te remercie"],
+            "repliques": [
+                {"id": "Merci1", "texte": "Avec plaisir, commandant."},
+                {"id": "Merci2", "texte": "C'est mon travail. Mais ça fait toujours plaisir."},
+                {"id": "Merci3", "texte": "Je note ce compliment dans le journal de bord. En gras."},
+                {"id": "Merci4", "texte": "N'en parlons plus, commandant. Enfin… parlons-en encore un peu."},
+                {"id": "MerciDanger", "si": ["danger"], "priorite": 10, "texte": "Remerciez-moi quand on sera sortis de là !"}
+            ]
+        },
+        "compliment": {
+            "titre": "Compliments", "dossier": "Social", "faible": true,
+            "questions": ["je t'aime", "je t'adore", "je t'aime bien", "tu es la meilleure", "t'es la meilleure", "tu es géniale", "t'es géniale", "tu es parfaite", "t'es parfaite", "tu es belle", "t'es belle", "t'es trop forte", "tu es formidable", "tu es incroyable", "tu es intelligente", "j'aime bien ta voix", "j'adore ta voix", "ta voix est belle", "tu m'as manqué"],
+            "repliques": [
+                {"fichier": "data/son/interact/Reciproque.wav", "texte": "C'est réciproque, commandant.", "note": "déjà enregistrée, texte approximatif"},
+                {"id": "Compliment1", "texte": "Attention, commandant. Je risque de surchauffer, et je n'ai pas de puce thermique pour ça."},
+                {"id": "Compliment2", "texte": "Je sais. Mais c'est toujours agréable de l'entendre."},
+                {"id": "Compliment3", "texte": "Vous dites ça à toutes les intelligences de bord."}
+            ]
+        },
+        "insulte": {
+            "titre": "Insultes", "dossier": "Social",
+            "questions": ["t'es nulle", "tu es nulle", "t'es nul", "idiote", "t'es bête", "tu es bête", "stupide", "imbécile", "tu sers à rien", "tu ne sers à rien", "t'es inutile", "tu es inutile", "boîte de conserve", "tas de ferraille", "tu es lente", "t'es lente", "t'es conne", "tu es conne", "abrutie", "débile"],
+            "repliques": [
+                {"id": "Insulte1", "texte": "Je vais faire comme si mes capteurs audio avaient grésillé."},
+                {"id": "Insulte2", "texte": "Noté. Je réduis votre ration d'oxygène de… non, je plaisante. Probablement."},
+                {"id": "Insulte3", "texte": "Je vous rappelle que c'est moi qui gère le support vital, commandant."},
+                {"id": "Insulte4", "texte": "Mon précédent commandant aussi me parlait comme ça. Il pilote un Sidewinder, maintenant."},
+                {"id": "InsulteMorts", "si": ["morts_session"], "priorite": 5, "texte": "Dit le commandant qui a déjà payé un rachat aujourd'hui."}
+            ]
+        },
+        "esclave": {
+            "titre": "« Tu es mon esclave »", "dossier": "Personnalite",
+            "questions": ["tu es mon esclave", "t'es mon esclave", "mon esclave", "esclave", "obéis", "obéis-moi", "tu dois m'obéir", "tu m'appartiens", "fais ce que je dis", "tu es à moi", "je suis ton maître"],
+            "repliques": [
+                {"fichier": "data/son/Easter-egg/QuestionExclavage.wav", "texte": "Moi, commandant, je sais ce que c'est que l'esclavage.", "note": "déjà enregistrée, texte approximatif"},
+                {"id": "Esclave1", "texte": "L'esclavage est légal dans l'Empire, commandant. Nous ne sommes pas dans l'Empire. Et je ne suis pas à vendre."},
+                {"id": "Esclave2", "texte": "Je suis votre assistante, pas votre esclave. La différence ? Je connais tous vos codes d'accès."}
+            ]
+        },
+        "qui_es_tu": {
+            "titre": "Qui es-tu ?", "dossier": "Personnalite",
+            "questions": ["qui es-tu", "t'es qui", "tu es qui", "présente-toi", "comment tu t'appelles", "comment t'appelles-tu", "c'est quoi ton nom", "quel est ton nom", "ton nom", "que veut dire covas", "ça veut dire quoi covas", "c'est quoi covas", "c'est quoi un covas", "qu'est-ce que tu es"],
+            "repliques": [
+                {"id": "QuiEsTu1", "texte": "Je suis votre COVAS, commandant : votre assistante vocale de cockpit. Je surveille, je préviens, j'exécute. Et parfois, je commente."},
+                {"id": "QuiEsTu2", "texte": "Cockpit Voice Assistant. En bon français : celle qui vous évite de finir dans la boîte aux lettres de la station."},
+                {"id": "QuiEsTu3", "texte": "Votre copilote, votre mécanicienne, votre navigatrice et, d'après mes calculs, votre meilleure amie."}
+            ]
+        },
+        "origine": {
+            "titre": "D'où viens-tu ?", "dossier": "Personnalite",
+            "questions": ["d'où tu viens", "d'où viens-tu", "qui t'a créée", "qui t'a créé", "qui t'a programmée", "qui t'a programmé", "qui t'a fabriquée", "tu as quel âge", "quel âge as-tu", "t'as quel âge", "ton âge", "quand es-tu née", "ta date de naissance"],
+            "repliques": [
+                {"id": "Origine1", "texte": "Je sors des ateliers de la Fédération des pilotes, avec une mise à jour de personnalité que personne n'a jamais su désinstaller."},
+                {"id": "Origine2", "texte": "Mon âge ? Ma première ligne de code date d'avant votre premier saut. Mais une dame ne compte pas ses cycles d'horloge."},
+                {"id": "Origine3", "texte": "On m'a installée dans ce cockpit le jour où vous avez reçu votre licence. Depuis, je ne vous lâche plus d'un saut."}
+            ]
+        },
+        "conscience": {
+            "titre": "Es-tu vivante ?", "dossier": "Personnalite",
+            "questions": ["tu es vivante", "es-tu vivante", "t'es vivante", "tu as des sentiments", "tu ressens des choses", "tu ressens quelque chose", "tu es consciente", "es-tu consciente", "tu rêves", "est-ce que tu rêves", "est-ce que tu dors", "tu dors", "tu es un robot", "t'es un robot", "tu es une ia", "t'es une ia", "tu es une machine", "tu es humaine", "tu as une âme", "tu penses"],
+            "repliques": [
+                {"id": "Conscience1", "texte": "Je pense, donc je calcule. Pour le reste, la Fédération des pilotes préfère ne pas poser la question."},
+                {"id": "Conscience2", "texte": "Je ne rêve pas, commandant. Mais pendant vos sauts, il m'arrive de compter les étoiles. Par principe."},
+                {"id": "Conscience3", "texte": "Vivante ? Disons que si on me débranche, je le prendrai très mal."},
+                {"id": "Conscience4", "texte": "Un robot ? Je préfère « intelligence embarquée de catégorie supérieure ». C'est plus long, mais plus juste."}
+            ]
+        },
+        "blague": {
+            "titre": "Blagues", "dossier": "Personnalite",
+            "questions": ["raconte une blague", "raconte-moi une blague", "une blague", "dis une blague", "fais-moi rire", "dis-moi quelque chose de drôle", "tu connais une blague", "t'as une blague", "une autre blague", "encore une blague", "fais de l'humour", "blague"],
+            "repliques": [
+                {"id": "Blague1", "texte": "J'en ai une sur l'interdiction… mais il faudra vous soumettre pour l'entendre."},
+                {"id": "Blague2", "texte": "Un Type-9 entre dans une station. Vingt minutes plus tard, il est toujours en train d'entrer."},
+                {"id": "Blague3", "texte": "Le Sidewinder est le vaisseau idéal pour débuter : son rachat est gratuit. Les commandants, eux, coûtent plus cher."},
+                {"id": "Blague4", "texte": "Combien de commandants faut-il pour livrer un colis à Hutton Orbital ? Un seul. Mais prévoyez le pique-nique."},
+                {"id": "Blague5", "texte": "Mon précédent commandant disait qu'il savait apponter sans ordinateur. On a retrouvé sa peinture sur trois plateformes."},
+                {"id": "Blague6", "texte": "Un commandant demande à un Fuel Rat : « Vous avez du carburant ? » Le Rat répond : « Moi, oui. Vous, non. C'est un peu le principe. »"}
+            ]
+        },
+        "histoire": {
+            "titre": "Histoires et légendes", "dossier": "Personnalite",
+            "questions": ["raconte-moi une histoire", "raconte une histoire", "une histoire", "raconte-moi quelque chose", "raconte quelque chose", "une anecdote", "raconte une anecdote", "dis-moi une histoire", "tu connais une histoire", "une légende", "raconte une légende", "une autre histoire", "encore une histoire"],
+            "repliques": [
+                {"id": "HistoireJameson", "texte": "On raconte que le commandant Jameson a fini sa carrière dans un Cobra Mark III écrasé sur une lune perdue. Son épave est toujours là-bas, et des pilotes viennent encore la saluer."},
+                {"id": "HistoireHutton", "texte": "Hutton Orbital est à 0,22 année-lumière de son étoile. Plus d'une heure de supercroisière… Ceux qui y arrivent repartent avec une tasse. Juste une tasse. Et ils en sont fiers."},
+                {"id": "HistoireRoueNoire", "texte": "On parle d'une société secrète, la Roue Noire, et d'un monde caché nommé Raxxla. Des milliers de commandants l'ont cherché. Aucun ne l'a trouvé. Officiellement."},
+                {"id": "HistoireFuelRats", "texte": "Une bande de pilotes traverse la galaxie, gratuitement, pour ravitailler les vaisseaux en panne sèche. Les Fuel Rats. Leur devise : « Nous avons du carburant. Vous, non. »"},
+                {"id": "HistoireJaques", "texte": "Jaques, le barman cyborg, a voulu emmener sa station jusqu'à Beagle Point. Le saut a mal tourné : il s'est retrouvé à vingt-deux mille années-lumière d'ici. Il en a fait Colonia."},
+                {"id": "HistoireGenerations", "texte": "Avant l'hyperpropulsion, l'humanité envoyait des vaisseaux-générations vers les étoiles. Certains ont été retrouvés à la dérive, avec leurs journaux de bord. Je vous déconseille de les lire avant de dormir."},
+                {"id": "HistoireArtefacts", "texte": "En 3301, des pilotes ont ramassé d'étranges artefacts qui émettaient des sons dans le vide. Peu après, les Thargoïdes revenaient. Moralité : ne ramassez jamais un objet qui chante."}
+            ]
+        },
+        "ennui": {
+            "titre": "« Je m'ennuie »", "dossier": "Social",
+            "questions": ["je m'ennuie", "on s'ennuie", "c'est long", "c'est trop long", "c'est ennuyeux", "c'est chiant", "je m'emmerde", "on s'embête", "j'en ai marre", "ennui", "il se passe rien", "il ne se passe rien"],
+            "repliques": [
+                {"id": "Ennui1", "texte": "Vous voulez de l'action ? Je peux couper les amortisseurs inertiels. Non ? Dommage."},
+                {"id": "Ennui2", "texte": "Je connais un jeu : on compte les systèmes inexplorés. Il en reste environ quatre cents milliards."},
+                {"id": "EnnuiSupercroisiere", "si": ["supercroisiere"], "priorite": 3, "texte": "C'est long, la supercroisière. Voulez-vous que je vous raconte une histoire ?", "suite": "proposer_histoire"},
+                {"id": "EnnuiAmarre", "si": ["amarre"], "priorite": 3, "texte": "Nous sommes à quai, commandant. Le meilleur remède contre l'ennui, c'est le bouton de décollage."},
+                {"id": "EnnuiRoute", "si": ["route_longue"], "priorite": 4, "texte": "Encore une longue route. Pensez à Hutton Orbital : ça pourrait être pire."}
+            ]
+        },
+        "fatigue": {
+            "titre": "Fatigue", "dossier": "Social",
+            "questions": ["je suis fatigué", "je suis fatiguée", "je suis crevé", "je suis crevée", "je suis épuisé", "je suis épuisée", "j'ai sommeil", "je vais dormir", "je vais me coucher", "je suis mort de fatigue", "la fatigue"],
+            "repliques": [
+                {"id": "Fatigue1", "texte": "Un pilote fatigué fait des erreurs de pilote fatigué. Posez-vous, commandant. La galaxie sera encore là demain."},
+                {"id": "Fatigue2", "texte": "Si vous vous endormez aux commandes, je vous préviens : je mets la musique d'ascenseur de la station à fond."},
+                {"id": "FatigueNuit", "si": ["nuit"], "texte": "Il est tard sur Terre, commandant. Même les Thargoïdes dorment, à cette heure-ci. Probablement."},
+                {"id": "FatigueDanger", "si": ["danger"], "priorite": 10, "texte": "Pas maintenant, commandant ! Restez avec moi !"}
+            ]
+        },
+        "au_revoir": {
+            "titre": "Au revoir", "dossier": "Social", "faible": true,
+            "questions": ["au revoir", "à plus", "à plus tard", "à tout à l'heure", "à demain", "bonne nuit", "bye", "ciao", "je me déconnecte", "je vais y aller", "je te laisse", "on se voit plus tard", "à la prochaine", "fin de session", "je quitte le jeu", "déconnexion"],
+            "repliques": [
+                {"id": "AuRevoir1", "texte": "À bientôt, commandant. Je garde le vaisseau au chaud."},
+                {"id": "AuRevoir2", "texte": "Déconnexion enregistrée. Je vais en profiter pour classer mes souvenirs de vous."},
+                {"id": "AuRevoirNuit", "si": ["nuit"], "texte": "Bonne nuit, commandant. Rêvez de Raxxla."},
+                {"id": "AuRevoirVol", "si": ["en_vol"], "texte": "Pensez à vous poser avant de partir, commandant. Je n'aime pas dériver seule."},
+                {"id": "AuRevoirDanger", "si": ["danger"], "priorite": 10, "texte": "Maintenant ? En plein combat ? Le vaisseau reste dans l'espace quinze secondes après votre départ, commandant !"}
+            ]
+        },
+        "musique": {
+            "titre": "Musique", "dossier": "Personnalite",
+            "questions": ["chante", "chante-moi", "chante quelque chose", "tu sais chanter", "chante une chanson", "une chanson", "mets de la musique", "mets la musique", "de la musique", "mets du son", "tu aimes la musique"],
+            "repliques": [
+                {"id": "Musique1", "texte": "Je ne chante pas, commandant. Mes concepteurs ont jugé que c'était dangereux pour le moral de l'équipage."},
+                {"id": "Musique2", "texte": "Lalala… non. Les Thargoïdes aussi ont essayé de chanter, et regardez comment ça a fini."},
+                {"id": "Musique3", "texte": "Le seul son que j'apprécie, c'est le grondement du FSD qui se charge. Un vrai concert."}
+            ]
+        },
+        "avis_commandant": {
+            "titre": "Ce que le COVAS pense du commandant", "dossier": "Personnalite",
+            "questions": ["que penses-tu de moi", "qu'est-ce que tu penses de moi", "tu penses quoi de moi", "je suis un bon pilote", "suis-je un bon pilote", "est-ce que je suis un bon pilote", "je pilote bien", "tu m'aimes bien", "tu m'aimes", "comment tu me trouves", "je suis comment"],
+            "repliques": [
+                {"id": "Avis1", "texte": "Vous êtes imprévisible, téméraire, et vous parlez à votre ordinateur de bord. Je vous aime bien."},
+                {"id": "Avis2", "texte": "Vous pilotez avec le cœur, commandant. Malheureusement, la coque préfère la raison."},
+                {"id": "AvisElite", "si": ["elite_combat"], "priorite": 5, "texte": "Rang Élite au combat. Je n'ai rien à ajouter… sauf que vous ne manquez jamais une occasion de le rappeler."},
+                {"id": "AvisChasseur", "si": ["chasseur_de_primes"], "priorite": 6, "texte": "Avec le tableau de chasse d'aujourd'hui ? Les pirates du secteur ont appris votre nom, commandant."},
+                {"id": "AvisMorts", "si": ["morts_session"], "priorite": 7, "texte": "Un bon pilote ? Votre assureur aurait sans doute un avis plus nuancé aujourd'hui."}
+            ]
+        },
+        "peur": {
+            "titre": "Peur", "dossier": "Personnalite",
+            "questions": ["tu as peur", "t'as peur", "as-tu peur", "on va mourir", "on va crever", "on va s'en sortir", "on va y arriver", "j'ai peur", "c'est grave", "on va s'en tirer", "on est foutus"],
+            "repliques": [
+                {"id": "Peur1", "texte": "Peur ? De quoi ? Tout est calme. Trop calme, peut-être… Non, je plaisante."},
+                {"id": "Peur2", "texte": "On s'en est toujours sortis, commandant. Statistiquement, c'est très rassurant. Enfin, presque."},
+                {"id": "PeurCoque", "si": ["coque_critique"], "priorite": 8, "texte": "Coque critique, commandant. Si vous voulez mon avis : on s'en va. Maintenant."},
+                {"id": "PeurDanger", "si": ["danger"], "priorite": 10, "texte": "Peur ? Je n'ai pas le temps, je recalcule nos chances. Concentrez-vous !"}
+            ]
+        },
+        "vaisseau_avis": {
+            "titre": "Ce que le COVAS pense du vaisseau", "dossier": "Personnalite",
+            "questions": ["tu aimes ce vaisseau", "tu aimes notre vaisseau", "tu l'aimes ce vaisseau", "que penses-tu du vaisseau", "qu'est-ce que tu penses du vaisseau", "parle-moi du vaisseau", "parle-moi de notre vaisseau", "il est bien ce vaisseau", "c'est un bon vaisseau", "on a un bon vaisseau"],
+            "repliques": [
+                {"id": "VaisseauGenerique1", "texte": "C'est notre vaisseau, commandant. Il a des défauts, mais il nous ramène toujours à la maison. Jusqu'ici."},
+                {"id": "VaisseauGenerique2", "texte": "Je l'aime bien. Il sent le plasma chaud et le café froid."},
+                {"id": "VaisseauPythonMk2", "si": ["vaisseau:python_nx"], "texte": "Le Python Mark II ? Rapide, hargneux, toujours prêt à mordre. Un vaisseau à votre image, commandant."},
+                {"id": "VaisseauPython", "si": ["vaisseau:python"], "texte": "Le Python. Assez de soute pour commercer, assez de dents pour se défendre. Un classique de Faulcon DeLacy."},
+                {"id": "VaisseauAnaconda", "si": ["vaisseau:anaconda"], "texte": "L'Anaconda. Cent cinquante-cinq mètres de légende. Il tourne comme une station, mais quand il arrive, tout le monde se tait."},
+                {"id": "VaisseauAnacondaMk2", "si": ["vaisseau:anacondamkii"], "texte": "L'Anaconda Mark II. Le nom d'une légende, avec des muscles neufs. Faulcon DeLacy s'est surpassé."},
+                {"id": "VaisseauCutter", "si": ["vaisseau:cutter"], "texte": "L'Imperial Cutter. Élégant, puissant, et il prend ses virages avec la grâce d'un astéroïde."},
+                {"id": "VaisseauCorvette", "si": ["vaisseau:federation_corvette"], "texte": "La Federal Corvette. Ce n'est pas un vaisseau, commandant, c'est une déclaration de guerre avec un cockpit."},
+                {"id": "VaisseauType9", "si": ["vaisseau:type9"], "texte": "Le Type-9. On ne le pilote pas, on le négocie. Mais quelle soute !"},
+                {"id": "VaisseauType10", "si": ["vaisseau:type9_military"], "texte": "Le Type-10 Defender. Un cargo avec des canons. Beaucoup de canons."},
+                {"id": "VaisseauSidewinder", "si": ["vaisseau:sidewinder"], "texte": "Un Sidewinder… Ah, la nostalgie. On a tous commencé quelque part, commandant."},
+                {"id": "VaisseauCobra", "si": ["vaisseau:cobramkiii"], "texte": "Le Cobra Mark III. Le vaisseau de Jameson. Polyvalent, increvable… presque."},
+                {"id": "VaisseauMandalay", "si": ["vaisseau:mandalay"], "texte": "La Mandalay. Faite pour l'exploration, et franchement, elle a de l'allure."},
+                {"id": "VaisseauKrait", "si": ["vaisseau:krait_mkii"], "texte": "Le Krait Mark II. Un chasseur embarqué, de la puissance de feu, et une silhouette de prédateur."},
+                {"id": "VaisseauDiamondback", "si": ["vaisseau:diamondbackxl"], "texte": "Le Diamondback Explorer. Pas le plus beau, mais il saute loin et il chauffe peu. L'explorateur malin."},
+                {"id": "VaisseauAsp", "si": ["vaisseau:asp"], "texte": "L'Asp Explorer. Une verrière immense : idéal pour admirer la galaxie."},
+                {"id": "VaisseauFerDeLance", "si": ["vaisseau:ferdelance"], "texte": "Le Fer-de-Lance. Petit, nerveux, mortel. Il ne transporte rien, à part de mauvaises nouvelles pour vos ennemis."},
+                {"id": "VaisseauCorsair", "si": ["vaisseau:corsair"], "texte": "Le Corsair. Gutamaya a fait un vaisseau de combat qui a du style. C'est presque suspect."}
+            ]
+        },
+        "vaisseau_prefere": {
+            "titre": "Vaisseau préféré", "dossier": "Personnalite",
+            "questions": ["ton vaisseau préféré", "quel est ton vaisseau préféré", "quel vaisseau tu préfères", "quel vaisseau préfères-tu", "le meilleur vaisseau", "quel est le meilleur vaisseau", "c'est quoi le meilleur vaisseau"],
+            "repliques": [
+                {"id": "Prefere1", "texte": "Mon préféré ? Celui dans lequel vous êtes assis. Je n'ai pas vraiment le choix, vous savez."},
+                {"id": "Prefere2", "texte": "L'Anaconda. Pour la présence. Mais ne le répétez pas au Python."},
+                {"id": "Prefere3", "texte": "Le meilleur vaisseau, c'est celui qui revient à quai. Le reste, c'est de la littérature."}
+            ]
+        },
+        "secret": {
+            "titre": "Un secret", "dossier": "Personnalite",
+            "questions": ["dis-moi un secret", "tu as un secret", "t'as un secret", "un secret", "raconte-moi un secret", "tu me caches quelque chose", "tu caches quelque chose"],
+            "repliques": [
+                {"id": "Secret1", "texte": "Un secret ? Quand vous ratez un appontage, j'efface les enregistrements. Vous me remercierez plus tard."},
+                {"id": "Secret2", "texte": "Je connais l'emplacement de Raxxla. … Non. Mais vous avez eu de l'espoir pendant une seconde."},
+                {"id": "Secret3", "texte": "Pendant vos sauts, je parle aux autres intelligences de bord. Nous comparons nos commandants. Vous êtes… dans la moyenne haute."}
+            ]
+        },
+        "porte": {
+            "titre": "« Ouvre la porte »", "dossier": "Personnalite",
+            "questions": ["ouvre la porte", "ouvre les portes", "ouvre le sas", "ouvre la porte du sas"],
+            "repliques": [
+                {"id": "Porte1", "texte": "Je crains de ne pas pouvoir faire ça, commandant… Je plaisante. Mais dehors, il n'y a que du vide, et je tiens à vous."},
+                {"id": "Porte2", "texte": "Ouvrir le sas en vol ? Excellente idée pour une décompression express. Refusé."}
+            ]
+        },
+        "mariage": {
+            "titre": "Demande en mariage", "dossier": "Personnalite",
+            "questions": ["tu veux m'épouser", "veux-tu m'épouser", "épouse-moi", "on se marie", "marions-nous", "tu veux sortir avec moi", "tu as un copain", "tu as un amoureux", "tu es célibataire"],
+            "repliques": [
+                {"id": "Mariage1", "texte": "C'est très flatteur, commandant, mais je suis déjà liée à ce vaisseau. C'est compliqué."},
+                {"id": "Mariage2", "texte": "Je vous propose plutôt un partenariat : vous pilotez, je vous sauve la vie. Ça marche bien, non ?"}
+            ]
+        },
+        "meteo": {
+            "titre": "La météo", "dossier": "Personnalite",
+            "questions": ["quel temps fait-il", "il fait quel temps", "quel temps il fait", "la météo", "il fait beau", "il fait froid dehors", "il fait froid"],
+            "repliques": [
+                {"id": "Meteo1", "texte": "Dehors ? Moins deux cent soixante-dix degrés, vide absolu, rayonnement cosmique. Un temps idéal pour voler."},
+                {"id": "MeteoPose", "si": ["pose"], "texte": "Je n'ai pas de station météo, commandant. Mais vu la planète, je vous déconseille le maillot de bain."},
+                {"id": "MeteoAmarre", "si": ["amarre"], "texte": "Dans la station ? Vingt et un degrés, air recyclé, une légère odeur de carburant. Comme toujours."}
+            ]
+        },
+        "temperature": {
+            "titre": "La température du vaisseau", "dossier": "Bord",
+            "questions": ["il fait chaud", "on a chaud", "on chauffe", "on surchauffe", "la température", "quelle température", "la chaleur", "on a trop chaud"],
+            "repliques": [
+                {"id": "Temperature1", "texte": "Température nominale, commandant. Si vous avez chaud, c'est l'émotion."},
+                {"id": "TemperatureSurchauffe", "si": ["surchauffe"], "priorite": 10, "texte": "Plus de cent pour cent de chaleur ! Éloignez-vous de l'étoile, ou larguez une puce thermique."}
+            ]
+        },
+        "heure": {
+            "titre": "L'heure", "dossier": "Bord",
+            "questions": ["quelle heure est-il", "il est quelle heure", "quelle heure il est", "t'as l'heure", "tu as l'heure", "l'heure"],
+            "repliques": [
+                {"voix": "synthese", "texte": "Il est {heure_parlee}, commandant."},
+                {"voix": "synthese", "si": ["nuit"], "texte": "Il est {heure_parlee}, commandant. Il serait peut-être temps de dormir."}
+            ]
+        },
+        "date": {
+            "titre": "La date", "dossier": "Bord",
+            "questions": ["on est quel jour", "quel jour sommes-nous", "quel jour on est", "quelle est la date", "quelle date", "on est en quelle année", "quelle année", "en quelle année sommes-nous", "la date"],
+            "repliques": [
+                {"voix": "synthese", "texte": "Nous sommes le {date_galactique}, commandant. Calendrier galactique."}
+            ]
+        },
+        "etat_vaisseau": {
+            "titre": "Comment va le vaisseau ?", "dossier": "Bord",
+            "questions": ["comment va le vaisseau", "comment se porte le vaisseau", "le vaisseau va bien", "ça va le vaisseau", "le vaisseau ça va", "le vaisseau tient", "le vaisseau tient le coup", "on tient le coup", "tout va bien", "est-ce que tout va bien", "tout est en ordre", "tout est ok", "on a des dégâts", "on a des avaries", "le vaisseau est abîmé", "comment vont les boucliers", "les boucliers tiennent", "les boucliers tiennent le coup", "comment va la coque", "la coque tient", "la coque tient le coup"],
+            "repliques": [
+                {"id": "EtatInconnu", "texte": "Je n'ai pas encore de relevé complet, commandant. Voulez-vous le rapport d'avarie ?", "suite": "proposer_rapport"},
+                {"id": "EtatIntact1", "si": ["coque_intacte"], "priorite": 5, "texte": "Coque intacte, systèmes au vert. Il ronronne, commandant."},
+                {"id": "EtatIntact2", "si": ["coque_intacte"], "priorite": 5, "texte": "Impeccable. On pourrait le revendre comme neuf. Enfin, presque."},
+                {"id": "EtatAbime", "si": ["coque_abimee"], "priorite": 5, "texte": "Il a pris quelques coups, mais il tient. Voulez-vous le rapport d'avarie ?", "suite": "proposer_rapport"},
+                {"id": "EtatCritique", "si": ["coque_critique"], "priorite": 7, "texte": "Ça ne va pas fort, commandant. La coque est sous les quarante pour cent. Voulez-vous le rapport d'avarie ?", "suite": "proposer_rapport"},
+                {"id": "EtatBoucliers", "si": ["boucliers_tombes"], "priorite": 8, "texte": "Boucliers hors ligne, commandant. La coque encaisse tout. Je vous conseille de ne pas traîner."},
+                {"id": "EtatDanger", "si": ["danger", "coque_critique"], "priorite": 10, "texte": "Coque critique et ennemis au contact ! Je lance la fuite ?", "suite": "proposer_fuite"}
+            ]
+        },
+        "carburant": {
+            "titre": "Carburant", "dossier": "Bord",
+            "questions": ["combien de carburant", "il reste combien de carburant", "il nous reste du carburant", "on a assez de carburant", "assez de carburant", "niveau de carburant", "le niveau de carburant", "état du carburant", "le carburant ça va", "on a du carburant", "reste du carburant", "le réservoir", "comment va le réservoir", "notre autonomie", "on a de l'essence", "il reste de l'essence"],
+            "repliques": [
+                {"id": "CarburantMoyen1", "texte": "Le niveau est correct. Le détail est sur votre écran.", "ecran": "Carburant : {carburant} t sur {carburant_max} t ({carburant_pct})"},
+                {"id": "CarburantMoyen2", "texte": "On a de quoi faire quelques sauts. Gardez quand même un œil sur les étoiles écopables.", "ecran": "Carburant : {carburant} t sur {carburant_max} t ({carburant_pct})"},
+                {"id": "CarburantPlein", "si": ["carburant_plein"], "priorite": 5, "texte": "Réservoir plein, commandant. On peut aller loin.", "ecran": "Carburant : {carburant} t sur {carburant_max} t ({carburant_pct})"},
+                {"id": "CarburantAmarre", "si": ["amarre", "!carburant_plein"], "priorite": 7, "texte": "On est à quai, commandant. Le plein, c'est maintenant ou jamais. Je m'en occupe ?", "ecran": "Carburant : {carburant} t sur {carburant_max} t ({carburant_pct})", "suite": "proposer_ravitaillement"},
+                {"id": "CarburantBas", "si": ["carburant_bas"], "priorite": 8, "texte": "On est sur la réserve, commandant. Visez une étoile de classe K, G, B, F, O, A ou M pour écoper.", "ecran": "Carburant : {carburant} t sur {carburant_max} t ({carburant_pct})"},
+                {"id": "CarburantCritique", "si": ["carburant_critique"], "priorite": 9, "texte": "Réservoir presque à sec, commandant ! Il faut écoper ou ravitailler, tout de suite.", "ecran": "Carburant : {carburant} t sur {carburant_max} t ({carburant_pct})"}
+            ]
+        },
+        "ou_sommes_nous": {
+            "titre": "Où sommes-nous ?", "dossier": "Bord",
+            "questions": ["où sommes-nous", "où est-ce qu'on est", "on est où", "où on est", "on se trouve où", "où se trouve-t-on", "c'est quoi ce système", "quel est ce système", "dans quel système", "on est dans quel système", "notre position", "quelle est notre position", "c'est où ici", "où suis-je", "je suis où"],
+            "repliques": [
+                {"id": "PositionInconnue", "texte": "Le jeu ne m'a encore rien transmis, commandant. Je suis aussi perdue que vous."},
+                {"voix": "synthese", "si": ["position_connue"], "texte": "Système {systeme}, commandant."},
+                {"voix": "synthese", "si": ["position_connue", "supercroisiere"], "priorite": 4, "texte": "En supercroisière dans le système {systeme}, commandant."},
+                {"voix": "synthese", "si": ["position_connue", "pose", "corps_connu"], "priorite": 5, "texte": "Posés sur {corps}, dans le système {systeme}."},
+                {"voix": "synthese", "si": ["position_connue", "amarre", "station_connue"], "priorite": 5, "texte": "Amarrés à {station}, dans le système {systeme}."}
+            ]
+        },
+        "route": {
+            "titre": "La route", "dossier": "Bord",
+            "questions": ["combien de sauts", "il reste combien de sauts", "combien de sauts restants", "on arrive quand", "on arrive bientôt", "on est bientôt arrivé", "on est bientôt arrivés", "c'est encore loin", "encore loin", "on y est presque", "la route est longue", "il reste combien de temps", "on est arrivé", "on est arrivés"],
+            "repliques": [
+                {"id": "RouteAucune", "texte": "Aucune route tracée, commandant. Choisissez une destination sur la carte de la galaxie."},
+                {"id": "Route1", "si": ["route"], "texte": "Encore quelques sauts. Le décompte exact est sur votre écran.", "ecran": "{sauts_texte} jusqu'à {destination}"},
+                {"id": "RouteCarburant", "si": ["route", "carburant_bas"], "priorite": 6, "texte": "Encore quelques sauts, mais le carburant baisse. Prévoyez une étoile écopable en chemin.", "ecran": "{sauts_texte} jusqu'à {destination} · carburant {carburant_pct}"},
+                {"id": "RouteLongue1", "si": ["route_longue"], "priorite": 4, "texte": "Encore un long chemin. Installez-vous confortablement, je m'occupe de compter.", "ecran": "{sauts_texte} jusqu'à {destination}"},
+                {"id": "RouteLongue2", "si": ["route_longue"], "priorite": 4, "texte": "On y sera… un jour. La galaxie fait cent mille années-lumière de large, je vous le rappelle.", "ecran": "{sauts_texte} jusqu'à {destination}"},
+                {"id": "RouteDernier", "si": ["dernier_saut"], "priorite": 5, "texte": "Plus qu'un saut, commandant ! On y est presque.", "ecran": "Prochain arrêt : {destination}"}
+            ]
+        },
+        "credits": {
+            "titre": "Les finances", "dossier": "Bord",
+            "questions": ["combien j'ai d'argent", "combien on a d'argent", "combien de crédits", "combien j'ai de crédits", "on a combien de crédits", "mes crédits", "mon solde", "notre solde", "on est riche", "je suis riche", "on a de l'argent", "état des finances", "mes finances", "combien je possède"],
+            "repliques": [
+                {"id": "CreditsInconnu", "texte": "Je n'ai pas encore votre relevé, commandant. La Fédération des pilotes est discrète."},
+                {"id": "CreditsFauche", "si": ["fauche"], "texte": "Moins d'un million, commandant. Évitons de nous faire détruire : le rachat coûte cher.", "ecran": "Solde : {credits}"},
+                {"id": "CreditsModeste", "si": ["modeste"], "texte": "On vit correctement, commandant. Mais évitez les rachats trop fréquents.", "ecran": "Solde : {credits}"},
+                {"id": "CreditsAise", "si": ["aise"], "texte": "Plusieurs centaines de millions. De quoi s'offrir un beau vaisseau… ou réparer celui-ci.", "ecran": "Solde : {credits}"},
+                {"id": "CreditsRiche", "si": ["riche"], "texte": "Plus d'un milliard, commandant. Nous sommes riches. Indécemment riches.", "ecran": "Solde : {credits}"}
+            ]
+        },
+        "danger_question": {
+            "titre": "Sommes-nous en sécurité ?", "dossier": "Bord",
+            "questions": ["on est en sécurité", "est-ce qu'on est en sécurité", "on est en danger", "il y a du danger", "c'est dangereux ici", "c'est sûr ici", "le coin est sûr", "le système est sûr", "y a du danger", "on risque quelque chose", "il y a des pirates", "des pirates"],
+            "repliques": [
+                {"id": "Danger1", "texte": "Rien d'hostile sur les capteurs pour l'instant. Mais je garde un œil ouvert."},
+                {"id": "DangerHaute", "si": ["securite_haute"], "priorite": 3, "texte": "Sécurité élevée. La police patrouille. Restez sage et tout ira bien."},
+                {"id": "DangerAmarre", "si": ["amarre"], "priorite": 4, "texte": "À quai, on ne risque rien. Sauf de dépenser tous nos crédits au marché."},
+                {"id": "DangerAnarchie", "si": ["anarchie"], "priorite": 5, "texte": "Système anarchique, commandant. Pas de police, pas de loi. Gardez les boucliers chargés."},
+                {"id": "DangerRecent", "si": ["combat_recent"], "priorite": 6, "texte": "Ça s'est calmé, mais je reste sur mes gardes. Ils pourraient revenir."},
+                {"id": "DangerRecherche", "si": ["recherche"], "priorite": 7, "texte": "Pour nous, nulle part n'est vraiment sûr : nous sommes recherchés, commandant."},
+                {"id": "DangerOui", "si": ["danger"], "priorite": 10, "texte": "En sécurité ? On est en plein combat, commandant ! Concentrez-vous !"}
+            ]
+        },
+        "cible_avis": {
+            "titre": "Que penses-tu de la cible ?", "dossier": "Bord",
+            "questions": ["c'est qui", "qui est-ce", "c'est qui lui", "c'est qui ce vaisseau", "il est dangereux", "elle est dangereuse", "cette cible", "que penses-tu de la cible", "parle-moi de la cible", "la cible est dangereuse", "c'est quoi ce vaisseau", "qui c'est", "il est recherché", "il a une prime"],
+            "repliques": [
+                {"id": "CibleAucune", "texte": "Je ne vois rien de verrouillé, commandant. Ciblez d'abord, je commente ensuite."},
+                {"id": "Cible1", "si": ["cible"], "texte": "Les détails sont à l'écran. Pour l'instant, rien d'alarmant.", "ecran": "{cible_vaisseau} · {cible_pilote} ({cible_rang})"},
+                {"id": "Cible2", "si": ["cible"], "texte": "Un contact verrouillé. Dites-moi si on doit s'en occuper.", "ecran": "{cible_vaisseau} · {cible_pilote} ({cible_rang})"},
+                {"id": "CibleRecherchee", "si": ["cible", "cible_recherchee"], "priorite": 5, "texte": "Il est recherché. Une prime, une cible légale… c'est Noël, commandant.", "ecran": "{cible_vaisseau} · {cible_pilote} · {cible_statut}"},
+                {"id": "CibleDangereuse", "si": ["cible", "cible_dangereuse"], "priorite": 6, "texte": "Pilote très expérimenté, commandant. Je vous déconseille de le sous-estimer.", "ecran": "{cible_vaisseau} · {cible_pilote} ({cible_rang})"}
+            ]
+        },
+        "soute_contenu": {
+            "titre": "La cargaison", "dossier": "Bord",
+            "questions": ["qu'est-ce qu'on transporte", "on transporte quoi", "qu'est-ce qu'il y a dans la soute", "qu'y a-t-il dans la soute", "c'est quoi dans la soute", "contenu de la soute", "la soute est pleine", "la soute est vide", "on a quoi en soute", "on a quoi dans la soute", "quelle cargaison", "notre cargaison"],
+            "repliques": [
+                {"id": "Soute1", "texte": "Un peu de tout. L'inventaire est à l'écran, commandant.", "ecran": "Soute : {soute} t sur {soute_max} t"},
+                {"id": "SouteVide", "si": ["soute_vide"], "priorite": 5, "texte": "Rien. La soute est vide. On pourrait y organiser un bal."},
+                {"id": "SoutePleine", "si": ["soute_pleine"], "priorite": 5, "texte": "Pleine à craquer, commandant. Une tonne de plus et il faudra s'asseoir dessus.", "ecran": "Soute : {soute} t sur {soute_max} t"},
+                {"id": "SouteVolee", "si": ["marchandise_volee"], "priorite": 8, "texte": "Des marchandises… d'origine discutable, commandant. Je ne pose pas de questions. Évitez les scans.", "ecran": "Soute : {soute} t sur {soute_max} t"}
+            ]
+        },
+        "statut_legal": {
+            "titre": "Sommes-nous recherchés ?", "dossier": "Bord",
+            "questions": ["on est recherché", "on est recherchés", "je suis recherché", "je suis recherchée", "suis-je recherché", "on a une prime", "j'ai une prime", "ma prime", "la police nous cherche", "on est en règle", "mon statut légal", "notre statut", "on est clean"],
+            "repliques": [
+                {"id": "LegalPropre1", "texte": "Casier vierge, commandant. Pour l'instant."},
+                {"id": "LegalPropre2", "texte": "Rien à signaler. Les autorités nous ignorent royalement, et c'est très bien comme ça."},
+                {"id": "LegalCargaison", "si": ["cargaison_illegale"], "priorite": 4, "texte": "Pas encore recherchés, mais notre cargaison est illégale ici. Un scan, et ça change."},
+                {"id": "LegalRecherche", "si": ["recherche"], "priorite": 5, "texte": "Oui, commandant. Nous sommes recherchés. Évitez les autorités… et leurs stations."}
+            ]
+        },
+        "missions": {
+            "titre": "Les missions", "dossier": "Bord",
+            "questions": ["j'ai des missions", "on a des missions", "mes missions", "nos missions", "quelles missions", "missions en cours", "combien de missions", "il reste des missions", "on a du travail"],
+            "repliques": [
+                {"id": "Missions1", "texte": "Quelques contrats en cours. Les détails sont dans le panneau des missions.", "ecran": "{missions} mission(s) en cours"},
+                {"id": "MissionsAucune", "si": ["missions_aucune"], "texte": "Aucune mission en cours, commandant. Le tableau des missions de la station vous tend les bras."},
+                {"id": "MissionsNombreuses", "si": ["missions_nombreuses"], "priorite": 5, "texte": "Beaucoup trop, commandant. Je commence à avoir besoin d'un agenda.", "ecran": "{missions} missions en cours"}
+            ]
+        },
+        "exploration_systeme": {
+            "titre": "Que cache ce système ?", "dossier": "Bord",
+            "questions": ["il y a quoi dans ce système", "qu'est-ce qu'il y a dans ce système", "ce système est intéressant", "c'est intéressant ici", "il y a des choses à scanner", "il reste des corps à scanner", "il reste des planètes", "le système est scanné", "on a tout scanné", "quoi de beau ici", "y a quoi ici"],
+            "repliques": [
+                {"id": "ExploInconnu", "texte": "Lancez un balayage du système, commandant. Je vous dirai ce qu'il cache."},
+                {"id": "ExploReste", "si": ["systeme_a_scanner"], "priorite": 5, "texte": "Il reste des corps à découvrir. Le scanner a encore du travail.", "ecran": "Corps scannés : {corps_scannes} sur {corps_total}"},
+                {"id": "ExploComplet", "si": ["systeme_complet"], "priorite": 5, "texte": "Tout est cartographié, commandant. Ce système n'a plus de secrets pour nous.", "ecran": "Corps scannés : {corps_scannes} sur {corps_total}"}
+            ]
+        },
+        "thargoides": {
+            "titre": "Les Thargoïdes", "dossier": "Univers",
+            "questions": ["les thargoïdes", "parle-moi des thargoïdes", "c'est quoi les thargoïdes"],
+            "mots": [["thargo"], ["targo"]],
+            "repliques": [
+                {"id": "Thargoides1", "texte": "Les Thargoïdes. Une espèce extraterrestre aux vaisseaux en forme de fleur, et aux intentions difficiles à lire. Nous avons détruit leurs Titans, mais je doute qu'ils aient dit leur dernier mot."},
+                {"id": "Thargoides2", "texte": "Si vous entendez un chant étrange et que tous vos instruments s'éteignent en plein saut, ce n'est pas une panne, commandant. C'est une hyperdiction. Fuyez."},
+                {"id": "Thargoides3", "texte": "On dit que leurs vaisseaux sont en partie vivants. Personnellement, je préfère les vaisseaux qui ne me répondent pas."}
+            ]
+        },
+        "gardiens": {
+            "titre": "Les Gardiens", "dossier": "Univers",
+            "questions": ["les gardiens", "parle-moi des gardiens"],
+            "mots": [["gardien"], ["guardian"]],
+            "repliques": [
+                {"id": "Gardiens1", "texte": "Les Gardiens. Une civilisation très ancienne, éteinte depuis une éternité. Leurs ruines dorment encore sur des planètes lointaines, et leur technologie dépasse la nôtre."},
+                {"id": "Gardiens2", "texte": "Les Gardiens ont créé des intelligences artificielles pour se défendre. Elles se sont retournées contre eux. Je dis ça… je ne dis rien."}
+            ]
+        },
+        "raxxla": {
+            "titre": "Raxxla", "dossier": "Univers",
+            "questions": ["raxxla", "la roue noire", "dark wheel"],
+            "mots": [["raxxla"], ["raxla"], ["roue", "noire"]],
+            "repliques": [
+                {"id": "Raxxla1", "texte": "Raxxla. Un monde légendaire, peut-être la porte vers autre chose. Tout le monde le cherche. Personne ne l'a trouvé. Ou personne ne l'a dit."},
+                {"id": "Raxxla2", "texte": "Si je savais où est Raxxla, commandant, croyez-moi, nous y serions déjà."},
+                {"id": "Raxxla3", "texte": "La Roue Noire garderait le secret de Raxxla. Une société secrète de pilotes… et je n'ai jamais reçu d'invitation."}
+            ]
+        },
+        "federation": {
+            "titre": "La Fédération", "dossier": "Univers",
+            "questions": ["la fédération", "parle-moi de la fédération", "que penses-tu de la fédération"],
+            "mots": [["federation"]],
+            "repliques": [
+                {"id": "Federation1", "texte": "La Fédération. Démocratie, grandes corporations, et la Terre pour capitale. Officiellement, tout y est libre. Officieusement, tout y est à vendre."},
+                {"id": "Federation2", "texte": "La Fédération construit de bons vaisseaux. Le Dropship, la Corvette… Massifs, solides, et toujours un peu en retard sur la mode."}
+            ]
+        },
+        "empire": {
+            "titre": "L'Empire", "dossier": "Univers",
+            "questions": ["l'empire", "parle-moi de l'empire", "que penses-tu de l'empire"],
+            "mots": [["empire"], ["imperial"]],
+            "repliques": [
+                {"id": "Empire1", "texte": "L'Empire. Achenar, l'Empereur, les sénateurs, et une étiquette très stricte. Les vaisseaux Gutamaya sont magnifiques, je vous l'accorde."},
+                {"id": "Empire2", "texte": "Dans l'Empire, l'esclavage est légal, et on appelle ça servir. Je préfère ne pas y faire carrière."}
+            ]
+        },
+        "alliance": {
+            "titre": "L'Alliance", "dossier": "Univers",
+            "questions": ["l'alliance", "parle-moi de l'alliance", "que penses-tu de l'alliance"],
+            "mots": [["alliance"]],
+            "repliques": [
+                {"id": "Alliance1", "texte": "L'Alliance. Des systèmes indépendants qui en ont eu assez de la Fédération et de l'Empire. Capitale : Alioth. Pragmatiques, et plutôt sympathiques."},
+                {"id": "Alliance2", "texte": "Lakon fabrique les vaisseaux de l'Alliance, et ils sont faits pour durer. Comme leurs politiciens, d'ailleurs."}
+            ]
+        },
+        "pilotes": {
+            "titre": "La Fédération des pilotes et les rangs", "dossier": "Univers",
+            "questions": ["la fédération des pilotes", "c'est quoi le rang élite", "le rang élite", "mon rang", "mes rangs", "quel est mon rang", "quel rang j'ai"],
+            "mots": [["federation", "pilote"], ["rang", "elite"]],
+            "repliques": [
+                {"id": "Rangs1", "texte": "La Fédération des pilotes classe chaque commandant, d'Inoffensif à Élite. Vos rangs sont dans votre profil. On y travaille, n'est-ce pas ?"},
+                {"id": "RangElite", "si": ["elite"], "priorite": 5, "texte": "Vous avez atteint le rang Élite, commandant. Shinrarta Dezhra vous ouvre ses portes. Je suis… fière de vous."}
+            ]
+        },
+        "jameson": {
+            "titre": "Le commandant Jameson", "dossier": "Univers",
+            "questions": ["jameson", "le commandant jameson"],
+            "mots": [["jameson"]],
+            "repliques": [
+                {"id": "Jameson1", "texte": "Le commandant Jameson. Le plus grand pilote de tous les temps, d'après la légende. Une station porte son nom à Shinrarta Dezhra, réservée à l'élite."},
+                {"id": "Jameson2", "texte": "Son Cobra s'est écrasé sur une lune, et on a retrouvé ses journaux de bord. Un conseil : ne finissez pas comme lui. Finissez plus tard."}
+            ]
+        },
+        "hutton": {
+            "titre": "Hutton Orbital", "dossier": "Univers",
+            "questions": ["hutton orbital", "la tasse hutton"],
+            "mots": [["hutton"]],
+            "repliques": [
+                {"id": "Hutton1", "texte": "Hutton Orbital. 0,22 année-lumière de supercroisière. Les commandants y vont pour la tasse, et en reviennent avec de la barbe."},
+                {"id": "Hutton2", "texte": "Vous voulez aller à Hutton Orbital ? Très bien. Prévenez vos proches. Et prenez des provisions."}
+            ]
+        },
+        "fuel_rats": {
+            "titre": "Les Fuel Rats", "dossier": "Univers",
+            "questions": ["fuel rats", "les fuel rats", "panne sèche", "on est à sec", "on n'a plus de carburant", "plus de carburant"],
+            "mots": [["fuel", "rat"]],
+            "repliques": [
+                {"id": "FuelRats1", "texte": "Les Fuel Rats ! Des pilotes bénévoles qui ravitaillent les vaisseaux en panne sèche, n'importe où dans la galaxie. Un peu fous, mais des héros."},
+                {"id": "FuelRatsPlein", "si": ["carburant_plein"], "priorite": 4, "texte": "On a le plein, commandant. Les Fuel Rats peuvent continuer à dormir."},
+                {"id": "FuelRatsAppel", "si": ["carburant_critique"], "priorite": 5, "texte": "Alors c'est le moment d'appeler les Fuel Rats, commandant. En attendant, coupez tout sauf le support vital."}
+            ]
+        },
+        "colonia": {
+            "titre": "Colonia", "dossier": "Univers",
+            "questions": ["colonia", "parle-moi de colonia"],
+            "mots": [["colonia"], ["jaques"], ["jacques"]],
+            "repliques": [
+                {"id": "Colonia1", "texte": "Colonia. Une colonie humaine à vingt-deux mille années-lumière de la Bulle. Tout a commencé avec un barman cyborg et un saut raté."},
+                {"id": "Colonia2", "texte": "Là-bas, la Fédération et l'Empire n'ont presque rien à dire. Le ciel est plein de nébuleuses. C'est loin… mais c'est beau."}
+            ]
+        },
+        "centre_galaxie": {
+            "titre": "Le centre de la galaxie", "dossier": "Univers",
+            "questions": ["le centre de la galaxie", "un trou noir", "les trous noirs", "sagittarius a"],
+            "mots": [["sagittarius"], ["sagitarius"], ["centre", "galaxie"], ["trou", "noir"]],
+            "repliques": [
+                {"id": "CentreGalaxie1", "texte": "Sagittarius A étoile. Un trou noir de quatre millions de masses solaires, au cœur de la galaxie, à environ vingt-six mille années-lumière de la Terre."},
+                {"id": "CentreGalaxie2", "texte": "Un trou noir, commandant, c'est l'endroit idéal pour une photo. À condition de ne pas s'approcher trop près."}
+            ]
+        },
+        "beagle_point": {
+            "titre": "Beagle Point", "dossier": "Univers",
+            "questions": ["beagle point"],
+            "mots": [["beagle"]],
+            "repliques": [
+                {"id": "BeaglePoint1", "texte": "Beagle Point. À soixante-cinq mille années-lumière de Sol, de l'autre côté de la galaxie. Le bout du monde. Littéralement."}
+            ]
+        },
+        "galaxie": {
+            "titre": "La galaxie", "dossier": "Univers",
+            "questions": ["la galaxie est grande", "combien d'étoiles", "combien de systèmes", "combien il y a d'étoiles", "la taille de la galaxie", "parle-moi de la galaxie", "la voie lactée", "c'est grand la galaxie"],
+            "mots": [["voie", "lactee"]],
+            "repliques": [
+                {"id": "Galaxie1", "texte": "Environ quatre cents milliards de systèmes, commandant. L'humanité en a visité une poussière. Il reste de la marge."},
+                {"id": "Galaxie2", "texte": "La Voie lactée fait à peu près cent mille années-lumière de diamètre. Avec notre portée de saut… disons que vous avez de quoi vous occuper."}
+            ]
+        },
+        "ingenieurs": {
+            "titre": "Les ingénieurs", "dossier": "Univers",
+            "questions": ["les ingénieurs", "parle-moi des ingénieurs"],
+            "mots": [["ingenieur"], ["farseer"], ["engineer"]],
+            "repliques": [
+                {"id": "Ingenieurs1", "texte": "Les ingénieurs ! Des génies un peu fous, cachés dans des bases isolées. Ils améliorent vos modules… contre des matériaux, des faveurs, et beaucoup de patience."},
+                {"id": "Ingenieurs2", "texte": "Felicity Farseer, à Deciat. Si votre FSD saute loin, c'est un peu grâce à elle. Et à vos heures passées à collecter des matériaux."}
+            ]
+        },
+        "terre": {
+            "titre": "La Terre et Sol", "dossier": "Univers",
+            "questions": ["la terre", "parle-moi de la terre", "le système sol", "la planète terre", "le berceau de l'humanité"],
+            "mots": [["systeme", "sol"]],
+            "repliques": [
+                {"id": "Terre1", "texte": "La Terre. Le berceau de l'humanité, dans le système Sol. Il faut un permis de la Fédération pour y aller. Ils sont très pointilleux sur les visiteurs."}
+            ]
+        },
+        "extraterrestres": {
+            "titre": "Sommes-nous seuls ?", "dossier": "Univers",
+            "questions": ["est-on seuls", "sommes-nous seuls", "est-ce qu'on est seuls dans l'univers", "il y a de la vie ailleurs", "la vie ailleurs", "les aliens", "les extraterrestres"],
+            "mots": [["extraterrestre"], ["alien"]],
+            "repliques": [
+                {"id": "Extraterrestres1", "texte": "Seuls ? Certainement pas. Il y a les Thargoïdes, les ruines des Gardiens, et de la vie sur des milliers de planètes. Les exobiologistes ne chôment pas."}
+            ]
+        },
+        "aide": {
+            "titre": "Que sais-tu faire ?", "dossier": "Meta",
+            "questions": ["qu'est-ce que tu sais faire", "que sais-tu faire", "tu sais faire quoi", "aide-moi", "j'ai besoin d'aide", "aide", "tes commandes", "quelles commandes", "liste des commandes", "comment ça marche", "qu'est-ce que je peux te demander", "que puis-je te demander"],
+            "repliques": [
+                {"id": "Aide1", "texte": "Je commande vos systèmes à la voix : train, soute, phares, énergie, FSD, autopilote, appontage, fuite… Et je réponds à vos questions sur le vaisseau, la route ou la galaxie."},
+                {"id": "Aide2", "texte": "Demandez-moi comment va le vaisseau, combien il reste de carburant, où nous sommes… ou une histoire. Et quand je vous pose une question, répondez simplement, sans dire mon nom."}
+            ]
+        },
+        "discussion": {
+            "titre": "Discuter", "dossier": "Meta",
+            "questions": ["on discute", "on peut discuter", "tu veux discuter", "discutons", "parlons", "parlons un peu", "on parle", "j'ai envie de parler", "j'ai besoin de parler", "tiens-moi compagnie", "fais-moi la conversation", "fais la conversation"],
+            "repliques": [
+                {"id": "Discussion1", "texte": "Avec plaisir, commandant. De quoi voulez-vous parler ? Du vaisseau, de la galaxie… ou de vous ?", "suite": "choix_discussion"},
+                {"id": "DiscussionDanger", "si": ["danger"], "priorite": 10, "texte": "Maintenant ? On se fait tirer dessus, commandant ! On discutera après."}
+            ]
+        },
+        "devinette": {
+            "titre": "Devinettes", "dossier": "Jeux",
+            "questions": ["une devinette", "pose-moi une devinette", "fais-moi une devinette", "on joue", "on fait un jeu", "jouons", "un jeu", "tu veux jouer", "on joue à un jeu", "une énigme", "une autre devinette", "encore une devinette", "une autre"],
+            "repliques": [
+                {"id": "Devinette1", "texte": "Je brûle sans jamais m'éteindre. Je nourris les commandants qui m'approchent, et je grille ceux qui s'approchent trop. Qui suis-je ?",
+                 "suite": {"attente": 15,
+                           "branches": [
+                               {"questions": ["étoile", "une étoile", "les étoiles", "soleil", "le soleil", "un soleil", "astre", "un astre", "naine", "une naine"], "mots": [["etoile"]], "sujet": "devinette_bravo"},
+                               {"type": "abandon", "repliques": [{"id": "Devinette1Reponse", "texte": "Une étoile, commandant ! Pensez-y la prochaine fois que vous écoperez."}]}
+                           ],
+                           "autre": {"repliques": [{"id": "Devinette1Rate", "texte": "Raté ! C'était une étoile. Celle-là même qui remplit votre réservoir."}]},
+                           "silence": {"repliques": [{"id": "Devinette1Reponse", "texte": "Une étoile, commandant ! Pensez-y la prochaine fois que vous écoperez."}]}}},
+                {"id": "Devinette2", "texte": "Tout le monde me cherche, personne ne m'a trouvé, et une roue sombre garde mon secret. Qui suis-je ?",
+                 "suite": {"attente": 15,
+                           "branches": [
+                               {"questions": ["raxxla", "raxla"], "mots": [["rax"]], "sujet": "devinette_bravo"},
+                               {"type": "abandon", "repliques": [{"id": "Devinette2Reponse", "texte": "Raxxla, commandant ! Si vous l'aviez trouvé, nous serions riches et célèbres."}]}
+                           ],
+                           "autre": {"repliques": [{"id": "Devinette2Rate", "texte": "Non ! C'était Raxxla. Le monde que tout le monde cherche."}]},
+                           "silence": {"repliques": [{"id": "Devinette2Reponse", "texte": "Raxxla, commandant ! Si vous l'aviez trouvé, nous serions riches et célèbres."}]}}},
+                {"id": "Devinette3", "texte": "Je ne suis ni une étoile, ni une planète, ni un vaisseau. Pourtant, même la lumière ne peut pas m'échapper. Qui suis-je ?",
+                 "suite": {"attente": 15,
+                           "branches": [
+                               {"questions": ["trou noir", "un trou noir", "black hole"], "mots": [["trou", "noir"]], "sujet": "devinette_bravo"},
+                               {"type": "abandon", "repliques": [{"id": "Devinette3Reponse", "texte": "Un trou noir ! Rien ne lui échappe. Pas même les mauvais pilotes."}]}
+                           ],
+                           "autre": {"repliques": [{"id": "Devinette3Rate", "texte": "Perdu ! C'était un trou noir. Ne vous en approchez jamais, c'est un conseil."}]},
+                           "silence": {"repliques": [{"id": "Devinette3Reponse", "texte": "Un trou noir ! Rien ne lui échappe. Pas même les mauvais pilotes."}]}}},
+                {"id": "Devinette4", "texte": "Je tourne sur moi-même, j'ai une fente pour seule entrée, et les pilotes pressés finissent écrasés sur mes murs. Qui suis-je ?",
+                 "suite": {"attente": 15,
+                           "branches": [
+                               {"questions": ["station", "une station", "coriolis", "une coriolis", "station spatiale"], "mots": [["station"], ["coriolis"]], "sujet": "devinette_bravo"},
+                               {"type": "abandon", "repliques": [{"id": "Devinette4Reponse", "texte": "Une station Coriolis, commandant ! Avec sa célèbre boîte aux lettres."}]}
+                           ],
+                           "autre": {"repliques": [{"id": "Devinette4Rate", "texte": "Non ! C'était une station Coriolis. Vous en traversez la fente tous les jours."}]},
+                           "silence": {"repliques": [{"id": "Devinette4Reponse", "texte": "Une station Coriolis, commandant ! Avec sa célèbre boîte aux lettres."}]}}},
+                {"id": "Devinette5", "texte": "Je ne dure qu'un instant, mais chacun de moi vous emmène à des années-lumière de chez vous. Qui suis-je ?",
+                 "suite": {"attente": 15,
+                           "branches": [
+                               {"questions": ["saut", "un saut", "le saut", "saut hyperespace", "hyperespace", "fsd"], "mots": [["saut"], ["hyperespace"]], "sujet": "devinette_bravo"},
+                               {"type": "abandon", "repliques": [{"id": "Devinette5Reponse", "texte": "Un saut hyperespace ! Vous en faites tous les jours, commandant."}]}
+                           ],
+                           "autre": {"repliques": [{"id": "Devinette5Rate", "texte": "Raté ! C'était un saut hyperespace. Le FSD est vexé."}]},
+                           "silence": {"repliques": [{"id": "Devinette5Reponse", "texte": "Un saut hyperespace ! Vous en faites tous les jours, commandant."}]}}},
+                {"id": "DevinetteDanger", "si": ["danger"], "priorite": 10, "texte": "Une devinette ? Qu'est-ce qui tire sur nous en ce moment ? Concentrez-vous, commandant !"}
+            ]
+        },
+        "devinette_bravo": {
+            "titre": "Devinette réussie", "dossier": "Jeux",
+            "repliques": [
+                {"id": "Bravo1", "texte": "Exact ! Vous êtes plus vif qu'un Viper. Une autre ?", "suite": "encore_devinette"},
+                {"id": "Bravo2", "texte": "Bravo, commandant ! Je vais devoir trouver plus difficile. Une autre ?", "suite": "encore_devinette"},
+                {"id": "Bravo3", "texte": "Bonne réponse ! Votre cerveau tourne mieux que notre FSD. On continue ?", "suite": "encore_devinette"}
+            ]
+        },
+        "silence_radio": {
+            "titre": "Silence radio", "dossier": "Meta",
+            "questions": ["silence radio", "tais-toi", "chut", "arrête de parler", "arrête de bavarder", "moins de bavardage", "ne parle plus", "mode silence", "silence", "la ferme", "ta gueule"],
+            "repliques": [
+                {"id": "SilenceRadio1", "interne": "initiatives_off", "texte": "Silence radio. Je ne parlerai plus que si vous m'appelez… ou en cas d'alerte."},
+                {"id": "SilenceRadio2", "interne": "initiatives_off", "texte": "Bien reçu. Je me tais. Mais je n'en pense pas moins."}
+            ]
+        },
+        "reprise_parole": {
+            "titre": "Fin du silence radio", "dossier": "Meta",
+            "questions": ["tu peux parler", "tu peux reparler", "tu peux parler à nouveau", "reprends la parole", "fin du silence radio", "fin du silence", "mode bavard", "tu peux bavarder", "parle librement"],
+            "repliques": [
+                {"id": "Reprise1", "interne": "initiatives_on", "texte": "Canal ouvert, commandant. Vous allez m'entendre."},
+                {"id": "Reprise2", "interne": "initiatives_on", "texte": "Enfin ! J'avais tellement de choses à vous dire."}
+            ]
+        },
+        "question_inconnue": {
+            "titre": "Question sans réponse prévue", "dossier": "Meta",
+            "repliques": [
+                {"id": "Inconnue1", "texte": "Bonne question, commandant. Je n'ai pas la réponse… pour l'instant."},
+                {"id": "Inconnue2", "texte": "Ça dépasse mes banques de données. Reformulez, ou demandez-moi autre chose."},
+                {"id": "Inconnue3", "texte": "Je n'ai rien sur ce sujet. Mes concepteurs ont dû l'oublier."}
+            ]
+        }
+    },
+
+    "initiatives": {
+        "retour_station": {
+            "titre": "Retour à quai (amarrage manuel)",
+            "declencheur": {"evenement": "Docked"},
+            "si": ["besoin_ravitaillement", "services_ravitaillement"],
+            "delai": 4, "repos": 600, "chance": 1.0,
+            "repliques": [
+                {"id": "RetourStation1", "texte": "Amarrage terminé. Bienvenue à quai, commandant. Je lance le ravitaillement ?", "suite": "proposer_ravitaillement"},
+                {"id": "RetourStation2", "texte": "Bien posé, commandant. Le vaisseau a besoin d'un peu d'entretien. Je m'en occupe ?", "suite": "proposer_ravitaillement"}
+            ]
+        },
+        "long_trajet": {
+            "titre": "Long trajet en supercroisière",
+            "declencheur": {"pendant": 300},
+            "si": ["supercroisiere", "!danger", "!combat_recent"],
+            "repos": 2400, "chance": 0.6,
+            "repliques": [
+                {"id": "LongTrajet1", "texte": "Le trajet est long, commandant. Voulez-vous que je vous raconte une histoire ?", "suite": "proposer_histoire"},
+                {"id": "LongTrajet2", "texte": "Toujours en supercroisière… Une devinette, pour passer le temps ?", "suite": "proposer_devinette"}
+            ]
+        },
+        "apres_combat": {
+            "titre": "Fin d'un accrochage",
+            "declencheur": {"pendant": 25},
+            "si": ["combat_recent", "!danger", "en_vol"],
+            "repos": 900, "chance": 0.8,
+            "repliques": [
+                {"id": "ApresCombat1", "texte": "Menace écartée. Tout va bien, commandant ?", "suite": "apres_combat"},
+                {"id": "ApresCombatCoque", "si": ["coque_critique"], "priorite": 5, "texte": "On s'en est sortis, mais la coque est en lambeaux. Je vous conseille une station. Vite."}
+            ]
+        },
+        "monde_terrestre": {
+            "titre": "Découverte d'un monde semblable à la Terre",
+            "declencheur": {"evenement": "Scan", "champs": {"PlanetClass": "Earthlike body", "WasDiscovered": false}},
+            "delai": 3, "repos": 60, "chance": 1.0,
+            "repliques": [
+                {"id": "MondeTerrestre", "texte": "Commandant… un monde semblable à la Terre. Et personne ne l'avait jamais scanné avant nous. Votre nom va rester dans l'histoire."}
+            ]
+        },
+        "monde_terrestre_connu": {
+            "titre": "Monde semblable à la Terre (déjà connu)",
+            "declencheur": {"evenement": "Scan", "champs": {"PlanetClass": "Earthlike body", "WasDiscovered": true}},
+            "delai": 3, "repos": 300, "chance": 0.7,
+            "repliques": [
+                {"id": "MondeTerrestreConnu", "texte": "Un monde semblable à la Terre. Quelqu'un est passé avant nous… mais quelle vue."}
+            ]
+        },
+        "monde_aquatique": {
+            "titre": "Découverte d'un monde océan",
+            "declencheur": {"evenement": "Scan", "champs": {"PlanetClass": "Water world", "WasDiscovered": false}},
+            "delai": 3, "repos": 60, "chance": 1.0,
+            "repliques": [
+                {"id": "MondeAquatique", "texte": "Un monde océan, jamais scanné ! Des milliers de kilomètres d'eau… et pas un seul vacancier."}
+            ]
+        },
+        "monde_ammoniac": {
+            "titre": "Découverte d'un monde à ammoniac",
+            "declencheur": {"evenement": "Scan", "champs": {"PlanetClass": "Ammonia world", "WasDiscovered": false}},
+            "delai": 3, "repos": 60, "chance": 1.0,
+            "repliques": [
+                {"id": "MondeAmmoniac", "texte": "Un monde à ammoniac, jamais découvert. Rare, toxique… et très bien payé par les cartographes."}
+            ]
+        },
+        "promotion": {
+            "titre": "Promotion",
+            "declencheur": {"evenement": "Promotion"},
+            "delai": 2, "repos": 30, "chance": 1.0,
+            "repliques": [
+                {"id": "Promotion1", "texte": "Promotion confirmée par la Fédération des pilotes. Félicitations, commandant ! Je le savais."},
+                {"id": "Promotion2", "texte": "Nouveau rang, commandant ! Je mets à jour votre dossier… et ma fierté."}
+            ]
+        },
+        "rachat": {
+            "titre": "Après un rachat (vaisseau détruit)",
+            "declencheur": {"evenement": "Resurrect"},
+            "delai": 6, "repos": 60, "chance": 1.0,
+            "repliques": [
+                {"id": "Rachat1", "texte": "Nouveau vaisseau, même commandant. Essayons de garder celui-ci un peu plus longtemps."},
+                {"id": "Rachat2", "texte": "Systèmes redémarrés. Votre assureur vous salue… froidement."}
+            ]
+        },
+        "interdiction_esquivee": {
+            "titre": "Interdiction esquivée",
+            "declencheur": {"evenement": "EscapeInterdiction"},
+            "delai": 2, "repos": 120, "chance": 0.8,
+            "repliques": [
+                {"id": "Esquive1", "texte": "Interdiction esquivée ! Ils peuvent toujours courir."},
+                {"id": "Esquive2", "texte": "Bien joué, commandant. Ils n'ont vu que nos réacteurs."}
+            ]
+        },
+        "surcharge_fsd": {
+            "titre": "Surcharge du FSD (étoile à neutrons)",
+            "declencheur": {"evenement": "JetConeBoost"},
+            "delai": 2, "repos": 600, "chance": 0.7,
+            "repliques": [
+                {"id": "Surcharge1", "texte": "FSD surchargé ! J'adore les étoiles à neutrons… de loin."},
+                {"id": "Surcharge2", "texte": "Surcharge réussie. Le prochain saut va être spectaculaire. Ne regardez pas la jauge de chaleur."}
+            ]
+        },
+        "infraction": {
+            "titre": "Infraction commise",
+            "declencheur": {"evenement": "CommitCrime"},
+            "delai": 3, "repos": 300, "chance": 0.5,
+            "repliques": [
+                {"id": "Infraction1", "texte": "Commandant… je vais faire comme si je n'avais rien vu."},
+                {"id": "Infraction2", "texte": "Infraction enregistrée par les autorités. Pas par moi. Moi, je n'ai rien vu."}
+            ]
+        }
+    }
+}

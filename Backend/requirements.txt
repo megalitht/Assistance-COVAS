@@ -1,0 +1,15 @@
+# Backend COVAS — Windows, Python 3.12 (versions installées dans .venv).
+# Installation : .venv\Scripts\python.exe -m pip install -r Backend\requirements.txt
+faster-whisper==1.2.1        # reconnaissance vocale (Whisper)
+SpeechRecognition==3.17.0    # capture du micro
+PyAudio==0.2.14
+sounddevice==0.5.6
+numpy==2.5.3
+pygame==2.6.1                # lecture des répliques audio
+PyDirectInput==1.0.4         # touches envoyées au jeu
+websockets==17.4             # liaison avec l'interface (Frontend/interface.html)
+piper-tts==1.8.0             # voix de synthèse (rapport d'avarie, conversations pas encore enregistrées)
+
+# Whisper sur carte graphique NVIDIA (CUDA 12)
+nvidia-cublas-cu12==12.9.2.10
+nvidia-cudnn-cu12==9.27.0.42

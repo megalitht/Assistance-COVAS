@@ -133,6 +133,20 @@ async def annoncer(texte, gravite="info", categorie="covas"):
     await envoyer_donnees_web({"type": "evenement", "evenement": ligne})
 
 
+async def dialogue(locuteur, texte, detail=None):
+    """Une réplique de conversation (« CMDR » ou « COVAS »), affichée dans le panneau
+    Communications de l'interface. `detail` : précision chiffrée (carburant, solde...)."""
+    ligne = {"id": next(_identifiants),
+             "h": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+             "nom": locuteur, "categorie": "comms", "gravite": "info",
+             "texte": f"{locuteur} : {texte}" if texte else locuteur,
+             "hostile": False, "n": 1, "locuteur": locuteur.lower()}
+    if detail:
+        ligne["detail"] = detail
+    HISTORIQUE.append(ligne)
+    await envoyer_donnees_web({"type": "evenement", "evenement": ligne})
+
+
 def _instantane():
     return {"type": "etat", "etat": ETAT, "historique": list(HISTORIQUE)}
 

@@ -1,2 +1,13 @@
-# Created by venv; see https://docs.python.org/3/library/venv.html
-*
+# Environnement Python
+.venv/
+__pycache__/
+*.pyc
+
+# Modèles téléchargés (trop lourds pour git ; voir les commentaires de main.py et synthese.py)
+Backend/module/modele_vocal_turbo/
+Backend/module/modele_synthese/*.onnx
+
+# Fichiers temporaires
+Backend/data/temp.wav
+essai_synthese*.wav
+Backend/tests/_script_essai.md

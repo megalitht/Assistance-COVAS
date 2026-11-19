@@ -267,6 +267,35 @@ h3 span { color: var(--creme); text-transform: none; letter-spacing: 0; }
 .journal li[data-gravite="attention"] .texte { color: var(--jaune); }
 .journal li[data-gravite="alerte"] .texte { color: var(--rouge); font-weight: 600; }
 .journal .fois { color: var(--creme); font-size: 0.8rem; }
+.journal .detail { display: block; color: var(--ambre); font-size: 0.8rem; opacity: 0.8; }
+
+/* Conversation avec le COVAS (panneau Communications) */
+.journal li[data-locuteur="covas"] .texte { color: var(--creme); }
+.journal li[data-locuteur="cmdr"] .texte { color: var(--accent); }
+#liste-comms { max-height: 8.6rem; }
+.parler { display: flex; gap: 0.35rem; margin-top: 0.45rem; }
+.parler input {
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-size: 0.88rem;
+    color: var(--creme);
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--trait);
+    padding: 0.3rem 0.5rem;
+}
+.parler input::placeholder { color: var(--eteint); }
+.parler input:focus-visible { outline: 2px solid var(--creme); outline-offset: 1px; }
+.parler button {
+    cursor: pointer;
+    border: 1px solid var(--trait);
+    background: var(--accent-doux);
+    color: var(--creme);
+    font-size: 0.85rem;
+    padding: 0.3rem 0.7rem;
+}
+.parler button:hover { background: var(--accent); color: var(--noir); }
+.lecteur-seul { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Modules */
 .groupe-modules { font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--marron-3); padding: 0.45rem 0 0.1rem; }

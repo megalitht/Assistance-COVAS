@@ -60,6 +60,7 @@ window.COVAS_DEMO = (() => {
     // Noms des modules que le scénario abîme (le vrai rapport vient de Backend/module/avaries.py)
     const NOMS = { MediumHardpoint2: 'Laser à impulsions tourelle', MainEngines: 'Propulseurs', Slot04_Size5: 'Cellules de bouclier', PowerPlant: 'Générateur', Radar: 'Capteurs', ShipCockpit: 'Verrière' };
     let actionCourante = null;       // réponse de la simulation aux boutons de l'interface
+    let questionCourante = null;     // réponse de la simulation aux phrases écrites au COVAS
 
     function demarrer(recevoir) {
         let identifiant = 0, minuteries = [], derniere = null;
@@ -96,6 +97,12 @@ window.COVAS_DEMO = (() => {
                 texte: `Rapport d'avarie — ${[...debut, compte + (detail ? ' : ' + detail : '')].join(' · ')}`, resume: [...debut, compte].join(' · '),
             };
         }
+        // Phrase écrite au COVAS : la simulation n'a pas le moteur de conversation (backend)
+        questionCourante = texte => {
+            const ligne = (locuteur, t, detail) => recevoir({ type: 'evenement', evenement: { id: ++identifiant, h: new Date().toISOString(), nom: locuteur, categorie: 'comms', gravite: 'info', texte: `${locuteur} : ${t}`, hostile: false, n: 1, locuteur: locuteur.toLowerCase(), ...(detail && { detail }) } });
+            ligne('CMDR', texte);
+            ligne('COVAS', 'Simulation : je vous répondrai quand le backend sera lancé, commandant.', 'Backend/main.py');
+        };
         actionCourante = nom => {
             if (nom !== 'rapport_avarie') return;               // les autres boutons n'ont rien à simuler
             const r = rapportAvarie();
@@ -179,11 +186,13 @@ window.COVAS_DEMO = (() => {
         }
 
         scenario();
-        return () => { minuteries.forEach(clearTimeout); actionCourante = null; };
+        return () => { minuteries.forEach(clearTimeout); actionCourante = null; questionCourante = null; };
     }
 
     /** Bouton de l'interface pendant la simulation (aucune touche n'est envoyée). */
     const action = nom => actionCourante?.(nom);
+    /** Phrase écrite au COVAS pendant la simulation. */
+    const question = texte => questionCourante?.(texte);
 
-    return { demarrer, action };
+    return { demarrer, action, question };
 })();

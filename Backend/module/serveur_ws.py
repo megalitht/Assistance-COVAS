@@ -4,6 +4,8 @@ serveur_ws.py — Pont WebSocket entre le backend COVAS et l'interface web.
   backend   -> interface : envoyer_donnees_web({...})   (état du vaisseau, événements)
   interface -> backend   : {"action": "train_atterrissage"}  -> file des macros
                            (mêmes noms d'action que dans macros.py)
+                           {"question": "comment va le vaisseau ?"} -> comme une phrase dite
+                           au micro après « Covas » (voir definir_questions)
 
 Dépendance : pip install websockets
 """
@@ -12,12 +14,23 @@ import json
 
 import websockets
 
-HOTE = None   # toutes les adresses de la machine (localhost IPv4/IPv6, réseau local)
+# Ce PC seulement (IPv4 et IPv6). L'interface peut appuyer sur les touches du jeu : None
+# l'ouvrirait à tout le réseau local (une tablette... mais aussi n'importe quel appareil).
+HOTE = "localhost"
 PORT = 8765
 
 _clients = set()
 _instantane = None     # fonction qui renvoie l'état complet, envoyé à chaque nouvelle interface
 _file_actions = None   # file asyncio des macros (fournie par main.py)
+_questions = None      # async fonction(texte) : phrase tapée dans l'interface (main.py)
+_taches = set()
+LONGUEUR_MAX_QUESTION = 300
+
+
+def definir_questions(fonction):
+    """Enregistre la fonction qui traite une phrase tapée dans l'interface."""
+    global _questions
+    _questions = fonction
 
 
 def definir_instantane(fonction):
@@ -62,7 +75,16 @@ async def _traiter_message(message):
         donnees = json.loads(message)
     except (TypeError, ValueError):
         return
-    action = donnees.get("action") if isinstance(donnees, dict) else None
+    if not isinstance(donnees, dict):
+        return
+    question = donnees.get("question")
+    if isinstance(question, str) and question.strip() and _questions is not None:
+        # En tâche à part : la réponse (voix comprise) ne bloque pas la réception
+        tache = asyncio.create_task(_questions(question.strip()[:LONGUEUR_MAX_QUESTION]))
+        _taches.add(tache)
+        tache.add_done_callback(_taches.discard)
+        return
+    action = donnees.get("action")
     # Seuls les noms connus de macros.py déclenchent des touches ; le reste y est ignoré.
     if isinstance(action, str) and _file_actions is not None:
         await _file_actions.put(action)

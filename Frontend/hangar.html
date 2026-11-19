@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>COVAS — Hangar des hologrammes</title>
+    <link rel="stylesheet" href="interface.css">
+    <style>
+        /* Page d'aperçu : tous les plans de vaisseaux, un grand hologramme et la liste */
+        body.hangar { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100vh; overflow: hidden; }
+        .hangar .bandeau { gap: 1.6rem; }
+        .hangar .compte { color: var(--ambre); font-size: 0.95rem; }
+        .hangar .bandeau-droite { margin-left: auto; }
+        .hangar .bandeau a { color: var(--creme); text-decoration: none; border: 1px solid var(--trait); padding: 0.45rem 0.9rem; background: var(--accent-doux); }
+        .hangar .bandeau a:hover { background: var(--accent); color: var(--noir); }
+        .hangar-vue { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1rem; padding: 0.9rem 1.2rem; min-height: 0; }
+        .hangar-apercu { display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; }
+        .hangar-apercu .hologramme { flex: 1; }
+        .hangar-apercu .note { font-size: 0.82rem; color: var(--marron-3); min-height: 1.2em; }
+        .hangar-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.2rem, 1fr)); gap: 0.45rem; overflow-y: auto; align-content: start; padding-right: 0.3rem; scrollbar-width: thin; scrollbar-color: var(--marron-3) transparent; }
+        .carte { display: grid; grid-template-rows: 8.5rem auto auto; gap: 0.1rem; padding: 0.35rem 0.45rem 0.45rem; text-align: left; cursor: pointer; border: 1px solid rgba(122, 76, 34, 0.45); background: linear-gradient(160deg, rgba(60, 34, 14, 0.35), rgba(18, 10, 5, 0.55)); color: var(--ambre); }
+        .carte:hover { border-color: var(--accent); }
+        .carte[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), 0 0 1rem var(--accent-doux); }
+        .carte .hologramme { flex: none; height: 8.5rem; pointer-events: none; }
+        .carte .hologramme .holo { animation: none !important; }
+        .carte .holo-balayage, .carte .holo-front { display: none; }
+        .carte .bouclier-anneau, .carte .bouclier-voile, .carte .holo-lumiere { display: none; }
+        .carte b { font-weight: 600; color: var(--creme); font-size: 0.86rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .carte small { font-size: 0.7rem; color: var(--marron-3); }
+        .carte[data-plan="absent"] b::after { content: " · à venir"; color: var(--eteint); font-weight: 400; }
+        .outils { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .outils button { cursor: pointer; border: 1px solid var(--trait); background: var(--accent-doux); padding: 0.3rem 0.7rem; color: var(--creme); font-size: 0.82rem; }
+        .outils button[aria-pressed="true"] { background: var(--accent); color: var(--noir); }
+        @media (max-width: 1000px) {
+            body.hangar { height: auto; overflow: auto; display: block; }
+            .hangar-vue { display: flex; flex-direction: column; }
+            .hangar-apercu .hologramme { height: 28rem; flex: none; }
+        }
+    </style>
+</head>
+<body class="hangar" data-mode="nav" data-liaison="simulation">
+    <header class="bandeau">
+        <div class="marque">
+            <strong>COVAS</strong>
+            <span class="liaison">Hangar des hologrammes</span>
+        </div>
+        <p class="compte" id="compte">—</p>
+        <div class="bandeau-droite">
+            <a href="atelier.html">Atelier des plans</a>
+            <a href="interface.html">Interface de bord</a>
+        </div>
+    </header>
+
+    <main class="hangar-vue">
+        <section class="hangar-apercu">
+            <div class="outils">
+                <button type="button" id="bouton-combat" aria-pressed="false">Palette combat</button>
+                <button type="button" id="bouton-boucliers" aria-pressed="true">Boucliers</button>
+                <button type="button" id="bouton-precedent">◀ Précédent</button>
+                <button type="button" id="bouton-suivant">Suivant ▶</button>
+            </div>
+            <div class="hologramme" id="apercu" data-hologramme data-boucliers="oui"></div>
+            <p class="note" id="note"></p>
+        </section>
+        <nav class="hangar-liste" id="liste" aria-label="Vaisseaux"></nav>
+    </main>
+
+    <script src="hologramme.js"></script>
+    <script>
+        (() => {
+            'use strict';
+            const H = window.COVAS_HOLOGRAMMES;
+            const ordre = H.identifiants().sort((a, b) => {
+                const [, , la] = H.CATALOGUE[a], [, , lb] = H.CATALOGUE[b];
+                return la - lb;
+            });
+            const apercu = H.creer(document.getElementById('apercu'), {});
+            const liste = document.getElementById('liste');
+            const note = document.getElementById('note');
+            let disponibles = 0, choisi = null;
+
+            const cartes = ordre.map(id => {
+                const [nom, constructeur, longueur, , , plateforme] = H.CATALOGUE[id];
+                const carte = document.createElement('button');
+                carte.type = 'button';
+                carte.className = 'carte';
+                carte.dataset.id = id;
+                carte.setAttribute('aria-pressed', 'false');
+                carte.innerHTML = '<div class="hologramme"></div><b></b><small></small>';
+                carte.querySelector('b').textContent = nom;
+                carte.querySelector('small').textContent = `${constructeur} · ${Math.round(longueur)} m · ${plateforme}`;
+                carte.onclick = () => choisir(id);
+                liste.append(carte);
+                const mini = H.creer(carte.querySelector('.hologramme'), { legende: false, cotes: false, grille: false, animation: false });
+                H.charger(id).then(() => { disponibles++; afficherCompte(); }, () => { carte.dataset.plan = 'absent'; });
+                mini.afficher(id);
+                return carte;
+            });
+
+            function afficherCompte() {
+                document.getElementById('compte').textContent = `${disponibles} plans de vaisseaux sur ${ordre.length}`;
+            }
+
+            function choisir(id) {
+                choisi = id;
+                cartes.forEach(c => c.setAttribute('aria-pressed', String(c.dataset.id === id)));
+                apercu.afficher(id).then(plan => {
+                    note.textContent = plan && plan.id === id ? (H.SOURCES[plan.source] || '') : 'Plan non disponible pour ce vaisseau : silhouette générique.';
+                });
+                history.replaceState(null, '', '#' + id);
+                cartes.find(c => c.dataset.id === id)?.scrollIntoView({ block: 'nearest' });
+            }
+
+            const decaler = pas => choisir(ordre[(ordre.indexOf(choisi) + pas + ordre.length) % ordre.length]);
+            document.getElementById('bouton-precedent').onclick = () => decaler(-1);
+            document.getElementById('bouton-suivant').onclick = () => decaler(1);
+            document.addEventListener('keydown', e => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { decaler(1); e.preventDefault(); }
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { decaler(-1); e.preventDefault(); }
+            });
+            const basculer = (bouton, action) => {
+                bouton.onclick = () => {
+                    const actif = bouton.getAttribute('aria-pressed') !== 'true';
+                    bouton.setAttribute('aria-pressed', String(actif));
+                    action(actif);
+                };
+            };
+            basculer(document.getElementById('bouton-combat'), actif => { document.body.dataset.mode = actif ? 'combat' : 'nav'; });
+            basculer(document.getElementById('bouton-boucliers'), actif => { document.getElementById('apercu').dataset.boucliers = actif ? 'oui' : 'non'; });
+
+            afficherCompte();
+            const depart = decodeURIComponent(location.hash.slice(1));
+            choisir(H.CATALOGUE[depart] ? depart : 'anaconda');
+        })();
+    </script>
+</body>
+</html>
