@@ -504,6 +504,104 @@ body[data-liaison="hors-ligne"] .voile { display: grid; }
 .voile-boite p { color: var(--creme); line-height: 1.5; }
 .voile-boite .actions { grid-template-columns: auto; justify-content: start; }
 
+/* ================= ÉCRAN D'ACCUEIL (application Python, interface.html?app) ================= */
+.accueil {
+    position: fixed;
+    inset: 0;
+    z-index: 45;                 /* au-dessus du voile, sous la trame holographique */
+    display: none;
+    place-items: center;
+    background: radial-gradient(120% 80% at 50% 45%, #2a1608 0%, var(--fond) 45%, var(--noir) 100%);
+}
+body[data-app] .accueil { display: grid; }
+.accueil.sortie { animation: accueil-sortie 0.9s cubic-bezier(0.55, 0, 0.75, 0.2) forwards; pointer-events: none; }
+.accueil-centre { display: grid; justify-items: center; gap: 0.6rem; text-align: center; width: min(40rem, 90vw); }
+.accueil-marque {
+    font-size: 4.2rem;
+    line-height: 1;
+    letter-spacing: 0.42em;
+    margin-right: -0.42em;       /* l'espacement final ne décentre pas le mot */
+    color: var(--orange);
+    text-shadow: 0 0 1.6rem var(--lueur);
+}
+.accueil-sous-titre { font-size: 0.95rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--marron-3); margin-bottom: 2.4rem; }
+
+.accueil-bouton {
+    position: relative;
+    width: 15rem;
+    height: 15rem;
+    border: 0;
+    border-radius: 50%;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    color: var(--orange);
+    background: radial-gradient(circle at 50% 50%, rgba(255, 122, 20, 0.16) 0%, rgba(255, 122, 20, 0.05) 55%, transparent 70%);
+    transition: color 0.2s, background 0.3s, transform 0.2s;
+}
+.accueil-bouton:hover { color: var(--ambre); background: radial-gradient(circle at 50% 50%, rgba(255, 122, 20, 0.28) 0%, rgba(255, 122, 20, 0.08) 55%, transparent 70%); }
+.accueil-bouton:active { transform: scale(0.97); }
+.accueil-bouton:focus-visible { outline: 2px solid var(--ambre); outline-offset: 0.5rem; }
+.accueil-bouton:disabled { cursor: default; }
+.accueil-anneaux { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.accueil-anneaux circle { fill: none; }
+.anneau-fond { stroke: var(--trait); stroke-width: 1px; }
+.anneau-tirets { stroke: var(--orange); stroke-width: 3px; stroke-dasharray: 3 9; transform-origin: 100px 100px; filter: drop-shadow(0 0 4px var(--lueur)); animation: accueil-rotation 24s linear infinite; }
+.anneau-interieur { stroke: var(--orange); stroke-width: 1.5px; opacity: 0.55; transform-origin: 100px 100px; animation: accueil-pulsation 2.6s ease-in-out infinite; }
+.accueil-icone { width: 4.2rem; height: 4.2rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; filter: drop-shadow(0 0 0.5rem var(--lueur)); }
+.accueil-libelle { font-size: 1.1rem; letter-spacing: 0.32em; margin-right: -0.32em; text-transform: uppercase; color: var(--creme); }
+
+.accueil-etat { margin-top: 1.6rem; font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--eteint); }
+.accueil-sequence {
+    display: grid;
+    gap: 0.25rem;
+    min-height: 9rem;
+    width: min(30rem, 100%);
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 0.82rem;
+    text-align: left;
+    color: var(--ambre);
+}
+.accueil-sequence li { display: flex; gap: 0.7rem; animation: accueil-ligne 0.35s ease-out; }
+.accueil-sequence li::before { content: "▸"; color: var(--orange); }
+.accueil-sequence li.fait { color: var(--marron-3); }
+.accueil-sequence li.fait::before { content: "✓"; color: var(--marron-3); }
+.accueil-sequence li.attention, .accueil-sequence li.attention::before { color: var(--jaune); }
+.accueil-sequence li.attention::before { content: "!"; }
+.accueil-sequence li.erreur, .accueil-sequence li.erreur::before { color: var(--rouge); }
+.accueil-sequence li.erreur::before { content: "✕"; }
+.accueil-sequence li.pret { color: var(--creme); }
+
+/* Activation en cours : l'anneau tourne vite, le bouton ne répond plus */
+.accueil[data-etat="activation"] .anneau-tirets { animation-duration: 2.4s; }
+.accueil[data-etat="activation"] .accueil-etat { color: var(--ambre); animation: clignote 1.2s steps(2) infinite; }
+.accueil[data-etat="pret"] .accueil-bouton { color: var(--creme); background: radial-gradient(circle at 50% 50%, rgba(255, 177, 99, 0.35) 0%, rgba(255, 122, 20, 0.1) 55%, transparent 70%); }
+.accueil[data-etat="pret"] .accueil-etat { color: var(--creme); }
+.accueil[data-etat="erreur"] { --orange: var(--rouge); --trait: rgba(255, 58, 28, 0.42); --lueur: rgba(255, 58, 28, 0.6); }
+.accueil[data-etat="erreur"] .accueil-etat { color: var(--rouge); }
+
+/* Le panneau s'allume quand l'accueil s'efface */
+body.allumage .bandeau, body.allumage .vue { animation: allumage 1.1s ease-out; }
+
+@keyframes accueil-rotation { to { transform: rotate(360deg); } }
+@keyframes accueil-pulsation { 0%, 100% { transform: scale(1); opacity: 0.55; } 50% { transform: scale(1.04); opacity: 0.9; } }
+@keyframes accueil-ligne { from { opacity: 0; transform: translateX(-0.6rem); } }
+@keyframes accueil-sortie {
+    0% { opacity: 1; transform: scale(1); filter: brightness(1); }
+    25% { opacity: 1; filter: brightness(1.8); }
+    100% { opacity: 0; transform: scale(1.08); filter: brightness(1); }
+}
+@keyframes allumage {
+    0% { opacity: 0; filter: brightness(2.2); }
+    12% { opacity: 0.7; }
+    18% { opacity: 0.25; }
+    30% { opacity: 1; }
+    100% { opacity: 1; filter: brightness(1); }
+}
+
 /* ================= ANIMATIONS ================= */
 @keyframes clignote { 50% { opacity: 0.35; } }
 @keyframes holo-flotte { to { transform: translateY(-0.45rem); } }
@@ -571,6 +669,14 @@ body.secoue .vue-combat { animation: secousse 0.3s; }
     .hologramme .bouclier-anneau.effondrement { animation: effondrement-anneau 1.3s ease-out !important; }
     .hologramme.touche .impact circle { animation: onde 0.9s ease-out !important; }
     .hologramme.touche .impact circle + circle { animation-delay: 0.18s !important; }
+    /* Écran d'accueil de l'application : l'allumage du COVAS est le moment fort, il joue toujours */
+    .anneau-tirets { animation: accueil-rotation 24s linear infinite !important; }
+    .accueil[data-etat="activation"] .anneau-tirets { animation-duration: 2.4s !important; }
+    .anneau-interieur { animation: accueil-pulsation 2.6s ease-in-out infinite !important; }
+    .accueil[data-etat="activation"] .accueil-etat { animation: clignote 1.2s steps(2) infinite !important; }
+    .accueil-sequence li { animation: accueil-ligne 0.35s ease-out !important; }
+    .accueil.sortie { animation: accueil-sortie 0.9s cubic-bezier(0.55, 0, 0.75, 0.2) forwards !important; }
+    body.allumage .bandeau, body.allumage .vue { animation: allumage 1.1s ease-out !important; }
 }
 
 /* Petits écrans (téléphone, fenêtre étroite) : tout passe en une colonne qui défile */

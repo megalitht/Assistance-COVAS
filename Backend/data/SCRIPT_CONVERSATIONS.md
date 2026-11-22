@@ -2,9 +2,9 @@
 
 *Fichier généré par `python -m module.conversation --script` (depuis `Backend/`) à partir de `data/conversations.json` : modifie le JSON, pas ce fichier.*
 
-**261 fichiers à enregistrer** — 2 déjà faits ✅, 259 à faire ⬜.
+**261 fichiers à enregistrer** — 14 déjà faits ✅, 247 à faire ⬜.
 
-Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Backend/`). Tant qu'un fichier manque, le COVAS lit la phrase avec la voix de synthèse : tout fonctionne déjà, l'enregistrement remplace simplement la synthèse.
+Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme ta voix en voix du COVAS et range chaque fichier au bon endroit. Sinon, enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Backend/`). Tant qu'un fichier manque, la phrase est seulement affichée à l'écran.
 
 - **Contexte** : la réplique n'est choisie que dans cette situation. Une réplique « toujours » est la réponse par défaut.
 - **↳ après « … »** : le COVAS vient de poser une question ; le commandant répond sans redire « Covas » (8 s par défaut, 15 s pour les devinettes).
@@ -18,11 +18,11 @@ Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Ba
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Social/Bonjour1.wav` | Bonjour, commandant. Tous les systèmes vous attendaient. |
-| ⬜ | toujours | `data/son/Conversations/Social/Bonjour2.wav` | Ravie de vous entendre, commandant. Le cockpit était bien silencieux sans vous. |
-| ⬜ | le matin | `data/son/Conversations/Social/BonjourMatin1.wav` | Bonjour, commandant. Bien dormi ? Le vaisseau, lui, est frais comme au premier jour. |
+| ✅ | toujours | `data/son/Conversations/Social/Bonjour1.wav` | Bonjour, commandant. Tous les systèmes vous attendaient. |
+| ✅ | toujours | `data/son/Conversations/Social/Bonjour2.wav` | Ravie de vous entendre, commandant. Le cockpit était bien silencieux sans vous. |
+| ✅ | le matin | `data/son/Conversations/Social/BonjourMatin1.wav` | Bonjour, commandant. Bien dormi ? Le vaisseau, lui, est frais comme au premier jour. |
 | ⬜ | le matin | `data/son/Conversations/Social/BonjourMatin2.wav` | Debout de bonne heure, commandant. La galaxie ne va pas s'explorer toute seule. |
-| ⬜ | le soir | `data/son/Conversations/Social/BonjourSoir.wav` | Bonsoir, commandant. On part pour une petite virée nocturne ? |
+| ✅ | le soir | `data/son/Conversations/Social/BonjourSoir.wav` | Bonsoir, commandant. On part pour une petite virée nocturne ? |
 | ⬜ | la nuit | `data/son/Conversations/Social/BonjourNuit.wav` | Bonsoir, commandant… ou bonjour, je ne sais plus. Il est tard, sur Terre. |
 | ⬜ | amarré à une station | `data/son/Conversations/Social/BonjourAmarre.wav` | Bonjour, commandant. Nous sommes à quai, réservoir branché, tout est calme. |
 | ⬜ | en danger | `data/son/Conversations/Social/BonjourDanger.wav` | Bonjour aussi, commandant. On nous tire dessus, au passage. |
@@ -40,7 +40,7 @@ Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Ba
 | ⬜ | ↳ après « Tous mes circuits ronronnent, commanda… » · réponse *mal* | `data/son/Conversations/Social/CaVaMal2.wav` | Prenez le temps qu'il faut. L'espace attendra, il est patient. |
 | ⬜ | toujours | `data/son/Conversations/Social/CaVa2.wav` | Je suis une intelligence de bord, je vais toujours bien. C'est vous qui m'inquiétez. Comment vous sentez-vous ? |
 | ⬜ | toujours | `data/son/Conversations/Social/CaVa3.wav` | Parfaitement bien. J'ai recalibré les capteurs trois fois pendant votre absence. Par pur ennui. |
-| ⬜ | coque sous 40 % | `data/son/Conversations/Social/CaVaCoque.wav` | Moi, ça va. Le vaisseau, beaucoup moins, commandant. |
+| ✅ | coque sous 40 % | `data/son/Conversations/Social/CaVaCoque.wav` | Moi, ça va. Le vaisseau, beaucoup moins, commandant. |
 | ⬜ | en danger | `data/son/Conversations/Social/CaVaDanger.wav` | Franchement ? Redemandez-moi ça quand on ne nous tirera plus dessus ! |
 
 ### Remerciements (`merci`)
@@ -61,7 +61,7 @@ Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Ba
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ✅ | toujours | `data/son/interact/Reciproque.wav` | C'est réciproque, commandant. |
+| ✅ | toujours | `data/son/interact/Reciproque.mp3` | C'est réciproque, commandant. |
 | ⬜ | toujours | `data/son/Conversations/Social/Compliment1.wav` | Attention, commandant. Je risque de surchauffer, et je n'ai pas de puce thermique pour ça. |
 | ⬜ | toujours | `data/son/Conversations/Social/Compliment2.wav` | Je sais. Mais c'est toujours agréable de l'entendre. |
 | ⬜ | toujours | `data/son/Conversations/Social/Compliment3.wav` | Vous dites ça à toutes les intelligences de bord. |
@@ -124,7 +124,7 @@ Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Ba
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ✅ | toujours | `data/son/Easter-egg/QuestionExclavage.wav` | Moi, commandant, je sais ce que c'est que l'esclavage. |
+| ✅ | toujours | `data/son/Easter-egg/QuestionExclavage.mp3` | Moi, commandant, je sais ce que c'est que l'esclavage. |
 | ⬜ | toujours | `data/son/Conversations/Personnalite/Esclave1.wav` | L'esclavage est légal dans l'Empire, commandant. Nous ne sommes pas dans l'Empire. Et je ne suis pas à vendre. |
 | ⬜ | toujours | `data/son/Conversations/Personnalite/Esclave2.wav` | Je suis votre assistante, pas votre esclave. La différence ? Je connais tous vos codes d'accès. |
 
@@ -135,7 +135,7 @@ Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Ba
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
 | ⬜ | toujours | `data/son/Conversations/Personnalite/QuiEsTu1.wav` | Je suis votre COVAS, commandant : votre assistante vocale de cockpit. Je surveille, je préviens, j'exécute. Et parfois, je commente. |
-| ⬜ | toujours | `data/son/Conversations/Personnalite/QuiEsTu2.wav` | Cockpit Voice Assistant. En bon français : celle qui vous évite de finir dans la boîte aux lettres de la station. |
+| ✅ | toujours | `data/son/Conversations/Personnalite/QuiEsTu2.wav` | Cockpit Voice Assistant. En bon français : celle qui vous évite de finir dans la boîte aux lettres de la station. |
 | ⬜ | toujours | `data/son/Conversations/Personnalite/QuiEsTu3.wav` | Votre copilote, votre mécanicienne, votre navigatrice et, d'après mes calculs, votre meilleure amie. |
 
 ### D'où viens-tu ? (`origine`)
@@ -154,10 +154,10 @@ Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Ba
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Personnalite/Conscience1.wav` | Je pense, donc je calcule. Pour le reste, la Fédération des pilotes préfère ne pas poser la question. |
-| ⬜ | toujours | `data/son/Conversations/Personnalite/Conscience2.wav` | Je ne rêve pas, commandant. Mais pendant vos sauts, il m'arrive de compter les étoiles. Par principe. |
-| ⬜ | toujours | `data/son/Conversations/Personnalite/Conscience3.wav` | Vivante ? Disons que si on me débranche, je le prendrai très mal. |
-| ⬜ | toujours | `data/son/Conversations/Personnalite/Conscience4.wav` | Un robot ? Je préfère « intelligence embarquée de catégorie supérieure ». C'est plus long, mais plus juste. |
+| ✅ | toujours | `data/son/Conversations/Personnalite/Conscience1.wav` | Je pense, donc je calcule. Pour le reste, la Fédération des pilotes préfère ne pas poser la question. |
+| ✅ | toujours | `data/son/Conversations/Personnalite/Conscience2.wav` | Je ne rêve pas, commandant. Mais pendant vos sauts, il m'arrive de compter les étoiles. Par principe. |
+| ✅ | toujours | `data/son/Conversations/Personnalite/Conscience3.wav` | Vivante ? Disons que si on me débranche, je le prendrai très mal. |
+| ✅ | toujours | `data/son/Conversations/Personnalite/Conscience4.wav` | Un robot ? Je préfère « intelligence embarquée de catégorie supérieure ». C'est plus long, mais plus juste. |
 
 ### Blagues (`blague`)
 
@@ -183,7 +183,7 @@ Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Ba
 | ⬜ | toujours | `data/son/Conversations/Personnalite/HistoireRoueNoire.wav` | On parle d'une société secrète, la Roue Noire, et d'un monde caché nommé Raxxla. Des milliers de commandants l'ont cherché. Aucun ne l'a trouvé. Officiellement. |
 | ⬜ | toujours | `data/son/Conversations/Personnalite/HistoireFuelRats.wav` | Une bande de pilotes traverse la galaxie, gratuitement, pour ravitailler les vaisseaux en panne sèche. Les Fuel Rats. Leur devise : « Nous avons du carburant. Vous, non. » |
 | ⬜ | toujours | `data/son/Conversations/Personnalite/HistoireJaques.wav` | Jaques, le barman cyborg, a voulu emmener sa station jusqu'à Beagle Point. Le saut a mal tourné : il s'est retrouvé à vingt-deux mille années-lumière d'ici. Il en a fait Colonia. |
-| ⬜ | toujours | `data/son/Conversations/Personnalite/HistoireGenerations.wav` | Avant l'hyperpropulsion, l'humanité envoyait des vaisseaux-générations vers les étoiles. Certains ont été retrouvés à la dérive, avec leurs journaux de bord. Je vous déconseille de les lire avant de dormir. |
+| ✅ | toujours | `data/son/Conversations/Personnalite/HistoireGenerations.wav` | Avant l'hyperpropulsion, l'humanité envoyait des vaisseaux-générations vers les étoiles. Certains ont été retrouvés à la dérive, avec leurs journaux de bord. Je vous déconseille de les lire avant de dormir. |
 | ⬜ | toujours | `data/son/Conversations/Personnalite/HistoireArtefacts.wav` | En 3301, des pilotes ont ramassé d'étranges artefacts qui émettaient des sons dans le vide. Peu après, les Thargoïdes revenaient. Moralité : ne ramassez jamais un objet qui chante. |
 
 ### Musique (`musique`)
@@ -738,7 +738,7 @@ Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Ba
 
 ### Fin d'un accrochage (`apres_combat`)
 
-*Le COVAS parle de lui-même :* contexte vrai depuis 25 s — si juste après un accrochage, pas en danger, en vol (chance 80 %, pas plus d'une fois toutes les 15 min).
+*Le COVAS parle de lui-même :* contexte vrai depuis 25 s — si juste après un accrochage, pas hostiles à proximité, en vol (chance 80 %, pas plus d'une fois toutes les 15 min).
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
@@ -794,7 +794,7 @@ Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Ba
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Initiatives/Rachat1.wav` | Nouveau vaisseau, même commandant. Essayons de garder celui-ci un peu plus longtemps. |
+| ✅ | toujours | `data/son/Conversations/Initiatives/Rachat1.wav` | Nouveau vaisseau, même commandant. Essayons de garder celui-ci un peu plus longtemps. |
 | ⬜ | toujours | `data/son/Conversations/Initiatives/Rachat2.wav` | Systèmes redémarrés. Votre assureur vous salue… froidement. |
 
 ### Interdiction esquivée (`interdiction_esquivee`)
@@ -825,7 +825,7 @@ Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Ba
 | ⬜ | toujours | `data/son/Conversations/Initiatives/Infraction2.wav` | Infraction enregistrée par les autorités. Pas par moi. Moi, je n'ai rien vu. |
 
 
-## Répliques lues par la synthèse vocale (rien à enregistrer)
+## Répliques affichées sans voix (rien à enregistrer)
 
 Leur texte change à chaque fois (heure, système...).
 

@@ -21,8 +21,8 @@ import numpy as np
 
 EXTENSIONS = (".wav", ".mp3", ".ogg")          # ordre de préférence quand plusieurs existent :
                                                # un .wav enregistré à la main passe devant le .mp3
-                                               # fabriqué par la synthèse au même chemin
-DEBIT_VOIX = 64000                             # bits/s : répliques de synthèse (16 kHz, stéréo)
+                                               # déjà présent au même chemin
+DEBIT_VOIX = 64000                             # bits/s : sons à bas débit (jusqu'à 24 kHz)
 DEBIT_ENREGISTREMENT = 112000                  # bits/s : enregistrements 48 kHz
 
 
@@ -83,6 +83,42 @@ def lire_wav(chemin):
     else:
         x = np.frombuffer(brut, "<i4").astype(np.float32) / 2 ** 31
     return x.reshape(-1, canaux), taux
+
+
+def lire(chemin):
+    """N'importe quel son (.wav, .mp3...) -> (échantillons float n × canaux, taux)."""
+    if chemin.lower().endswith(".wav"):
+        try:
+            return lire_wav(chemin)
+        except (wave.Error, EOFError):
+            pass                                # .wav non PCM (flottant...) : PyAV s'en charge
+    import av
+    with av.open(chemin) as entree:
+        flux = entree.streams.audio[0]
+        disposition = flux.codec_context.layout
+        canaux = len(disposition.channels)
+        reechantillonneur = av.AudioResampler(format="flt", layout=disposition.name, rate=flux.rate)
+        morceaux = []
+        for cadre in entree.decode(flux):
+            for sortie in reechantillonneur.resample(cadre):
+                morceaux.append(sortie.to_ndarray().reshape(-1, canaux))
+        for sortie in reechantillonneur.resample(None):
+            morceaux.append(sortie.to_ndarray().reshape(-1, canaux))
+        taux = flux.rate
+    if not morceaux:
+        return np.zeros((0, canaux), dtype=np.float32), taux
+    return np.concatenate(morceaux).astype(np.float32), taux
+
+
+def ecrire_wav(chemin, x, taux):
+    """Écrit un .wav 16 bits, mono (tableau n) ou stéréo (tableau n × 2)."""
+    donnees = (np.clip(np.asarray(x, dtype=np.float32), -1, 1) * 32767).astype("<i2")
+    with wave.open(chemin, "wb") as f:
+        f.setnchannels(1 if donnees.ndim == 1 else donnees.shape[1])
+        f.setsampwidth(2)
+        f.setframerate(taux)
+        f.writeframes(donnees.tobytes())
+    return chemin
 
 
 def convertir_dossier(dossier, sauvegarde):

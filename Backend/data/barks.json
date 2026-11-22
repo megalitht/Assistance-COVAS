@@ -989,5 +989,97 @@
         "reponses": [
             "data/son/Refus/Incomprise.mp3"
         ]
+    },
+    "manuel_fsd": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Macros/Deploiment/FSD/FSD1.mp3",
+            "data/son/Macros/Deploiment/FSD/FSD3.mp3"
+        ]
+    },
+    "manuel_train_sorti": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Macros/Deploiment/train/TrainDéployé.mp3",
+            "data/son/Macros/Deploiment/train/TrainDéployé2.mp3"
+        ]
+    },
+    "manuel_soute_ouverte": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Macros/Deploiment/soute/SouteDéployé.mp3"
+        ]
+    },
+    "manuel_train_rentre": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/TrainRentre.mp3"
+        ]
+    },
+    "manuel_soute_fermee": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/SouteFermee.mp3"
+        ]
+    },
+    "manuel_armes_sorties": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/ArmesSorties.mp3"
+        ]
+    },
+    "manuel_armes_rentrees": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/ArmesRentrees.mp3"
+        ]
+    },
+    "manuel_phares_on": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/PharesOn.mp3"
+        ]
+    },
+    "manuel_phares_off": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/PharesOff.mp3"
+        ]
+    },
+    "manuel_nvg_on": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/NvgOn.mp3"
+        ]
+    },
+    "manuel_nvg_off": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/NvgOff.mp3"
+        ]
+    },
+    "manuel_silencieux_on": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/SilencieuxOn.mp3"
+        ]
+    },
+    "manuel_silencieux_off": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/SilencieuxOff.mp3"
+        ]
+    },
+    "manuel_analyse": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/ModeAnalyse.mp3"
+        ]
+    },
+    "manuel_combat": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/ModeCombat.mp3"
+        ]
     }
 }

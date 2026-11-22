@@ -8,7 +8,7 @@ numpy==2.5.3
 pygame==2.6.1                # lecture des répliques audio
 PyDirectInput==1.0.4         # touches envoyées au jeu
 websockets==17.4             # liaison avec l'interface (Frontend/interface.html)
-piper-tts==1.8.0             # voix de synthèse (rapport d'avarie, conversations pas encore enregistrées)
+pywebview==6.2.1             # fenêtre de l'application (Backend/app.py, moteur Edge WebView2)
 
 # Whisper sur carte graphique NVIDIA (CUDA 12)
 nvidia-cublas-cu12==12.9.2.10

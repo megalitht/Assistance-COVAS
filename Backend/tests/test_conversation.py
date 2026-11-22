@@ -145,9 +145,15 @@ class Contextes(Base):
         self.assertIsNone(conversation.texte_de(d.replique, etat())[1])
 
     def test_danger_prioritaire(self):
+        conversation.observer_evenement({"event": "UnderAttack", "Target": "You"})
         e = etat(flags=VAISSEAU | DANGER, vaisseau={"coque": 0.3})
         d = decider("Covas comment va le vaisseau", e)
         self.assertEqual(d.replique["id"], "EtatDanger")
+
+    def test_hostiles_proches_sans_tir_pas_de_combat(self):
+        e = etat(flags=VAISSEAU | BOUCLIERS | DANGER, vaisseau={"coque": 0.3})
+        d = decider("Covas comment va le vaisseau", e)
+        self.assertNotEqual(d.replique["id"], "EtatDanger")
 
     def test_vaisseau_du_commandant(self):
         e = etat(vaisseau={"type": "python_nx"})
@@ -179,11 +185,8 @@ class Suites(Base):
         async def commander(c):
             commandes.append(c)
 
-        async def synthetiser(texte):
-            return None
-
         asyncio.run(conversation.jouer(replique, e or etat(), dire=dire, afficher=afficher,
-                                       commander=commander, synthetiser=synthetiser))
+                                       commander=commander))
         return dits, commandes
 
     def test_oui_lance_le_rapport(self):

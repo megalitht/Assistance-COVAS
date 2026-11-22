@@ -383,15 +383,15 @@
             "titre": "L'heure", "dossier": "Bord",
             "questions": ["quelle heure est-il", "il est quelle heure", "quelle heure il est", "t'as l'heure", "tu as l'heure", "l'heure"],
             "repliques": [
-                {"voix": "synthese", "texte": "Il est {heure_parlee}, commandant."},
-                {"voix": "synthese", "si": ["nuit"], "texte": "Il est {heure_parlee}, commandant. Il serait peut-être temps de dormir."}
+                {"voix": "aucune", "texte": "Il est {heure_parlee}, commandant."},
+                {"voix": "aucune", "si": ["nuit"], "texte": "Il est {heure_parlee}, commandant. Il serait peut-être temps de dormir."}
             ]
         },
         "date": {
             "titre": "La date", "dossier": "Bord",
             "questions": ["on est quel jour", "quel jour sommes-nous", "quel jour on est", "quelle est la date", "quelle date", "on est en quelle année", "quelle année", "en quelle année sommes-nous", "la date"],
             "repliques": [
-                {"voix": "synthese", "texte": "Nous sommes le {date_galactique}, commandant. Calendrier galactique."}
+                {"voix": "aucune", "texte": "Nous sommes le {date_galactique}, commandant. Calendrier galactique."}
             ]
         },
         "etat_vaisseau": {
@@ -424,10 +424,10 @@
             "questions": ["où sommes-nous", "où est-ce qu'on est", "on est où", "où on est", "on se trouve où", "où se trouve-t-on", "c'est quoi ce système", "quel est ce système", "dans quel système", "on est dans quel système", "notre position", "quelle est notre position", "c'est où ici", "où suis-je", "je suis où"],
             "repliques": [
                 {"id": "PositionInconnue", "texte": "Le jeu ne m'a encore rien transmis, commandant. Je suis aussi perdue que vous."},
-                {"voix": "synthese", "si": ["position_connue"], "texte": "Système {systeme}, commandant."},
-                {"voix": "synthese", "si": ["position_connue", "supercroisiere"], "priorite": 4, "texte": "En supercroisière dans le système {systeme}, commandant."},
-                {"voix": "synthese", "si": ["position_connue", "pose", "corps_connu"], "priorite": 5, "texte": "Posés sur {corps}, dans le système {systeme}."},
-                {"voix": "synthese", "si": ["position_connue", "amarre", "station_connue"], "priorite": 5, "texte": "Amarrés à {station}, dans le système {systeme}."}
+                {"voix": "aucune", "si": ["position_connue"], "texte": "Système {systeme}, commandant."},
+                {"voix": "aucune", "si": ["position_connue", "supercroisiere"], "priorite": 4, "texte": "En supercroisière dans le système {systeme}, commandant."},
+                {"voix": "aucune", "si": ["position_connue", "pose", "corps_connu"], "priorite": 5, "texte": "Posés sur {corps}, dans le système {systeme}."},
+                {"voix": "aucune", "si": ["position_connue", "amarre", "station_connue"], "priorite": 5, "texte": "Amarrés à {station}, dans le système {systeme}."}
             ]
         },
         "route": {
@@ -789,7 +789,7 @@
         "apres_combat": {
             "titre": "Fin d'un accrochage",
             "declencheur": {"pendant": 25},
-            "si": ["combat_recent", "!danger", "en_vol"],
+            "si": ["combat_recent", "!menace_proche", "en_vol"],
             "repos": 900, "chance": 0.8,
             "repliques": [
                 {"id": "ApresCombat1", "texte": "Menace écartée. Tout va bien, commandant ?", "suite": "apres_combat"},

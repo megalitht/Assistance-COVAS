@@ -166,6 +166,12 @@ REACTIONS = {
     "interdiction": True,     # arraché de supercroisière -> énergie aux systèmes
 }
 
+# Annonces vocales de ce que tu fais toi-même (touche, HOTAS). False = il se tait pour ce module.
+ANNONCES_MANUELLES = {
+    "fsd": True, "train": True, "armes": True, "soute": True,
+    "phares": True, "nvg": True, "silencieux": True, "analyse": True,
+}
+
 ATTENTE_ECRAN = 2.5     # secondes laissées au jeu pour afficher l'écran des services
 # ---------------------------------------------------------------------------
 
@@ -199,6 +205,7 @@ def normaliser(nom: str) -> str:
 
 STOP = threading.Event()      # levé par la commande « stop » : les appuis s'interrompent
 _enfoncees = set()
+DERNIERS_APPUIS = {}          # touche -> heure du dernier appui du COVAS (voir annonces.py)
 
 
 def touche_de(nom):
@@ -246,6 +253,7 @@ def appuyer(nom: str, fois: int = 1, duree: float = None) -> bool:
     for _ in range(fois):
         if STOP.is_set():
             return False
+        DERNIERS_APPUIS[nom] = time.monotonic()
         for m in modificateurs:
             _enfoncer(m)
         _enfoncer(touche)

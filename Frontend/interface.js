@@ -12,6 +12,7 @@
     // ----------------------------------------------------------------
     const PORT_WS = 8765;
     const DELAI_RETOUR_NAV = 25;      // secondes sans menace avant de quitter la vue combat
+    const DELAI_ENGAGEMENT = 75;      // le drapeau « danger » ne prolonge le combat que si on a essuyé un tir depuis ce délai
     const LIGNES_JOURNAL_MAX = 150;
     const DUREE_LIGNE_TOUCHEE = 4;    // secondes : ligne d'un module qui vient de perdre de l'intégrité
     const DUREE_RAPPORT = 25;         // secondes : modules cités par le rapport d'avarie mis en évidence
@@ -39,7 +40,7 @@
             ['fsdCharge', 'FSD en charge'], ['fsdRefroid', 'FSD en refroid.'],
             ['masse', 'Masse verrouillée', 'attention'], ['collecte', 'Collecte carburant'],
             ['escadrille', 'En escadrille'], ['carburantBas', 'Carburant bas', 'alerte'],
-            ['surchauffe', 'Surchauffe', 'alerte'], ['danger', 'En danger', 'alerte'],
+            ['surchauffe', 'Surchauffe', 'alerte'], ['danger', 'Hostiles proches', 'attention'],
             ['interdiction', 'Interdiction', 'alerte'],
         ],
         combat: [
@@ -47,7 +48,7 @@
             ['fsdCharge', 'FSD en charge'], ['fsdRefroid', 'FSD en refroid.', 'attention'],
             ['silencieux', 'Mode silencieux', 'attention'], ['surchauffe', 'Surchauffe', 'alerte'],
             ['carburantBas', 'Carburant bas', 'alerte'], ['interdiction', 'Interdiction', 'alerte'],
-            ['danger', 'En danger', 'alerte'],
+            ['danger', 'Hostiles proches', 'attention'],
         ],
     };
 
@@ -587,10 +588,14 @@
     // ----------------------------------------------------------------
     //  CHOIX DE LA VUE (navigation / combat)
     // ----------------------------------------------------------------
+    /** Le jeu lève « danger » dès qu'un hostile rôde : seul, ce n'est pas un combat. */
+    function sousLeFeu() {
+        return drapeau('interdiction') || (drapeau('danger') && Date.now() - derniereMenace < DELAI_ENGAGEMENT * 1000);
+    }
+
     function menaceActive() {
         if (drapeau('amarre')) return false;
-        if (drapeau('danger') || drapeau('interdiction')) return true;
-        return Date.now() - derniereMenace < DELAI_RETOUR_NAV * 1000;
+        return sousLeFeu() || Date.now() - derniereMenace < DELAI_RETOUR_NAV * 1000;
     }
 
     function evaluerMode() {
@@ -599,7 +604,7 @@
         ecrire('mode-choisi', { auto: 'auto', combat: 'combat', nav: 'navigation' }[modeChoisi]);
         if (!combat) return;
 
-        const sousMenace = drapeau('danger') || drapeau('interdiction');
+        const sousMenace = sousLeFeu();
         ecrire('alerte-cause', causeMenace || (drapeau('interdiction') ? 'Interdiction en cours' : 'Contact hostile détecté'));
         const reste = Math.ceil(DELAI_RETOUR_NAV - (Date.now() - derniereMenace) / 1000);
         ecrire('alerte-retour', modeChoisi === 'combat' ? 'Vue combat forcée' : sousMenace ? 'Menace toujours présente' : `Retour à la navigation dans ${Math.max(reste, 0)} s`);
@@ -662,7 +667,11 @@
         const adresse = `ws://${location.hostname || 'localhost'}:${PORT_WS}`;
         ecrire('adresse-ws', adresse);
         socket = new WebSocket(adresse);
-        socket.onopen = () => { document.body.dataset.liaison = 'en-ligne'; ecrire('liaison', 'En ligne'); };
+        socket.onopen = () => {
+            document.body.dataset.liaison = 'en-ligne';
+            ecrire('liaison', 'En ligne');
+            fermerAccueil?.();
+        };
         socket.onmessage = event => {
             try { recevoir(JSON.parse(event.data)); } catch (erreur) { console.error('Message COVAS illisible', erreur); }
         };
@@ -681,6 +690,103 @@
         document.body.dataset.liaison = 'simulation';
         ecrire('liaison', 'Simulation');
         window.COVAS_DEMO.demarrer(recevoir);
+    }
+
+    // ----------------------------------------------------------------
+    //  ÉCRAN D'ACCUEIL (application Python : Backend/app.py ouvre interface.html?app)
+    //  Le COVAS est en veille ; le bouton central l'active (Api.activer côté Python),
+    //  app.py renvoie chaque étape via COVAS_ACCUEIL.recevoir({texte, etat}).
+    //  « pret » -> connexion WebSocket -> l'accueil s'efface devant le panneau.
+    // ----------------------------------------------------------------
+    const MODE_APP = document.body.hasAttribute('data-app');
+    let fermerAccueil = null;
+
+    function installerAccueil() {
+        const accueil = $('ecran-accueil');
+        const bouton = $('bouton-activer');
+        const sequence = $('accueil-sequence');
+        let derniere = null;
+
+        const etat = (nom, texte, libelle) => {
+            accueil.dataset.etat = nom;
+            ecrire('accueil-etat', texte);
+            if (libelle) ecrire('accueil-libelle', libelle);
+        };
+        const ajouter = (texte, classe) => {
+            if (derniere && !derniere.className) derniere.className = 'fait';
+            derniere = creer('li', classe, texte);
+            sequence.append(derniere);
+            while (sequence.children.length > 8) sequence.firstElementChild.remove();
+        };
+
+        const activer = async () => {
+            if (!window.pywebview?.api) { etat('erreur', "Liaison avec l'application indisponible"); return; }
+            bouton.disabled = true;
+            sequence.replaceChildren();
+            derniere = null;
+            etat('activation', 'Activation en cours', 'Activation');
+            try {
+                await window.pywebview.api.activer();
+            } catch (erreur) {
+                ajouter(String(erreur), 'erreur');
+                etat('erreur', 'Activation impossible', 'Réessayer');
+                bouton.disabled = false;
+            }
+        };
+        bouton.onclick = activer;
+
+        // F11 : quitter / retrouver le plein écran de la fenêtre de l'application
+        document.addEventListener('keydown', event => {
+            if (event.key !== 'F11') return;
+            event.preventDefault();
+            window.pywebview?.api?.plein_ecran?.();
+        });
+
+        window.COVAS_ACCUEIL = {
+            recevoir({ texte, etat: type }) {
+                if (type === 'erreur') {
+                    ajouter(texte, 'erreur');
+                    if (accueil.hidden) {           // le COVAS s'est arrêté après l'allumage : retour à l'accueil
+                        accueil.hidden = false;
+                        accueil.classList.remove('sortie');
+                        if (socket) { socket.onclose = null; socket.close(); }
+                        document.body.dataset.liaison = 'veille';
+                    }
+                    etat('erreur', 'Activation impossible', 'Réessayer');
+                    bouton.disabled = false;
+                    return;
+                }
+                if (type === 'attention') { ajouter(texte, 'attention'); return; }
+                if (type === 'pret') {
+                    ajouter(texte, 'pret');
+                    etat('pret', 'Liaison avec le panneau de contrôle', 'En ligne');
+                    connecter();
+                    return;
+                }
+                ajouter(texte);
+            },
+        };
+
+        fermerAccueil = () => {
+            if (accueil.hidden || accueil.classList.contains('sortie')) return;
+            if (derniere && !derniere.className) derniere.className = 'fait';
+            accueil.classList.add('sortie');
+            document.body.classList.add('allumage');
+            setTimeout(() => {
+                accueil.hidden = true;
+                document.body.classList.remove('allumage');
+            }, 1200);
+        };
+
+        // Fenêtre rechargée (F5) alors que le COVAS tourne déjà : on rejoint directement le panneau
+        const verifier = async () => {
+            try {
+                if (await window.pywebview.api.etat() === 'actif') { etat('pret', 'COVAS en ligne', 'En ligne'); connecter(); }
+            } catch (_) { /* API pas prête */ }
+        };
+        if (window.pywebview?.api) verifier();
+        else window.addEventListener('pywebviewready', verifier, { once: true });
+        bouton.focus();
     }
 
     // ----------------------------------------------------------------
@@ -752,7 +858,8 @@
         setInterval(tic, 1000);
 
         rendreTout();
-        if (new URLSearchParams(location.search).has('demo') || location.protocol === 'https:') lancerSimulation();
+        if (MODE_APP) installerAccueil();
+        else if (new URLSearchParams(location.search).has('demo') || location.protocol === 'https:') lancerSimulation();
         else connecter();
     }
 

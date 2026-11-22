@@ -21,9 +21,9 @@ Trois mécanismes :
 Enregistrement des voix : data/SCRIPT_CONVERSATIONS.md liste chaque fichier et sa phrase.
 Il est régénéré par (depuis Backend/) :
     python -m module.conversation --script
-Tant qu'un fichier n'existe pas, la réplique est lue par la synthèse vocale (Piper) si
-SYNTHESE_SI_ABSENT est vrai. Les répliques « voix: synthese » (heure, position...) sont
-toujours lues par la synthèse : leur texte change à chaque fois.
+Tant qu'un fichier n'existe pas, la réplique est seulement affichée. Les répliques
+« voix: aucune » (heure, position...) sont toujours affichées sans son : leur texte change
+à chaque fois.
 
 Essais sans micro ni jeu (depuis Backend/) :
     python -m module.conversation --verifier
@@ -52,11 +52,12 @@ CHEMIN_SCRIPT = os.path.join(DOSSIER_BACKEND, "data", "SCRIPT_CONVERSATIONS.md")
 DOSSIER_SONS = "data/son/Conversations"          # relatif à Backend/
 
 # --- RÉGLAGES ----------------------------------------------------------------
-SYNTHESE_SI_ABSENT = True     # réplique pas encore enregistrée : lue par la synthèse vocale
 ATTENTE_REPONSE = 8           # secondes pour répondre au COVAS sans redire « Covas »
 INITIATIVES_AU_DEMARRAGE = True   # le COVAS peut engager la conversation de lui-même
 ECART_INITIATIVES = 240       # secondes minimum entre deux initiatives
 COMBAT_RECENT = 180           # secondes pendant lesquelles un accrochage reste « récent »
+ENGAGEMENT_RECENT = 75        # le drapeau « danger » du jeu ne vaut combat que si on a essuyé
+                              # un tir depuis ce délai (le jeu écrit UnderAttack ~1 fois/min)
 SEUIL_ECHO = 0.55             # phrase entendue trop proche de ce que le COVAS vient de dire :
                               # c'est sa propre voix captée par le micro (haut-parleurs)
 PROFONDEUR_MAX = 3            # enchaînements de sujets (« oui » -> une histoire...) au plus
@@ -183,7 +184,13 @@ CONDITIONS = {
     "a_pied": (lambda e, p: bool(_flags(e)) and not (_bit(e, "vaisseau") or _bit(e, "vrs")
                                                      or _bit(e, "chasseur")), "à pied"),
     "vrs": (lambda e, p: _bit(e, "vrs"), "en VRS"),
-    "danger": (lambda e, p: _bit(e, "danger") or _bit(e, "interdiction"), "en danger"),
+    # Le drapeau du jeu s'allume dès qu'un hostile rôde (zone d'extraction...) : seul, il ne
+    # veut pas dire qu'on nous tire dessus
+    "danger": (lambda e, p: _bit(e, "interdiction") or (
+        _bit(e, "danger") and time.monotonic() - _memoire["combat"] < ENGAGEMENT_RECENT),
+               "en danger"),
+    "menace_proche": (lambda e, p: _bit(e, "danger") or _bit(e, "interdiction"),
+                      "hostiles à proximité"),
     "combat_recent": (lambda e, p: time.monotonic() - _memoire["combat"] < COMBAT_RECENT,
                       "juste après un accrochage"),
     "surchauffe": (lambda e, p: _bit(e, "surchauffe"), "en surchauffe"),
@@ -415,7 +422,7 @@ class _Preparation:
         parle = bool(r.get("texte"))
         if not parle and not (r.get("commande") or r.get("sujet")):
             self.erreurs.append(f"{ou} : réplique sans texte")
-        if parle and r.get("voix") != "synthese":
+        if parle and r.get("voix") != "aucune":
             if not r.get("fichier") and not r.get("id"):
                 self.erreurs.append(f"{ou} : il manque « id » (nom du fichier à enregistrer)")
             fichier = r.get("fichier") or f"{DOSSIER_SONS}/{dossier}/{r.get('id')}.wav"
@@ -781,32 +788,13 @@ def texte_de(replique, etat):
 
 def chemin_enregistrement(replique):
     """Chemin complet du son enregistré (.wav ou .mp3, quelle que soit l'extension écrite),
-    ou None (synthèse, ou fichier pas encore créé)."""
-    if replique.get("voix") == "synthese" or not replique.get("_fichier"):
+    ou None (réplique sans voix, ou fichier pas encore créé)."""
+    if replique.get("voix") == "aucune" or not replique.get("_fichier"):
         return None
     return sons.trouver(os.path.join(DOSSIER_BACKEND, *replique["_fichier"].split("/")))
 
 
-async def chemin_audio(replique, texte, synthetiser=None):
-    chemin = chemin_enregistrement(replique)
-    if chemin:
-        return chemin
-    if replique.get("voix") != "synthese" and not SYNTHESE_SI_ABSENT:
-        return None
-    if not texte:
-        return None
-    if synthetiser is None:
-        from module import synthese
-        synthetiser = synthese.synthetiser
-    try:
-        return await synthetiser(texte)
-    except Exception as erreur:
-        print(f"[Conversation] Synthèse impossible : {erreur!r}")
-        return None
-
-
-async def jouer(replique, etat, *, dire, afficher, commander=None, synthetiser=None,
-                profondeur=0):
+async def jouer(replique, etat, *, dire, afficher, commander=None, profondeur=0):
     """Joue une réplique puis ses effets.
     dire(chemin)              : joue le .wav ET attend la fin
     afficher(texte, detail)   : montre la réplique dans l'interface
@@ -818,7 +806,7 @@ async def jouer(replique, etat, *, dire, afficher, commander=None, synthetiser=N
     elif texte:
         _memoire["paroles"].append((time.monotonic(), _normaliser_question(texte)))
         await afficher(texte, detail)
-        chemin = await chemin_audio(replique, texte, synthetiser)
+        chemin = chemin_enregistrement(replique)
         if chemin:
             await dire(chemin)
     elif detail:
@@ -832,7 +820,7 @@ async def jouer(replique, etat, *, dire, afficher, commander=None, synthetiser=N
         suivante = choisir(sujet(replique["sujet"])["repliques"], etat, memoire=replique["sujet"])
         if suivante:
             return await jouer(suivante, etat, dire=dire, afficher=afficher, commander=commander,
-                               synthetiser=synthetiser, profondeur=profondeur + 1)
+                               profondeur=profondeur + 1)
     if replique.get("suite"):
         attendre_reponse(replique["suite"])
 
@@ -965,6 +953,11 @@ async def surveiller_initiatives(etat, jouer_initiative, occupe):
 # =====================================================================
 #  SCRIPT D'ENREGISTREMENT (data/SCRIPT_CONVERSATIONS.md)
 # =====================================================================
+TITRES_DOSSIERS = {"Social": "Échanges courants", "Personnalite": "Personnalité du COVAS",
+                   "Bord": "Questions de bord", "Univers": "La galaxie et son histoire",
+                   "Jeux": "Jeux", "Meta": "Aide et réglages", "Initiatives": "Le COVAS prend la parole"}
+
+
 def _questions_lisibles(bloc, maxi=10):
     exemples = [f"« {q} »" for q in (bloc.get("questions") or [])[:maxi]]
     for groupe in bloc.get("mots") or []:
@@ -972,13 +965,13 @@ def _questions_lisibles(bloc, maxi=10):
     return ", ".join(exemples) or "—"
 
 
-def _lignes_repliques(bloc, contexte_parent, lignes, synthese):
+def _lignes_repliques(bloc, contexte_parent, lignes, sans_voix):
     for r in bloc.get("repliques") or []:
         contexte = list(contexte_parent) + [decrire_condition(c) for c in r.get("si") or []]
         etiquette = " · ".join(contexte) or "toujours"
         if r.get("texte"):
-            if r.get("voix") == "synthese":
-                synthese.append((etiquette, r["texte"]))
+            if r.get("voix") == "aucune":
+                sans_voix.append((etiquette, r["texte"]))
             else:
                 fait = "✅" if chemin_enregistrement(r) else "⬜"
                 lignes.append(f"| {fait} | {etiquette} | `{r['_fichier']}` | {r['texte']} |")
@@ -1002,10 +995,10 @@ def _lignes_repliques(bloc, contexte_parent, lignes, synthese):
                 if branche.get("sujet") and not branche.get("repliques"):
                     lignes.append(f"|  | {' · '.join(sous)} | — | *(enchaîne sur le sujet "
                                   f"`{branche['sujet']}`)* |")
-                _lignes_repliques(branche, sous, lignes, synthese)
+                _lignes_repliques(branche, sous, lignes, sans_voix)
             for nom, libelle in (("autre", "toute autre réponse"), ("silence", "pas de réponse")):
                 if suite.get(nom):
-                    _lignes_repliques(suite[nom], [amorce, libelle], lignes, synthese)
+                    _lignes_repliques(suite[nom], [amorce, libelle], lignes, sans_voix)
 
 
 def ecrire_script(chemin=CHEMIN_SCRIPT):
@@ -1013,10 +1006,10 @@ def ecrire_script(chemin=CHEMIN_SCRIPT):
     for r in contenu["repliques"]:
         if isinstance(r.get("suite"), dict):
             r["suite"].pop("_ecrite", None)
-    enregistrables = [r for r in contenu["repliques"] if r.get("voix") != "synthese"]
+    enregistrables = [r for r in contenu["repliques"] if r.get("voix") != "aucune"]
     faits = sum(1 for r in enregistrables if chemin_enregistrement(r))
     fichiers = {r["_fichier"] for r in enregistrables}
-    corps, synthese = [], []
+    corps, sans_voix = [], []
 
     def section(titre, blocs, est_initiative=False):
         corps.extend(["", f"## {titre}", ""])
@@ -1038,17 +1031,14 @@ def ecrire_script(chemin=CHEMIN_SCRIPT):
             else:
                 corps.append("*Sujet caché : atteint seulement par une autre réplique.*")
             corps.extend(["", "| | Contexte | Fichier | Phrase à dire |", "|---|---|---|---|"])
-            _lignes_repliques(bloc, [], corps, synthese)
+            _lignes_repliques(bloc, [], corps, sans_voix)
             corps.append("")
 
     groupes = {}
     for cle, s in contenu["sujets"].items():
         groupes.setdefault(s.get("dossier") or "Divers", []).append((cle, s))
-    titres = {"Social": "Échanges courants", "Personnalite": "Personnalité du COVAS",
-              "Bord": "Questions de bord", "Univers": "La galaxie et son histoire",
-              "Jeux": "Jeux", "Meta": "Aide et réglages"}
     for dossier, blocs in groupes.items():
-        section(f"{titres.get(dossier, dossier)} — `{DOSSIER_SONS}/{dossier}/`", blocs)
+        section(f"{TITRES_DOSSIERS.get(dossier, dossier)} — `{DOSSIER_SONS}/{dossier}/`", blocs)
     section(f"Le COVAS prend la parole — `{DOSSIER_SONS}/Initiatives/`",
             list(contenu["initiatives"].items()), est_initiative=True)
 
@@ -1061,9 +1051,10 @@ def ecrire_script(chemin=CHEMIN_SCRIPT):
         f"**{len(fichiers)} fichiers à enregistrer** — {faits} déjà faits ✅, "
         f"{len(fichiers) - faits} à faire ⬜.",
         "",
-        "Enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Backend/`). "
-        "Tant qu'un fichier manque, le COVAS lit la phrase avec la voix de synthèse : tout "
-        "fonctionne déjà, l'enregistrement remplace simplement la synthèse.",
+        "Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme ta voix en voix "
+        "du COVAS et range chaque fichier au bon endroit. Sinon, enregistre chaque phrase et range le "
+        "fichier `.wav` au chemin indiqué (dans `Backend/`). "
+        "Tant qu'un fichier manque, la phrase est seulement affichée à l'écran.",
         "",
         "- **Contexte** : la réplique n'est choisie que dans cette situation. Une réplique "
         "« toujours » est la réponse par défaut.",
@@ -1071,11 +1062,11 @@ def ecrire_script(chemin=CHEMIN_SCRIPT):
         "sans redire « Covas » (8 s par défaut, 15 s pour les devinettes).",
         "- Tu peux changer une phrase : modifie `texte` dans le JSON (le fichier garde son nom).",
     ]
-    if synthese:
-        corps.extend(["", "## Répliques lues par la synthèse vocale (rien à enregistrer)", "",
+    if sans_voix:
+        corps.extend(["", "## Répliques affichées sans voix (rien à enregistrer)", "",
                       "Leur texte change à chaque fois (heure, système...).", "",
                       "| Contexte | Phrase |", "|---|---|"])
-        corps.extend(f"| {contexte} | {texte} |" for contexte, texte in synthese)
+        corps.extend(f"| {contexte} | {texte} |" for contexte, texte in sans_voix)
     with open(chemin, "w", encoding="utf-8") as f:
         f.write("\n".join(entete + corps) + "\n")
     return len(fichiers), faits

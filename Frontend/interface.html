@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="interface.css">
 </head>
 <body data-mode="nav" data-liaison="hors-ligne">
+    <!-- Application Python (Backend/app.py, interface.html?app) : l'écran d'accueil s'affiche
+         dès le premier rendu, le panneau n'apparaît qu'une fois le COVAS activé. -->
+    <script>if (new URLSearchParams(location.search).has('app')) { document.body.dataset.app = ''; document.body.dataset.liaison = 'veille'; }</script>
 
     <!-- ================= BANDEAU ================= -->
     <header class="bandeau">
@@ -294,6 +297,30 @@
             <div class="actions">
                 <button type="button" id="bouton-demo">Lancer la simulation</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ================= ÉCRAN D'ACCUEIL (application) =================
+         COVAS en veille : un seul bouton au centre. Le clic appelle Backend/app.py (Api.activer),
+         la séquence de démarrage s'affiche, puis l'écran s'efface devant le panneau. -->
+    <div class="accueil" id="ecran-accueil" data-etat="veille">
+        <div class="accueil-centre">
+            <p class="accueil-marque">COVAS</p>
+            <p class="accueil-sous-titre">Assistance de bord</p>
+            <button type="button" class="accueil-bouton" id="bouton-activer" aria-describedby="accueil-etat">
+                <svg class="accueil-anneaux" viewBox="0 0 200 200" aria-hidden="true">
+                    <circle class="anneau-fond" cx="100" cy="100" r="92"></circle>
+                    <circle class="anneau-tirets" cx="100" cy="100" r="92"></circle>
+                    <circle class="anneau-interieur" cx="100" cy="100" r="78"></circle>
+                </svg>
+                <svg class="accueil-icone" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3v8"></path>
+                    <path d="M6.4 6.6a8 8 0 1 0 11.2 0"></path>
+                </svg>
+                <span class="accueil-libelle" data-v="accueil-libelle">Activer</span>
+            </button>
+            <p class="accueil-etat" id="accueil-etat" data-v="accueil-etat">Système en veille</p>
+            <ol class="accueil-sequence" id="accueil-sequence" aria-live="polite"></ol>
         </div>
     </div>
 

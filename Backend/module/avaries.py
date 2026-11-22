@@ -2,7 +2,6 @@
 avaries.py — Rapport d'avarie : état de la coque, des boucliers et des modules endommagés.
 
     rapport = construire_rapport(lecteur_logs.ETAT)
-      rapport["voix"]   : phrase lue par la synthèse vocale (courte : elle doit passer en combat)
       rapport["texte"]  : ligne du journal de bord (catégorie « vaisseau »)
       rapport["resume"] : résumé d'une ligne pour l'en-tête du panneau Modules
       rapport["avaries"]: modules cités (emplacement, nom, santé), pour les surligner dans l'interface
@@ -22,7 +21,6 @@ from datetime import datetime, timezone
 
 SEUIL_AVARIE = 0.8          # un module est cité sous ce niveau d'intégrité (seuil jaune de l'interface)
 SEUIL_CRITIQUE = 0.5        # en dessous : critique (rouge)
-MODULES_A_LA_VOIX = 5       # au-delà : « et 2 autres » (tous sont affichés à l'écran)
 
 # Début du nom interne du module -> nom en français (le plus long préfixe gagne).
 # Même table que MODULES dans Frontend/interface.js : garder les deux identiques.
@@ -117,52 +115,27 @@ def construire_rapport(etat, maintenant=None):
 
     # --- Coque (palier : le jeu n'écrit la coque qu'à 80, 60, 40, 20 %) ---
     if coque is None:
-        coque_voix = coque_ecran = None
+        coque_ecran = None
     elif coque >= 0.995:
-        coque_voix, coque_ecran = "Coque intacte.", "coque intacte"
+        coque_ecran = "coque intacte"
     elif palier:
         seuil = min(100, max(20, math.ceil(coque * 5 - 1e-9) * 20))
-        coque_voix, coque_ecran = f"Coque sous {seuil} pour cent.", f"coque < {seuil} %"
+        coque_ecran = f"coque < {seuil} %"
     else:
-        coque_voix, coque_ecran = (f"Coque à {_pour_cent(coque)} pour cent.",
-                                   f"coque {_pour_cent(coque)} %")
+        coque_ecran = f"coque {_pour_cent(coque)} %"
 
-    boucliers_voix = {True: "Boucliers en ligne.", False: "Boucliers hors ligne."}.get(boucliers)
     boucliers_ecran = {True: "boucliers en ligne", False: "boucliers hors ligne"}.get(boucliers)
 
     # --- Modules ---
     if not liste:
-        modules_voix, modules_ecran, compte = "Équipement inconnu.", "équipement inconnu", None
+        modules_ecran, compte = "équipement inconnu", None
     elif not avaries:
-        modules_voix, modules_ecran, compte = "Aucune avarie.", "aucune avarie", "aucune avarie"
+        modules_ecran, compte = "aucune avarie", "aucune avarie"
     else:
         n = len(avaries)
-        # Les plus touchés seulement, regroupés par nom (« 4 survolteur de bouclier : hors
-        # service, 2, 13 et 18 pour cent ») : le rapport doit tenir en quelques secondes.
-        groupes = {}
-        for a in avaries[:MODULES_A_LA_VOIX]:
-            groupes.setdefault(a["court"], []).append(a)
-        phrases, unite_dite = [], False
-        for court, membres in groupes.items():
-            valeurs = ["hors service" if a["hs"] else str(_pour_cent(a["sante"])) for a in membres]
-            serie = valeurs[0] if len(valeurs) == 1 else f"{', '.join(valeurs[:-1])} et {valeurs[-1]}"
-            if not unite_dite and any(not a["hs"] for a in membres):
-                serie += " pour cent"
-                unite_dite = True
-            phrases.append(f"{court} {serie}" if len(membres) == 1 else f"{len(membres)} {court} : {serie}")
-        reste = n - MODULES_A_LA_VOIX
-        if reste > 0:
-            phrases.append(f"Et {reste} autre{'s' if reste > 1 else ''}")
-        modules_voix = (f"Une avarie : {phrases[0]}." if n == 1
-                        else f"{n} avaries. " + ". ".join(phrases) + ".")
         compte = f"{n} avarie{'s' if n > 1 else ''}"
         modules_ecran = compte + " : " + ", ".join(
             f"{a['nom']} {'HS' if a['hs'] else str(_pour_cent(a['sante'])) + ' %'}" for a in avaries)
-
-    voix = [coque_voix, "Verrière brisée." if verriere else None, boucliers_voix, modules_voix,
-            "Relevé des modules antérieur aux derniers dégâts." if perime else None]
-    if coque is None and not liste:
-        voix = ["Aucune donnée sur le vaisseau pour l'instant."]
 
     heure = _heure_locale(releve)
     precision = None
@@ -190,5 +163,5 @@ def construire_rapport(etat, maintenant=None):
         "h": (maintenant or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "coque": coque, "coque_palier": palier, "boucliers": boucliers, "verriere_brisee": verriere,
         "avaries": avaries, "releve": releve, "perime": perime, "gravite": gravite,
-        "voix": " ".join(v for v in voix if v), "texte": texte, "resume": resume,
+        "texte": texte, "resume": resume,
     }

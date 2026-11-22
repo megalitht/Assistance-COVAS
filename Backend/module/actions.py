@@ -22,17 +22,20 @@ import os
 import time
 import traceback
 
+from module import annonces
 from module import avaries
 from module import ecran
 from module import lecteur_logs as logs
 from module import macros
 from module import serveur_ws
-from module import synthese
 from module import touches
 
 # Page de l'interface (le « panel »), ouverte par la commande vocale « ouvre le panel »
 CHEMIN_INTERFACE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__)))), "Frontend", "interface.html")
+# True quand le COVAS tourne dans l'application (Backend/app.py) : l'interface est alors
+# sa propre fenêtre, on ne lance jamais de navigateur.
+MODE_APPLICATION = False
 from module.macros import normaliser
 
 # Bits de Status.json utilisés ici
@@ -287,6 +290,68 @@ async def _stop(dire):
 
 
 # =====================================================================
+#  PROGRAMME : FSD DIFFÉRÉ (demandé en masse verrouillée)
+#  Le commandant s'éloigne aux commandes ; le FSD part tout seul à la sortie du champ.
+# =====================================================================
+NOM_FSD_DIFFERE = "FSD en attente"
+FSD_ATTENTE_MAX = 300           # secondes avant d'abandonner la demande
+FSD_DELAI_LIBRE = 1             # secondes sans masse verrouillée avant d'appuyer
+
+
+def _fsd_differe_en_cours():
+    return programme_en_cours() and _programme["nom"] == NOM_FSD_DIFFERE
+
+
+async def _fsd_apres_masse(dire, poli=False):
+    await logs.annoncer("FSD en attente : éloigne-toi, il partira dès la sortie de la masse "
+                        "verrouillée (« stop » pour annuler)", "attention")
+    await dire("refus_masse", "refus")
+
+    fin = time.monotonic() + FSD_ATTENTE_MAX
+    libre_depuis = None
+    while True:
+        maintenant = time.monotonic()
+        if maintenant > fin:
+            return await refuser(dire, "macro_echec",
+                                 "FSD annulé : toujours en masse verrouillée après 5 minutes")
+        if not etat_connu():            # Status.json en cours d'écriture, ou menu du jeu
+            libre_depuis = None
+        elif not drapeau("vaisseau") or drapeau("amarre") or drapeau("pose"):
+            return await logs.annoncer("FSD en attente annulé : le vaisseau n'est plus en vol",
+                                       "attention")
+        elif drapeau("supercroisiere") or drapeau("saut") or drapeau("fsd_charge"):
+            # Le commandant a lancé le FSD lui-même : un 2e appui l'annulerait
+            return await logs.annoncer("FSD déjà lancé manuellement")
+        elif drapeau("masse") or drapeau("fsd_refroid") or _focus():
+            libre_depuis = None         # on n'appuie pas non plus dans un menu ouvert
+        else:
+            libre_depuis = libre_depuis or maintenant
+            if maintenant - libre_depuis >= FSD_DELAI_LIBRE:
+                break
+        await asyncio.sleep(0.15)
+
+    if not await preparer_jeu(dire):
+        return
+    await confirmer(dire, "fsd", poli)
+    # Le FSD ne charge pas avec les points d'emport, le train ou l'écope sortis
+    a_rentrer = [(bit, touche) for bit, touche in
+                 (("armes", "armement"), ("train", "train"), ("ecope", "soute"))
+                 if drapeau(bit) and macros.touche_connue(touche)]
+    for _, touche in a_rentrer:
+        await appuyer(touche)
+    if a_rentrer:
+        await attendre(lambda: not any(drapeau(bit) for bit, _ in a_rentrer), 3)
+
+    await asyncio.to_thread(macros.executer_touches, "fsd")
+    if await attendre(lambda: drapeau("fsd_charge") or drapeau("saut")
+                      or drapeau("supercroisiere"), 3):
+        await logs.annoncer("Sortie de la masse verrouillée : FSD enclenché", "succes")
+    else:
+        await logs.annoncer(sans_reaction("FSD", "saut"), "alerte")
+        await dire("macro_echec", "refus")
+
+
+# =====================================================================
 #  POINT D'ENTRÉE
 # =====================================================================
 async def executer_commande(action, texte, dire, poli=False):
@@ -306,6 +371,10 @@ async def executer_commande(action, texte, dire, poli=False):
     if cle in SPECIALES:
         return await SPECIALES[cle](action, texte, dire, poli)
 
+    if cle == "fsd" and _fsd_differe_en_cours():
+        # Surtout pas de 2e appui : il annulerait la charge lancée par le programme
+        return await logs.annoncer("FSD déjà en attente de la sortie de masse verrouillée")
+
     if cle == "fsd" and etat_connu():
         if not drapeau("vaisseau"):
             return await refuser(dire, "refus_hors_vaisseau", "FSD : impossible hors du vaisseau")
@@ -314,8 +383,9 @@ async def executer_commande(action, texte, dire, poli=False):
         if drapeau("pose"):
             return await refuser(dire, "refus_pose", "FSD : décolle d'abord")
         if drapeau("masse"):
-            return await refuser(dire, "refus_masse",
-                                 "FSD bloqué : masse verrouillée, éloigne-toi de l'objet massif")
+            if not await touche_prete(dire, "saut", "FSD"):
+                return
+            return await _lancer_programme(NOM_FSD_DIFFERE, _fsd_apres_masse(dire, poli), dire)
 
     # Commande simple (pips, verrouillage, boost...)
     if cle not in macros.MACROS:
@@ -561,6 +631,9 @@ async def _ouvrir_interface(action, texte, dire, poli):
     if await asyncio.to_thread(macros.focaliser_interface):
         await logs.annoncer("Interface ramenée au premier plan")
         return await confirmer(dire, action, poli)
+    if MODE_APPLICATION:
+        return await refuser(dire, "macro_echec",
+                             "Interface : la fenêtre de l'application est introuvable")
     if serveur_ws.interfaces_ouvertes():
         # Connectée mais introuvable : c'est un onglet caché d'un navigateur -> on ouvre
         # une vraie fenêtre (tu peux fermer l'ancien onglet)
@@ -611,10 +684,15 @@ async def surveiller_reactions(dire):
     logs.ecouter_evenements(
         lambda e: interdictions.append(e) if e.get("event") == "Interdicted" else None)
     precedents = None
+    gestes = annonces.DetecteurManuel()
     while True:
         await asyncio.sleep(0.25)
         try:
             actuels = _flags()
+            for cle in gestes.observer(actuels, time.monotonic(), macros.DERNIERS_APPUIS,
+                                       muet=programme_en_cours(),
+                                       actives=macros.ANNONCES_MANUELLES):
+                await dire(cle)
             if not actuels:
                 precedents = None
                 continue
@@ -1308,14 +1386,11 @@ async def _ravitaillement(dire, poli=False):
 #  RAPPORT D'AVARIE (aucune touche : on lit l'état du vaisseau, voir module/avaries.py)
 # =====================================================================
 async def _rapport_avarie(action, texte, dire, poli):
-    """Coque, boucliers, modules endommagés : affiché dans l'interface, puis lu à voix haute
-    par la synthèse vocale (le texte change à chaque fois, aucun .wav ne peut le contenir)."""
+    """Coque, boucliers, modules endommagés : affiché dans l'interface, annoncé par une réplique enregistrée."""
     rapport = avaries.construire_rapport(logs.ETAT)
     await logs.annoncer(rapport["texte"], rapport["gravite"], categorie="vaisseau")
     await serveur_ws.envoyer_donnees_web({"type": "rapport_avarie", "rapport": rapport})
-    chemin = await synthese.synthetiser(rapport["voix"])
-    if not chemin or not await dire(chemin):
-        await dire("rapport_avarie", poli=poli)     # synthèse indisponible : réplique enregistrée
+    await dire("rapport_avarie", poli=poli)
 
 
 # =====================================================================
