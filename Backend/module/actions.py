@@ -27,6 +27,7 @@ from module import avaries
 from module import ecran
 from module import lecteur_logs as logs
 from module import macros
+from module import morceaux
 from module import serveur_ws
 from module import touches
 
@@ -1386,11 +1387,14 @@ async def _ravitaillement(dire, poli=False):
 #  RAPPORT D'AVARIE (aucune touche : on lit l'état du vaisseau, voir module/avaries.py)
 # =====================================================================
 async def _rapport_avarie(action, texte, dire, poli):
-    """Coque, boucliers, modules endommagés : affiché dans l'interface, annoncé par une réplique enregistrée."""
+    """Coque, boucliers, modules endommagés : affiché dans l'interface et dit avec les morceaux
+    enregistrés au studio. S'il en manque un, une réplique annonce simplement le rapport à l'écran."""
     rapport = avaries.construire_rapport(logs.ETAT)
     await logs.annoncer(rapport["texte"], rapport["gravite"], categorie="vaisseau")
     await serveur_ws.envoyer_donnees_web({"type": "rapport_avarie", "rapport": rapport})
-    await dire("rapport_avarie", poli=poli)
+    chemin = await asyncio.to_thread(morceaux.assembler, morceaux.pour_rapport(rapport))
+    if not chemin or not await dire(chemin):
+        await dire("rapport_avarie", poli=poli)
 
 
 # =====================================================================

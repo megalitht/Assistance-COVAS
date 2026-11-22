@@ -78,8 +78,9 @@ Chaque ligne = un fichier.
 | `refus_pas_de_module` | `data/son/Refus/PasDeModule.mp3` | Ce module n'est pas installé sur le vaisseau. |
 | `rapport_avarie` | `data/son/Combat/RapportAvarie.mp3` | Rapport d'avarie à l'écran, commandant. |
 
-Le rapport d'avarie lui-même (coque, boucliers, modules) est affiché à l'écran : son texte change
-à chaque fois. La réplique ci-dessus l'annonce.
+Le rapport d'avarie lui-même (coque, boucliers, modules) change à chaque fois : le COVAS l'assemble
+avec les morceaux du studio vocal (filtre « Rapport, heure, date, position »). Tant qu'il en manque
+un, le rapport reste à l'écran et la réplique ci-dessus l'annonce.
 
 ## Station
 

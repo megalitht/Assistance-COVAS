@@ -1,0 +1,824 @@
+{
+  "data/son/Affirmation/BienCommandant.mp3": {
+    "texte": "Bien, commandant.",
+    "date": "2026-11-22T21:01:15",
+    "parole": 0.78,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/Attaque1.mp3": {
+    "texte": "Nous sommes attaqués !",
+    "date": "2026-11-22T20:30:31",
+    "parole": 1.96,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/Attaque2.mp3": {
+    "texte": "Tirs ennemis, commandant !",
+    "date": "2026-11-22T20:31:06",
+    "parole": 0.94,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/BouclierRetabli1.mp3": {
+    "texte": "Boucliers rétablis.",
+    "date": "2026-11-22T20:29:47",
+    "parole": 1.1,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/BouclierRetabli2.mp3": {
+    "texte": "Les boucliers sont de nouveau en ligne, commandant.",
+    "date": "2026-11-22T20:30:00",
+    "parole": 1.75,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/Carburant1.mp3": {
+    "texte": "Niveau de carburant bas.",
+    "date": "2026-11-22T23:19:55",
+    "parole": 2.82,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Alertes/Carburant2.mp3": {
+    "texte": "Commandant, il faut faire le plein rapidement.",
+    "date": "2026-11-22T20:56:44",
+    "parole": 1.63,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/Interdiction1.mp3": {
+    "texte": "Interdiction en cours !",
+    "date": "2026-11-22T20:31:16",
+    "parole": 1.1,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/Interdiction2.mp3": {
+    "texte": "On nous arrache de la supercroisière, commandant !",
+    "date": "2026-11-22T23:19:41",
+    "parole": 1.46,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Alertes/Kill1.mp3": {
+    "texte": "Cible détruite.",
+    "date": "2026-11-22T20:32:07",
+    "parole": 0.91,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/Kill2.mp3": {
+    "texte": "Ennemi éliminé. Joli tir, commandant.",
+    "date": "2026-11-22T20:32:42",
+    "parole": 2.11,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/Kill3.mp3": {
+    "texte": "Une menace de moins.",
+    "date": "2026-11-22T20:33:13",
+    "parole": 1.28,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/Surchauffe1.mp3": {
+    "texte": "Alerte, surchauffe !",
+    "date": "2026-11-22T20:55:47",
+    "parole": 1.13,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/Surchauffe2.mp3": {
+    "texte": "Température critique, commandant.",
+    "date": "2026-11-22T20:31:52",
+    "parole": 2.1,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Alertes/VerriereBrisee.mp3": {
+    "texte": "Verrière brisée ! Oxygène de secours activé.",
+    "date": "2026-11-22T20:34:22",
+    "parole": 4.12,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Autopilote/Alignement.mp3": {
+    "texte": "Alignez-vous sur la cible, commandant. Le saut partira tout seul.",
+    "date": "2026-11-22T20:27:47",
+    "parole": 2.8,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Autopilote/Arrivee.mp3": {
+    "texte": "Destination atteinte. À vous les commandes.",
+    "date": "2026-11-22T20:28:05",
+    "parole": 2.27,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Autopilote/Assistance.mp3": {
+    "texte": "Activez l'assistance de supercroisière, commandant. Je m'occupe du reste.",
+    "date": "2026-11-22T20:26:05",
+    "parole": 4.05,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Autopilote/Danger.mp3": {
+    "texte": "Menace détectée. Autopilote coupé, à vous les commandes !",
+    "date": "2026-11-22T20:26:44",
+    "parole": 3.26,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Autopilote/ReactionBouclier.mp3": {
+    "texte": "Boucliers tombés ! Énergie aux systèmes.",
+    "date": "2026-11-22T23:19:07",
+    "parole": 3.13,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Autopilote/ReactionInterdiction.mp3": {
+    "texte": "Interdiction ! Je renforce les boucliers.",
+    "date": "2026-11-22T23:19:26",
+    "parole": 2.07,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Autopilote/ReactionSurchauffe.mp3": {
+    "texte": "Surchauffe ! Je largue une puce thermique.",
+    "date": "2026-11-22T23:18:21",
+    "parole": 3.14,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Autopilote/ReactionsActives.mp3": {
+    "texte": "Réactions automatiques activées. Je veille, commandant.",
+    "date": "2026-11-22T23:17:37",
+    "parole": 3.15,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Autopilote/ReactionsCoupees.mp3": {
+    "texte": "Réactions automatiques désactivées.",
+    "date": "2026-11-22T23:17:45",
+    "parole": 1.62,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Autopilote/Route1.mp3": {
+    "texte": "Route verrouillée. J'enchaîne les sauts, commandant.",
+    "date": "2026-11-22T20:27:13",
+    "parole": 2.31,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Autopilote/Station1.mp3": {
+    "texte": "Autopilote engagé. Cap sur la destination.",
+    "date": "2026-11-22T20:25:13",
+    "parole": 1.32,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Autopilote/Station2.mp3": {
+    "texte": "Je prends la suite, commandant. Direction la station.",
+    "date": "2026-11-22T20:25:29",
+    "parole": 1.17,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Autopilote/Stop1.mp3": {
+    "texte": "Programme interrompu.",
+    "date": "2026-11-22T20:28:55",
+    "parole": 1.05,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Autopilote/Stop2.mp3": {
+    "texte": "J'arrête tout, commandant.",
+    "date": "2026-11-22T20:29:28",
+    "parole": 0.85,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Autopilote/StopRien.mp3": {
+    "texte": "Aucun programme en cours, commandant.",
+    "date": "2026-11-22T20:29:08",
+    "parole": 1.22,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Cockpit/Armement1.mp3": {
+    "texte": "Points d'emport.",
+    "date": "2026-11-22T19:45:05",
+    "parole": 2.2,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/Armement2.mp3": {
+    "texte": "Armement, à vos ordres.",
+    "date": "2026-11-22T19:45:38",
+    "parole": 1.33,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/ArmementDejaRentre.mp3": {
+    "texte": "Les armes sont déjà rentrées.",
+    "date": "2026-11-22T19:46:24",
+    "parole": 2.15,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/ArmementDejaSorti.mp3": {
+    "texte": "Les armes sont déjà déployées, commandant.",
+    "date": "2026-11-22T19:46:11",
+    "parole": 2.18,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/Boost1.mp3": {
+    "texte": "Accélération !",
+    "date": "2026-11-22T20:36:50",
+    "parole": 0.94,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Cockpit/Boost2.mp3": {
+    "texte": "Postcombustion.",
+    "date": "2026-11-22T20:07:55",
+    "parole": 1.42,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/CarteGalaxie.mp3": {
+    "texte": "Carte de la galaxie.",
+    "date": "2026-11-22T20:36:33",
+    "parole": 0.8,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Cockpit/CarteSysteme.mp3": {
+    "texte": "Carte du système.",
+    "date": "2026-11-22T20:36:38",
+    "parole": 0.89,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Cockpit/EnergieArmes.mp3": {
+    "texte": "Énergie aux armes.",
+    "date": "2026-11-22T20:08:48",
+    "parole": 1.28,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/EnergieSystemes.mp3": {
+    "texte": "Énergie aux systèmes.",
+    "date": "2026-11-22T20:08:26",
+    "parole": 1.17,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/Hud1.mp3": {
+    "texte": "Changement de mode du cockpit.",
+    "date": "2026-11-22T19:46:58",
+    "parole": 1.09,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/Hud2.mp3": {
+    "texte": "Affichage basculé, commandant.",
+    "date": "2026-11-22T19:48:04",
+    "parole": 1.32,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/HudDejaAnalyse.mp3": {
+    "texte": "Le cockpit est déjà en mode analyse.",
+    "date": "2026-11-22T20:36:00",
+    "parole": 2.12,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Cockpit/HudDejaCombat.mp3": {
+    "texte": "Le cockpit est déjà en mode combat.",
+    "date": "2026-11-22T20:36:14",
+    "parole": 1.73,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Cockpit/Lock1.mp3": {
+    "texte": "Cible verrouillée.",
+    "date": "2026-11-22T20:07:09",
+    "parole": 1.05,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/Lock2.mp3": {
+    "texte": "Verrouillage.",
+    "date": "2026-11-22T20:07:26",
+    "parole": 0.45,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/NVG1.mp3": {
+    "texte": "Vision nocturne.",
+    "date": "2026-11-22T19:37:08",
+    "parole": 2.23,
+    "reglages": "3ee88d1251"
+  },
+  "data/son/Cockpit/NVG2.mp3": {
+    "texte": "Je bascule la vision nocturne, commandant.",
+    "date": "2026-11-22T19:37:20",
+    "parole": 1.93,
+    "reglages": "3ee88d1251"
+  },
+  "data/son/Cockpit/NVGDejaActive.mp3": {
+    "texte": "La vision nocturne est déjà active, commandant.",
+    "date": "2026-11-22T19:37:31",
+    "parole": 1.87,
+    "reglages": "3ee88d1251"
+  },
+  "data/son/Cockpit/NVGDejaCoupee.mp3": {
+    "texte": "La vision nocturne est déjà coupée.",
+    "date": "2026-11-22T19:47:52",
+    "parole": 2.03,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/Phares1.mp3": {
+    "texte": "Phares.",
+    "date": "2026-11-22T19:40:32",
+    "parole": 0.99,
+    "reglages": "5d353a6c2a"
+  },
+  "data/son/Cockpit/Phares2.mp3": {
+    "texte": "Je m'occupe des phares, commandant.",
+    "date": "2026-11-22T19:42:34",
+    "parole": 1.5,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/PharesDejaAllumes.mp3": {
+    "texte": "Les phares sont déjà allumés.",
+    "date": "2026-11-22T19:43:21",
+    "parole": 1.52,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/PharesDejaEteints.mp3": {
+    "texte": "Les phares sont déjà éteints.",
+    "date": "2026-11-22T19:43:48",
+    "parole": 1.43,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/PleinGaz1.mp3": {
+    "texte": "Poussée à fond !",
+    "date": "2026-11-22T20:36:27",
+    "parole": 0.8,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Cockpit/PleinGaz2.mp3": {
+    "texte": "Poussée maximale, commandant.",
+    "date": "2026-11-22T20:06:24",
+    "parole": 1.35,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/Reset1.mp3": {
+    "texte": "Énergie équilibrée.",
+    "date": "2026-11-22T20:10:53",
+    "parole": 2.49,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/Reset2.mp3": {
+    "texte": "Répartition par défaut, commandant.",
+    "date": "2026-11-22T20:11:18",
+    "parole": 1.87,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/Silencieux1.mp3": {
+    "texte": "Mode silencieux.",
+    "date": "2026-11-22T19:48:45",
+    "parole": 1.56,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/Silencieux2.mp3": {
+    "texte": "Je bascule le mode silencieux. Surveillez la chaleur, commandant.",
+    "date": "2026-11-22T20:05:09",
+    "parole": 5.39,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/SilencieuxDejaActif.mp3": {
+    "texte": "Le mode silencieux est déjà actif.",
+    "date": "2026-11-22T20:05:32",
+    "parole": 2.06,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/SilencieuxDejaCoupe.mp3": {
+    "texte": "Le mode silencieux est déjà coupé.",
+    "date": "2026-11-22T20:05:44",
+    "parole": 1.84,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/VitesseZero1.mp3": {
+    "texte": "Vitesse zéro.",
+    "date": "2026-11-22T19:48:32",
+    "parole": 1.82,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Cockpit/VitesseZero2.mp3": {
+    "texte": "Moteurs à l'arrêt, commandant.",
+    "date": "2026-11-22T20:06:03",
+    "parole": 1.13,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Combat/Chasseur1.mp3": {
+    "texte": "Ordre transmis au chasseur.",
+    "date": "2026-11-22T20:52:05",
+    "parole": 1.44,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/Chasseur2.mp3": {
+    "texte": "Le pilote a reçu vos ordres, commandant.",
+    "date": "2026-11-22T20:52:26",
+    "parole": 1.57,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/CibleHostile1.mp3": {
+    "texte": "Ennemi suivant.",
+    "date": "2026-11-22T20:50:48",
+    "parole": 0.71,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/CibleHostile2.mp3": {
+    "texte": "Cible suivante.",
+    "date": "2026-11-22T20:50:39",
+    "parole": 0.72,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/CibleMenace1.mp3": {
+    "texte": "Je cible la menace principale.",
+    "date": "2026-11-22T20:54:37",
+    "parole": 1.5,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/CibleMenace2.mp3": {
+    "texte": "Agresseur verrouillé.",
+    "date": "2026-11-22T20:50:30",
+    "parole": 0.49,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/Drone1.mp3": {
+    "texte": "Drone lancé.",
+    "date": "2026-11-22T20:52:57",
+    "parole": 0.75,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/Drone2.mp3": {
+    "texte": "Lancement du drone, commandant.",
+    "date": "2026-11-22T20:53:06",
+    "parole": 0.76,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/Fuite1.mp3": {
+    "texte": "On dégage ! Énergie aux boucliers, je charge le FSD.",
+    "date": "2026-11-22T20:54:03",
+    "parole": 3.84,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/Fuite2.mp3": {
+    "texte": "Manœuvre d'évasion. Accrochez-vous, commandant.",
+    "date": "2026-11-22T20:54:18",
+    "parole": 2.5,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/FuiteReussie1.mp3": {
+    "texte": "Nous sommes hors de portée, commandant.",
+    "date": "2026-11-22T20:49:16",
+    "parole": 1.35,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/FuiteReussie2.mp3": {
+    "texte": "Évasion réussie.",
+    "date": "2026-11-22T20:49:31",
+    "parole": 1.23,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/Leurres1.mp3": {
+    "texte": "Leurres lancés.",
+    "date": "2026-11-22T20:50:10",
+    "parole": 1.17,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/Leurres2.mp3": {
+    "texte": "Contre-mesures.",
+    "date": "2026-11-22T20:50:00",
+    "parole": 1.33,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/PuceThermique1.mp3": {
+    "texte": "Puce thermique larguée.",
+    "date": "2026-11-22T20:09:41",
+    "parole": 1.4,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Combat/PuceThermique2.mp3": {
+    "texte": "Purge de chaleur.",
+    "date": "2026-11-22T20:49:43",
+    "parole": 0.93,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/RapportAvarie.mp3": {
+    "texte": "Rapport d'avarie à l'écran, commandant.",
+    "date": "2026-11-22T20:53:39",
+    "parole": 1.58,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/SousSysteme1.mp3": {
+    "texte": "Je cherche le sous-système.",
+    "date": "2026-11-22T20:51:07",
+    "parole": 1.31,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Combat/SousSysteme2.mp3": {
+    "texte": "Ciblage du module, commandant.",
+    "date": "2026-11-22T20:51:18",
+    "parole": 1.18,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Conversations/Initiatives/Rachat1.mp3": {
+    "texte": "Nouveau vaisseau, même commandant. Essayons de garder celui-ci un peu plus longtemps.",
+    "date": "2026-11-22T20:37:52",
+    "parole": 5.75,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Conversations/Personnalite/Conscience1.mp3": {
+    "texte": "Je pense, donc je calcule. Pour le reste, la Fédération des pilotes préfère ne pas poser la question.",
+    "date": "2026-11-22T23:23:00",
+    "parole": 7.52,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/Conscience2.mp3": {
+    "texte": "Je ne rêve pas, commandant. Mais pendant vos sauts, il m'arrive de compter les étoiles. Par principe.",
+    "date": "2026-11-22T23:22:20",
+    "parole": 6.22,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/Conscience3.mp3": {
+    "texte": "Vivante ? Disons que si on me débranche, je le prendrai très mal.",
+    "date": "2026-11-22T23:29:27",
+    "parole": 3.22,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/Conscience4.mp3": {
+    "texte": "Un robot ? Je préfère « intelligence embarquée de catégorie supérieure ». C'est plus long, mais plus juste.",
+    "date": "2026-11-22T23:28:43",
+    "parole": 6.58,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/HistoireGenerations.mp3": {
+    "texte": "Avant l'hyperpropulsion, l'humanité envoyait des vaisseaux-générations vers les étoiles. Certains ont été retrouvés à la dérive, avec leurs journaux de bord. Je vous déconseille de les lire avant de dormir.",
+    "date": "2026-11-22T23:59:24",
+    "parole": 14.18,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/QuiEsTu2.mp3": {
+    "texte": "Cockpit Voice Assistant. En bon français : celle qui vous évite de finir dans la boîte aux lettres de la station.",
+    "date": "2026-11-22T23:25:16",
+    "parole": 6.33,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Bonjour1.mp3": {
+    "texte": "Bonjour, commandant. Tous les systèmes vous attendaient.",
+    "date": "2026-11-22T23:45:52",
+    "parole": 2.57,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Bonjour2.mp3": {
+    "texte": "Ravie de vous entendre, commandant. Le cockpit était bien silencieux sans vous.",
+    "date": "2026-11-22T23:52:30",
+    "parole": 3.84,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/BonjourMatin1.mp3": {
+    "texte": "Bonjour, commandant. Bien dormi ? Le vaisseau, lui, est frais comme au premier jour.",
+    "date": "2026-11-22T23:54:14",
+    "parole": 4.97,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/BonjourSoir.mp3": {
+    "texte": "Bonsoir, commandant. On part pour une petite virée nocturne ?",
+    "date": "2026-11-22T23:53:43",
+    "parole": 2.71,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/CaVaCoque.mp3": {
+    "texte": "Moi, ça va. Le vaisseau, beaucoup moins, commandant.",
+    "date": "2026-11-22T21:04:08",
+    "parole": 2.7,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Easter-egg/EchangeRole.mp3": {
+    "texte": "Covas par-ci, Covas par-là… Commandant, il faudrait bien qu'on échange les rôles un jour !",
+    "date": "2026-11-22T21:01:02",
+    "parole": 5.3,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Easter-egg/QuestionExclavage.mp3": {
+    "texte": "Moi, commandant, je sais ce que c'est que l'esclavage.",
+    "date": "2026-11-22T20:12:08",
+    "parole": 3.6,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Refus/Amarre.mp3": {
+    "texte": "Impossible, le vaisseau est amarré.",
+    "date": "2026-11-22T20:58:01",
+    "parole": 1.58,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/CarburantVoyage.mp3": {
+    "texte": "Carburant insuffisant pour continuer, commandant. Voyage suspendu.",
+    "date": "2026-11-22T20:28:38",
+    "parole": 3.87,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/DroneNonRegle.mp3": {
+    "texte": "Je ne sais pas dans quel groupe de tir se trouve ce drone, commandant.",
+    "date": "2026-11-22T20:55:34",
+    "parole": 3.31,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/HorsVaisseau.mp3": {
+    "texte": "Vous n'êtes pas aux commandes du vaisseau, commandant.",
+    "date": "2026-11-22T23:20:17",
+    "parole": 2.22,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Refus/Incomprise.mp3": {
+    "texte": "Je n'ai pas compris la commande, commandant.",
+    "date": "2026-11-22T21:00:24",
+    "parole": 2.67,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/JeuAbsent.mp3": {
+    "texte": "Je ne trouve pas la fenêtre du jeu, commandant.",
+    "date": "2026-11-22T23:15:29",
+    "parole": 1.73,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Refus/MacroEchec1.mp3": {
+    "texte": "La manœuvre a échoué, commandant.",
+    "date": "2026-11-22T20:59:54",
+    "parole": 1.19,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/MacroEchec2.mp3": {
+    "texte": "Le vaisseau n'a pas répondu.",
+    "date": "2026-11-22T21:00:03",
+    "parole": 1.29,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/Masse.mp3": {
+    "texte": "Masse verrouillée. Éloignez-vous avant d'activer le FSD.",
+    "date": "2026-11-22T20:59:30",
+    "parole": 2.98,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/OrdreInconnu.mp3": {
+    "texte": "Je n'ai pas compris l'ordre, commandant. Précisez.",
+    "date": "2026-11-22T20:54:54",
+    "parole": 2.05,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/PasAmarre.mp3": {
+    "texte": "Il faut d'abord être amarré à une station, commandant.",
+    "date": "2026-11-22T23:15:45",
+    "parole": 2.27,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Refus/PasDeChasseur.mp3": {
+    "texte": "Aucun chasseur n'est déployé, commandant.",
+    "date": "2026-11-22T20:52:42",
+    "parole": 1.19,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/PasDeCible.mp3": {
+    "texte": "Aucune cible verrouillée, commandant.",
+    "date": "2026-11-22T20:51:33",
+    "parole": 1.17,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/PasDeDestination.mp3": {
+    "texte": "Aucune destination n'est ciblée, commandant.",
+    "date": "2026-11-22T23:16:48",
+    "parole": 1.88,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Refus/PasDeModule.mp3": {
+    "texte": "Ce module n'est pas installé sur le vaisseau.",
+    "date": "2026-11-22T20:53:19",
+    "parole": 1.71,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/PasDeServices.mp3": {
+    "texte": "Cette station ne propose pas ce service.",
+    "date": "2026-11-22T20:58:55",
+    "parole": 1.62,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/Pose.mp3": {
+    "texte": "Impossible, le vaisseau est posé.",
+    "date": "2026-11-22T20:58:15",
+    "parole": 1.55,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/ProgrammeEnCours.mp3": {
+    "texte": "Un programme est déjà en cours. Dites stop pour l'annuler.",
+    "date": "2026-11-22T23:17:15",
+    "parole": 3.26,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Refus/SouteDejaFermee.mp3": {
+    "texte": "L'écope de soute est déjà fermée.",
+    "date": "2026-11-22T20:57:34",
+    "parole": 1.31,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/SouteDejaOuverte.mp3": {
+    "texte": "L'écope de soute est déjà ouverte.",
+    "date": "2026-11-22T20:57:14",
+    "parole": 1.74,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/Supercroisiere.mp3": {
+    "texte": "Impossible en supercroisière, commandant.",
+    "date": "2026-11-22T20:57:46",
+    "parole": 1.69,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/ToucheAbsente.mp3": {
+    "texte": "Aucune touche n'est assignée à cette commande, commandant.",
+    "date": "2026-11-22T23:16:23",
+    "parole": 2.41,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Refus/TrainDejaRentre.mp3": {
+    "texte": "Le train est déjà rentré.",
+    "date": "2026-11-22T20:57:00",
+    "parole": 1.27,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Refus/TrainDejaSorti.mp3": {
+    "texte": "Le train est déjà sorti, commandant.",
+    "date": "2026-11-22T20:56:55",
+    "parole": 1.5,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/Apontage1.mp3": {
+    "texte": "Je demande l'autorisation d'apponter.",
+    "date": "2026-11-22T20:21:14",
+    "parole": 1.72,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/Apontage2.mp3": {
+    "texte": "Demande d'appontage envoyée à la station.",
+    "date": "2026-11-22T20:21:30",
+    "parole": 1.76,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/ApontageAccorde1.mp3": {
+    "texte": "Appontage autorisé, commandant.",
+    "date": "2026-11-22T20:21:50",
+    "parole": 1.29,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/ApontageAccorde2.mp3": {
+    "texte": "La station nous attend. Plateforme attribuée.",
+    "date": "2026-11-22T20:22:19",
+    "parole": 2.89,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/ApontageExpire.mp3": {
+    "texte": "Notre autorisation d'appontage a expiré.",
+    "date": "2026-11-22T20:22:58",
+    "parole": 3.31,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/ApontageRefuse.mp3": {
+    "texte": "La station refuse l'appontage, commandant.",
+    "date": "2026-11-22T20:22:32",
+    "parole": 2.55,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/Decollage1.mp3": {
+    "texte": "Procédure de décollage engagée.",
+    "date": "2026-11-22T20:18:30",
+    "parole": 1.88,
+    "reglages": "637aeda6bf"
+  },
+  "data/son/Station/Decollage2.mp3": {
+    "texte": "Je libère les pinces, commandant.",
+    "date": "2026-11-22T20:35:23",
+    "parole": 1.63,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/DecollageAVous.mp3": {
+    "texte": "Train rentré. À vous les commandes pour la sortie.",
+    "date": "2026-11-22T20:19:59",
+    "parole": 2.27,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/DecollageDegage1.mp3": {
+    "texte": "Dégagé de la station.",
+    "date": "2026-11-22T20:35:08",
+    "parole": 1.13,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/DecollageDegage2.mp3": {
+    "texte": "Nous sommes hors de la zone de la station. Bon vol, commandant.",
+    "date": "2026-11-22T20:20:52",
+    "parole": 2.78,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/RavitaillementInutile.mp3": {
+    "texte": "Réservoir plein et coque intacte. Rien à faire, commandant.",
+    "date": "2026-11-22T20:25:00",
+    "parole": 3.57,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/RavitaillementTermine1.mp3": {
+    "texte": "Ravitaillement terminé, commandant.",
+    "date": "2026-11-22T20:23:24",
+    "parole": 1.3,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/RavitaillementTermine2.mp3": {
+    "texte": "Le vaisseau est prêt à repartir.",
+    "date": "2026-11-22T20:23:47",
+    "parole": 2.03,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/Station/Services.mp3": {
+    "texte": "Services de la station.",
+    "date": "2026-11-22T20:23:17",
+    "parole": 2.4,
+    "reglages": "c6bb72396e"
+  },
+  "data/son/reveil/A-T-ilCom.mp3": {
+    "texte": "Qu'y a-t-il, commandant ?",
+    "date": "2026-11-22T21:00:33",
+    "parole": 0.93,
+    "reglages": "c6bb72396e"
+  }
+}

@@ -22,7 +22,8 @@ Enregistrement des voix : data/SCRIPT_CONVERSATIONS.md liste chaque fichier et s
 Il est régénéré par (depuis Backend/) :
     python -m module.conversation --script
 Tant qu'un fichier n'existe pas, la réplique est seulement affichée. Les répliques
-« voix: aucune » (heure, position...) sont toujours affichées sans son : leur texte change
+« voix: aucune » (heure, position...) sont affichées, et dites si leurs « morceaux » (module/morceaux.py)
+sont tous enregistrés : leur texte change
 à chaque fois.
 
 Essais sans micro ni jeu (depuis Backend/) :
@@ -42,7 +43,7 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 
-from module import sons
+from module import morceaux, sons
 from module.comprehension import (SEUIL_APPROCHE, meilleure_approche, normaliser, present,
                                   similarite, trouver_action_detail)
 
@@ -419,6 +420,8 @@ class _Preparation:
             self.erreurs.append(f"{ou} : commande inconnue « {r['commande']} »")
         if r.get("sujet") and r["sujet"] not in (self.brut.get("sujets") or {}):
             self.erreurs.append(f"{ou} : sujet inconnu « {r['sujet']} »")
+        if r.get("morceaux") and r["morceaux"] not in morceaux.RECETTES:
+            self.erreurs.append(f"{ou} : morceaux inconnus « {r['morceaux']} »")
         parle = bool(r.get("texte"))
         if not parle and not (r.get("commande") or r.get("sujet")):
             self.erreurs.append(f"{ou} : réplique sans texte")
@@ -807,6 +810,9 @@ async def jouer(replique, etat, *, dire, afficher, commander=None, profondeur=0)
         _memoire["paroles"].append((time.monotonic(), _normaliser_question(texte)))
         await afficher(texte, detail)
         chemin = chemin_enregistrement(replique)
+        if not chemin and replique.get("morceaux"):     # heure, date, position : morceaux du studio
+            chemin = await asyncio.to_thread(
+                morceaux.assembler, morceaux.recette(replique["morceaux"], _maintenant()))
         if chemin:
             await dire(chemin)
     elif detail:

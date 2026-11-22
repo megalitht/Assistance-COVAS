@@ -7,7 +7,8 @@ Ce module fait le travail sans micro ni fenêtre (il reçoit des échantillons, 
 
   inventaire()          toutes les répliques à dire : data/SCRIPT_VOIX.md (alertes, commandes...),
                         les enregistrements d'origine (data/studio/originaux.json) et les
-                        conversations (data/conversations.json)
+                        conversations (data/conversations.json) et morceaux des phrases qui
+                        changent : rapport d'avarie, heure, date, position (module/morceaux.py)
   Studio.traiter()      prise du micro -> voix nettoyée -> voix du COVAS (module/effet_voix.py)
   Studio.garder()       range la réplique là où le COVAS la cherche (data/son/..., en .mp3)
   Studio.etalonner()    égalisation calculée sur TA voix pour retrouver le timbre des
@@ -85,7 +86,7 @@ DEBRUITAGE = {"cle": "debruitage", "nom": "Débruitage", "min": 0, "max": 1, "pa
               "aide": "Retire le bruit de fond (ventilateur, souffle). Trop fort, la voix devient « aquatique »."}
 
 SOURCES = {"repliques": "Alertes et commandes", "origine": "Enregistrements d'origine",
-           "conversations": "Conversations"}
+           "conversations": "Conversations", "morceaux": "Rapport, heure, date, position"}
 ETATS = {"studio": "ta voix", "synthese": "synthèse", "origine": "enregistrement d'origine",
          "manquante": "à enregistrer"}
 
@@ -261,6 +262,11 @@ def _lignes_conversations():
     return lignes
 
 
+def _lignes_morceaux():
+    from module import morceaux
+    return [{**m, "source": "morceaux"} for m in morceaux.catalogue()]
+
+
 def etat_replique(ident, prises=None, synthetiques=None):
     """« studio » (ta voix), « synthese », « origine » (fait à la main avant le studio) ou « manquante »."""
     prises = lire_prises() if prises is None else prises
@@ -278,10 +284,10 @@ def etat_replique(ident, prises=None, synthetiques=None):
 
 def inventaire():
     """Toutes les répliques à dire, dans l'ordre : alertes et commandes, enregistrements d'origine,
-    conversations. [{id, source, groupe, contexte, texte, etat, (note)}]"""
+    conversations, morceaux des phrases variables. [{id, source, groupe, contexte, texte, etat, (note)}]"""
     prises, synthetiques = lire_prises(), _lire_registre_synthese()
     lignes, vues = [], set()
-    for ligne in _lignes_script() + _lignes_originaux() + _lignes_conversations():
+    for ligne in _lignes_script() + _lignes_originaux() + _lignes_conversations() + _lignes_morceaux():
         if ligne["id"] in vues:
             continue
         vues.add(ligne["id"])

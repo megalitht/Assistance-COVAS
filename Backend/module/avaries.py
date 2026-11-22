@@ -114,6 +114,7 @@ def construire_rapport(etat, maintenant=None):
     avaries.sort(key=lambda a: a["sante"])            # HS d'abord, puis du plus touché au moins touché
 
     # --- Coque (palier : le jeu n'écrit la coque qu'à 80, 60, 40, 20 %) ---
+    seuil = None
     if coque is None:
         coque_ecran = None
     elif coque >= 0.995:
@@ -161,7 +162,8 @@ def construire_rapport(etat, maintenant=None):
 
     return {
         "h": (maintenant or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "coque": coque, "coque_palier": palier, "boucliers": boucliers, "verriere_brisee": verriere,
+        "coque": coque, "coque_palier": palier, "coque_seuil": seuil, "modules_connus": bool(liste),
+        "boucliers": boucliers, "verriere_brisee": verriere,
         "avaries": avaries, "releve": releve, "perime": perime, "gravite": gravite,
         "texte": texte, "resume": resume,
     }
