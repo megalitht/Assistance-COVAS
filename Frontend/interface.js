@@ -14,6 +14,7 @@
     const DELAI_RETOUR_NAV = 25;      // secondes sans menace avant de quitter la vue combat
     const DELAI_ENGAGEMENT = 75;      // le drapeau « danger » ne prolonge le combat que si on a essuyé un tir depuis ce délai
     const LIGNES_JOURNAL_MAX = 150;
+    const DUREE_CARTE_SCAN = 40;      // secondes d'affichage du dernier corps scanné
     const DUREE_LIGNE_TOUCHEE = 4;    // secondes : ligne d'un module qui vient de perdre de l'intégrité
     const DUREE_RAPPORT = 25;         // secondes : modules cités par le rapport d'avarie mis en évidence
     const DUREE_GRESILLEMENT = 250;   // ms : parasites à chaque changement d'interface
@@ -57,6 +58,10 @@
             ['tresFroid', 'Grand froid', 'alerte'], ['tresChaud', 'Forte chaleur', 'alerte'],
             ['respirable', 'Air respirable'], ['visionNuit', 'Vision nocturne'],
             ['viseur', 'Visée'], ['danger', 'Hostiles proches', 'attention'],
+        ],
+        nomade: [
+            ['pose', 'Posé'], ['train', 'Train sorti'], ['feux', 'Phares'], ['visionNuit', 'Vision nocturne'],
+            ['danger', 'Hostiles proches', 'attention'], ['surchauffe', 'Surchauffe', 'alerte'],
         ],
         vol: [
             ['train', 'Train sorti'], ['ecope', 'Écope de soute'], ['feux', 'Feux'],
@@ -161,7 +166,8 @@
         session: {}, commandant: { rangs: {}, progression: {} }, vaisseau: {}, position: {},
         status: {}, route: { etapes: [] }, modules: { liste: [] }, soute: { inventaire: [] },
         cible: {}, combat: {}, missions: { liste: [] }, proches: { liste: [] },
-        sol: { vaisseau: {} },
+        sol: { vaisseau: {} }, pilotage: {},
+        chasse: { profil: {}, a_encaisser: {} }, exploration: { corps: [], session: {} },
     };
     let journal = [];                 // lignes du journal de bord, la plus récente en premier
     let filtreJournal = 'tous';
@@ -189,6 +195,15 @@
     const credits = n => (n == null ? '—' : nombre(n) + ' cr');
     const pourcent = x => (x == null ? '—' : Math.round(x * 100) + ' %');
     const palier = x => (x == null ? '' : x < 0.3 ? 'critique' : x < 0.6 ? 'attention' : 'ok');
+    /** 12 400 cr, 3,4 M cr, 1,2 Md cr */
+    const creditsCourts = n => {
+        if (n == null) return '—';
+        for (const [seuil, unite] of [[1e9, 'Md'], [1e6, 'M']]) {
+            if (n >= seuil) return (n / seuil).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ` ${unite} cr`;
+        }
+        return credits(n);
+    };
+    const fourchette = (a, b) => (a === b ? creditsCourts(b) : `${creditsCourts(a).replace(/ cr$/, '')} à ${creditsCourts(b)}`);
 
     function ecrire(cle, texte) {
         tous(`[data-v="${cle}"]`).forEach(el => { el.textContent = texte ?? '—'; });
@@ -357,7 +372,7 @@
         // Silhouette du vaisseau : change avec le type (à pied, en VRS ou en chasseur, on garde le vaisseau)
         hologrammes.forEach(h => h.afficher(vaisseauForce || v.type || 'generique'));
         window.COVAS_REGLAGES?.majVaisseau(v.type);
-        tous('.vital').forEach(el => { el.dataset.etat = el.classList.contains('bouclier') ? (boucliers === false ? 'critique' : '') : palier(v.coque); });
+        tous('.vital:not([data-libre])').forEach(el => { el.dataset.etat = el.classList.contains('bouclier') ? (boucliers === false ? 'critique' : '') : palier(v.coque); });
 
         ecrire('carburant', s.carburant != null ? `${s.carburant.toFixed(1)}${v.carburant_max ? ' / ' + v.carburant_max : ''} t` : '—');
         jauge('carburant', v.carburant_max ? s.carburant / v.carburant_max : 0, s.carburant != null && v.carburant_max && s.carburant / v.carburant_max < 0.25 ? 'critique' : 'ok');
@@ -557,8 +572,9 @@
 
     function rendreCible() {
         const c = etat.cible;
-        $('cible-vide').hidden = !!c.verrouillee;
-        $('cible-fiche').hidden = !c.verrouillee;
+        tous('[data-cible-vide]').forEach(el => { el.hidden = !!c.verrouillee; });
+        tous('[data-cible-fiche]').forEach(el => { el.hidden = !c.verrouillee; });
+        rendreVerdict(c);
         if (!c.verrouillee) return;
         ecrire('cible-vaisseau', c.vaisseau || 'Contact inconnu');
         ecrire('cible-pilote', [c.pilote, c.rang].filter(Boolean).join(' · ') || 'Scan en cours…');
@@ -570,6 +586,165 @@
         ecrire('cible-prime', c.prime ? credits(c.prime) : '—');
         ecrire('cible-faction', c.faction || '—');
         ecrire('cible-sous-systeme', c.sous_systeme ? `${c.sous_systeme}${c.sous_systeme_sante != null ? ' · ' + Math.round(c.sous_systeme_sante) + ' %' : ''}` : '—');
+    }
+
+    /** Recherché, en règle, autorités... : la couleur et le conseil, dans la vue combat et au viseur. */
+    function rendreVerdict(c) {
+        const v = c.verrouillee ? c.verdict : null;
+        tous('[data-verdict]').forEach(el => {
+            el.hidden = !v;
+            if (v) el.dataset.code = v.code;
+        });
+        tous('[data-teinte-verdict]').forEach(el => { el.dataset.teinteVerdict = v?.code || 'aucun'; });
+        const precisions = v ? [v.joueur && 'Commandant', v.gros && 'Gros gibier', v.tirer && v.dangereux && 'Pilote dangereux', v.conseil].filter(Boolean).join(' · ') : '';
+        ecrire('cible-verdict', v?.libelle || '');
+        ecrire('cible-conseil', [v?.prime ? creditsCourts(v.prime) : null, precisions].filter(Boolean).join(' · '));
+        ecrire('viseur-verdict', v?.libelle || (c.verrouillee ? 'Scan en cours' : 'Aucune cible'));
+        ecrire('viseur-prime', v?.prime ? credits(v.prime) : '');
+        ecrire('viseur-conseil', precisions || (c.verrouillee ? '' : 'Verrouillez un contact'));
+    }
+
+    // ----------------------------------------------------------------
+    //  MODE CHASSEUR DE PRIMES
+    // ----------------------------------------------------------------
+    function rendreTauxChasse() {
+        const c = etat.chasse || {};
+        const heures = c.depuis ? (Date.now() - Date.parse(c.depuis)) / 3600000 : 0;
+        ecrire('chasse-taux', c.actif && c.gains && heures > 1 / 60 ? `${creditsCourts(c.gains / heures)}/h` : '—');
+    }
+
+    function rendreChasse() {
+        const c = etat.chasse || {};
+        const actif = !!c.actif;
+        document.body.toggleAttribute('data-chasse', actif);
+        ecrire('chasse-etat', actif ? (c.zone_nom?.replace("Site d'extraction ", 'Site ') || (c.manuel ? 'activé à la main' : 'en chasse')) : c.profil?.pret ? 'en veille' : 'vaisseau peu armé');
+        ecrire('chasse-eliminations', String(c.eliminations || 0));
+        ecrire('chasse-gains', creditsCourts(c.gains || 0));
+        ecrire('chasse-meilleure', c.meilleure ? credits(c.meilleure) : '—');
+        ecrire('chasse-encaisser', credits(c.a_encaisser_total || 0));
+        rendreTauxChasse();
+        const lignes = () => Object.entries(c.a_encaisser || {}).sort((a, b) => b[1] - a[1]).map(([faction, montant]) => {
+            const li = creer('li');
+            li.append(creer('span', 'nom', faction), creer('span', 'valeur', creditsCourts(montant)));
+            return li;
+        });
+        tous('[data-liste-primes]').forEach(l => l.replaceChildren(...lignes()));
+        tous('[data-bouton-chasse]').forEach(b => {
+            b.dataset.action = actif ? 'chasse|coupe' : 'chasse|active';
+            b.textContent = actif ? 'Couper le mode chasse' : 'Activer le mode chasse';
+        });
+        evaluerMode();
+    }
+
+    function rendrePilotage() {
+        const p = etat.pilotage || {};
+        ecrire('pilotage-modele', p.modele || '');
+        ecrire('pilotage-coque', pourcent(p.coque));
+        jauge('pilotage-coque', p.coque ?? 0);
+        tous('.vital[data-libre]').forEach(el => { el.dataset.etat = palier(p.coque); });
+        evaluerMode();
+        rendreSurface();
+    }
+
+    // ----------------------------------------------------------------
+    //  EXPLORATION : VALEUR DES CORPS ET VIE
+    // ----------------------------------------------------------------
+    let cleDernierScan = null, finCarteScan = 0;
+
+    /** Le corps où l'on est, sinon le dernier scanné. */
+    function ficheActuelle() {
+        const x = etat.exploration || {}, ici = etat.status.corps || etat.position.corps;
+        const corps = (x.corps || []).filter(f => f.connu);
+        return corps.find(f => f.nom === ici) || corps.find(f => f.id === x.dernier) || null;
+    }
+
+    function ficheDernier() {
+        const x = etat.exploration || {};
+        return (x.corps || []).find(f => f.id === x.dernier && f.connu) || null;
+    }
+
+    const cleScan = f => (f ? `${etat.exploration.systeme}|${f.id}|${f.valeur}|${f.bio?.signaux || 0}` : null);
+
+    function signalerScan() {
+        const cle = cleScan(ficheDernier());
+        if (cle && cle !== cleDernierScan) finCarteScan = Date.now() + DUREE_CARTE_SCAN * 1000;
+        cleDernierScan = cle;
+    }
+
+    function pastillesCorps(f) {
+        const p = [];
+        if (f.etoile) p.push([f.premiere_decouverte ? 'Première découverte' : 'Déjà découverte', f.premiere_decouverte && 'or']);
+        else {
+            p.push([f.premiere_decouverte ? 'Première découverte' : 'Déjà découvert', f.premiere_decouverte && 'or']);
+            p.push([f.cartographie ? 'Cartographié' : f.premiere_carto ? 'Jamais cartographié' : 'Déjà cartographié', !f.cartographie && f.premiere_carto && 'or']);
+        }
+        if (f.terraformable) p.push(['Terraformable']);
+        if (f.atterrissable) p.push([f.premier_pas ? 'Aucun pas posé · bonus ×5' : 'Déjà foulé', f.premier_pas && f.bio && 'vie']);
+        if (f.balise) p.push(['Données de balise']);
+        return p.map(([texte, type]) => { const li = creer('li', '', texte); if (type) li.dataset.t = type; return li; });
+    }
+
+    const valeurVie = bio => (!bio ? 'Aucune' : bio.max_bonus ? fourchette(bio.min_bonus, bio.max_bonus) : `${bio.signaux} signal${bio.signaux > 1 ? 'ux' : ''}`);
+
+    function ligneCorps(f, ici) {
+        const li = creer('li', f.id === ici ? 'ici' : '');
+        li.append(creer('span', 'nom', f.court || f.nom || `Corps ${f.id}`));
+        li.lastChild.title = [f.classe, f.distance_ls != null && `${nombre(f.distance_ls)} sl`].filter(Boolean).join(' · ');
+        if (f.premiere_decouverte) { const m = creer('span', 'marque', '1re'); m.title = 'Première découverte'; li.append(m); }
+        if (f.bio) { const m = creer('span', 'marque', `Vie ${f.bio.signaux}`); m.dataset.t = 'vie'; m.title = valeurVie(f.bio); li.append(m); }
+        li.append(creer('span', 'valeur', f.connu ? creditsCourts(f.potentiel) : '—'));
+        return li;
+    }
+
+    /** facteur : 5 si personne n'a encore posé le pied ici, comme le total affiché au-dessus. */
+    function ligneBio(l, facteur) {
+        const li = creer('li');
+        li.dataset.etat = l.etat;
+        li.append(creer('span', 'nom', l.espece || l.genre));
+        li.append(creer('span', 'valeur', l.max ? fourchette(l.min * facteur, l.max * facteur) : '—'));
+        const detail = { analyse: 'Analyse terminée', prelevement: 'Prélèvement en cours' }[l.etat]
+            || (l.espece ? `${l.genre} · espèce probable` : `${l.possibles} espèce${l.possibles > 1 ? 's' : ''} possible${l.possibles > 1 ? 's' : ''}`);
+        li.append(creer('span', 'detail-bio', detail));
+        return li;
+    }
+
+    function rendreCarteScan() {
+        const f = ficheDernier();
+        const visible = !!f && Date.now() < finCarteScan;
+        $('carte-scan').hidden = !visible;
+        if (!visible) return;
+        ecrire('scan-nom', f.court || f.nom);
+        ecrire('scan-classe', f.classe || '');
+        ecrire('scan-valeur', f.balise ? '—' : `≈ ${creditsCourts(f.valeur)}`);
+        ecrire('scan-carto', f.etoile || f.balise ? '—' : `≈ ${creditsCourts(f.valeur_carto)}`);
+        ecrire('scan-vie', valeurVie(f.bio));
+        $('scan-pastilles').replaceChildren(...pastillesCorps(f));
+    }
+
+    function rendreCorpsActuel() {
+        const f = ficheActuelle(), bio = f?.bio;
+        ecrire('corps-nom', f ? f.court || f.nom : 'aucun scan');
+        ecrire('corps-valeur', f ? `≈ ${creditsCourts(f.valeur)}` : '—');
+        ecrire('corps-carto', f && !f.etoile ? `≈ ${creditsCourts(f.valeur_carto)}` : '—');
+        ecrire('corps-vie', f ? valeurVie(bio) : '—');
+        $('corps-pastilles').replaceChildren(...(f ? pastillesCorps(f) : []));
+        ecrire('bio-resume', bio ? `${bio.signaux} forme${bio.signaux > 1 ? 's' : ''} de vie` : '');
+        tous('[data-bio-vide]').forEach(el => { el.hidden = !!bio; });
+        tous('[data-bio-liste]').forEach(l => l.replaceChildren(...(bio?.lignes || []).map(ligne => ligneBio(ligne, bio.bonus ? 5 : 1))));
+    }
+
+    function rendreExploration() {
+        const x = etat.exploration || {}, session = x.session || {};
+        const ici = ficheActuelle()?.id;
+        ecrire('explo-total', x.total ? `≈ ${creditsCourts(x.total_carto)}` : '—');
+        ecrire('explo-vie', x.bio_max ? `≤ ${creditsCourts(x.bio_max)}` : '—');
+        ecrire('explo-vendre', creditsCourts(session.a_vendre || 0));
+        ecrire('exo-vendre', creditsCourts(session.exo || 0));
+        ecrire('explo-resume', x.corps?.length ? `${x.corps.length} corps connus · ${x.premieres || 0} première${x.premieres > 1 ? 's' : ''} découverte${x.premieres > 1 ? 's' : ''} · exobiologie à vendre ${creditsCourts(session.exo || 0)}` : 'Lancez un balayage du système pour estimer ses corps.');
+        remplir($('liste-corps'), (x.corps || []).map(f => ligneCorps(f, ici)), 'Aucun corps scanné dans ce système.');
+        remplir($('liste-corps-nomade'), (x.corps || []).filter(f => f.bio || f.atterrissable).slice(0, 12).map(f => ligneCorps(f, ici)), 'Aucun corps posable scanné.');
+        rendreCarteScan();
+        rendreCorpsActuel();
     }
 
     function rendreCombat() {
@@ -597,6 +772,8 @@
         remplir($('liste-journal-surface'), journal.filter(e => e.categorie !== 'comms').map(ligneJournal), 'Rien à signaler pour l\'instant.');
         remplir($('liste-comms-surface'), journal.filter(e => e.categorie === 'comms').map(ligneJournal), 'Aucun message reçu.');
         remplir($('liste-menaces'), journal.filter(e => e.categorie === 'combat').map(ligneJournal), 'Aucune menace enregistrée.');
+        remplir($('liste-menaces-chasseur'), journal.filter(e => e.categorie === 'combat').map(ligneJournal), 'Aucune menace enregistrée.');
+        remplir($('liste-comms-chasseur'), journal.filter(e => e.categorie === 'comms').map(ligneJournal), 'Aucun message reçu.');
     }
 
     // ----------------------------------------------------------------
@@ -671,12 +848,15 @@
         else if (exo.distance != null && exo.portee) texte = `Éloignez-vous encore de ${distanceLisible(exo.portee - exo.distance)}.`;
         consigne.textContent = texte;
         consigne.dataset.etat = exo.termine || exo.libre ? 'ok' : '';
+        ecrire('exo-valeur', exo.valeur ? `${credits(exo.valeur)}${exo.premier_pas ? ` · ${creditsCourts(exo.valeur * 5)} avec le premier pas` : ''}` : '');
     }
 
     function rendreSurface() {
         const s = etat.status, p = etat.position, sol = etat.sol || {}, v = sol.vaisseau || {};
         const aPied = drapeau('aPied');
-        ecrire('surface-situation', aPied ? 'à pied' : 'en VRS');
+        const enNomad = !aPied && etat.pilotage?.genre === 'nomade';
+        ecrire('surface-situation', aPied ? 'à pied' : enNomad ? 'en Nomad' : 'en VRS');
+        ecrire('nomade-etat', drapeau('pose') ? 'posé' : 'en vol');
         ecrire('surface-corps', s.corps || p.corps || p.station?.nom || '—');
         ecrire('surface-lat', angle(s.latitude));
         ecrire('surface-lon', angle(s.longitude));
@@ -685,14 +865,22 @@
         ecrire('surface-gravite', s.gravite != null ? decimales(s.gravite, 2) + ' g' : '—');
         ecrire('surface-air', drapeau('respirable') ? 'Respirable' : aPied ? 'Non respirable' : '—');
 
+        // Descendu du Nomad : c'est lui qu'il faut retrouver, le vaisseau mère est resté en orbite
+        const engin = etat.pilotage?.genre === 'nomade' ? 'Nomad' : 'Vaisseau';
+        ecrire('retour-titre', engin);
+        ecrire('retour-nom', engin === 'Nomad' ? '' : etat.vaisseau.nom || nomVaisseau(etat.vaisseau.type, etat.vaisseau.modele));
         const present = v.etat === 'pose';
         ecrire('retour-etat', present ? 'Posé' : v.etat === 'parti' ? 'En orbite' : 'Position inconnue');
         ecrire('retour-distance', distanceLisible(v.distance));
         ecrire('retour-direction', directionRelative(v.cap, s.cap));
         ecrire('boussole-distance', v.distance != null ? distanceLisible(v.distance) : '—');
         ecrire('boussole-consigne', v.distance != null ? directionRelative(v.cap, s.cap)
-            : v.etat === 'parti' ? 'Vaisseau en orbite' : 'Vaisseau non localisé');
-        rendreBoussole(s.cap, v.cap);
+            : v.etat === 'parti' ? `${engin} en orbite` : `${engin} non localisé`);
+        rendreBoussole(s.cap, enNomad ? null : v.cap);
+        if (enNomad) {               // le vaisseau mère reste en orbite : on suit surtout l'altitude
+            ecrire('boussole-distance', s.altitude != null ? distanceLisible(s.altitude) : '—');
+            ecrire('boussole-consigne', s.altitude != null ? 'Altitude' : 'En vol');
+        }
         $('bouton-rappel').firstChild.textContent = present ? 'Renvoyer le vaisseau' : 'Rappeler le vaisseau';
 
         ecrire('vrs-modele', sol.vrs?.modele || 'VRS');
@@ -715,6 +903,7 @@
         const inconfort = drapeau('froid') || drapeau('chaud');
         jauge('pied-temperature', kelvins != null ? Math.min(1, kelvins / 600) : 0, extreme ? 'critique' : inconfort ? 'attention' : 'ok');
         rendreExobio(sol.exobio);
+        rendreCorpsActuel();
     }
 
     /** Boutons VRS et à pied sans touche dans le jeu : marqués, le clic expliquera quoi régler. */
@@ -736,8 +925,11 @@
         session: [rendrePosition],
         commandant: [rendreEntete, rendreCommandant],
         vaisseau: [rendreEntete, rendreVaisseau],
-        position: [rendreEntete, rendrePosition, rendreSurface],
+        position: [rendreEntete, rendrePosition, rendreSurface, rendreExploration],
         sol: [rendreSurface],
+        chasse: [rendreChasse],
+        pilotage: [rendrePilotage],
+        exploration: [rendreExploration],
         status: [rendreEntete, rendrePosition, rendreVaisseau, rendreStatus, rendreSurface, evaluerMode],
         route: [rendreRoute],
         modules: [rendreModules],
@@ -780,17 +972,36 @@
         return derniereSurface;
     }
 
+    /** 'nomade', 'chasseur' ou null : l'engin embarqué que le commandant pilote lui-même.
+        Le Nomad est reconnu par le journal : on ne sait pas quel drapeau le jeu lui donne. */
+    function situationPilotage() {
+        if (drapeau('aPied')) return null;
+        if (etat.pilotage?.genre === 'nomade') return 'nomade';
+        return drapeau('chasseur') ? 'chasseur' : null;
+    }
+
     function evaluerMode() {
         const menace = menaceActive();
-        const surface = situationSurface();
+        const pilotage = situationPilotage();
+        const surface = pilotage ? null : situationSurface();
+        const chasse = etat.chasse || {};
         // Hors du vaisseau, la vue combat (coque, FSD, sous-systèmes) ne servirait à rien :
-        // on reste sur la vue de surface, avec le bandeau d'alerte
-        const auto = surface || (menace ? 'combat' : 'nav');
+        // on reste sur la vue de l'engin ou de surface, avec le bandeau d'alerte.
+        // En chasse aux primes, la vue combat reste affichée même entre deux cibles.
+        const auto = pilotage || surface || (menace || chasse.actif ? 'combat' : 'nav');
         const mode = modeChoisi === 'auto' ? auto : modeChoisi;
         demanderInterface(mode, contexteCommandes());
         ecrire('mode-choisi', { auto: 'auto', combat: 'combat', nav: 'navigation' }[modeChoisi]);
-        const alerteSurface = (mode === 'vrs' || mode === 'pied') && menace;
+        const alerteSurface = ['vrs', 'pied', 'nomade', 'chasseur'].includes(mode) && menace;
         document.body.toggleAttribute('data-alerte', alerteSurface);
+        const chasseCalme = mode === 'combat' && !!chasse.actif && !menace;
+        document.body.toggleAttribute('data-chasse-calme', chasseCalme);
+        ecrire('alerte-titre', chasseCalme ? 'Chasse aux primes' : 'Alerte combat');
+        if (chasseCalme) {
+            ecrire('alerte-cause', chasse.zone_nom || 'Mode chasseur de primes');
+            ecrire('alerte-retour', `${chasse.eliminations || 0} élimination${chasse.eliminations > 1 ? 's' : ''} · ${creditsCourts(chasse.gains || 0)}`);
+            return;
+        }
         if (mode !== 'combat' && !alerteSurface) return;
 
         const sousMenace = sousLeFeu();
@@ -882,7 +1093,7 @@
         toile.height = Math.max(90, Math.round(320 * innerHeight / Math.max(innerWidth, 1)));
         const image = contexte.createImageData(toile.width, toile.height);
         const pixels = new Uint32Array(image.data.buffer);
-        const [rouge, vert, bleu] = { combat: [255, 74, 40], vrs: [240, 190, 70], pied: [150, 215, 115] }[mode] || [255, 158, 72];
+        const [rouge, vert, bleu] = { combat: [255, 74, 40], vrs: [240, 190, 70], pied: [150, 215, 115], nomade: [80, 216, 196], chasseur: [199, 155, 255] }[mode] || [255, 158, 72];
         const debut = performance.now();
 
         const trame = () => {
@@ -927,6 +1138,7 @@
         } else if (message.type === 'etat') {
             Object.assign(etat, message.etat);
             memoriserSantes(etat.modules.liste);
+            cleDernierScan = cleScan(ficheDernier());      // déjà connu : pas de carte à l'ouverture
             journal = [...(message.historique || [])].reverse();
             rendreTout();
             interfacePrete = true;
@@ -934,6 +1146,7 @@
             // Modules : la santé reçue est comparée au relevé précédent (avant le rendu, pour marquer les lignes)
             if (message.section === 'modules') signalerModulesTouches(modulesTouches(message.donnees.liste));
             etat[message.section] = message.donnees;
+            if (message.section === 'exploration') signalerScan();
             (RENDUS[message.section] || []).forEach(f => f());
         } else if (message.type === 'evenement') {
             const e = message.evenement;
@@ -1203,7 +1416,7 @@
         // Boutons d'action (macros du backend) et sélecteur de vue
         tous('[data-action]').forEach(bouton => {
             bouton.onclick = () => {
-                if (bouton.closest('[data-commandes], .vue-surface') && performance.now() < protectionCommandes) return;
+                if (bouton.closest('[data-commandes], .vue-surface, .vue-chasseur') && performance.now() < protectionCommandes) return;
                 envoyerAction(bouton.dataset.action);
             };
         });
@@ -1231,6 +1444,8 @@
             const d = new Date();
             ecrire('heure', d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
             ecrire('date', d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) + ' ' + (d.getFullYear() + 1286));
+            rendreTauxChasse();
+            rendreCarteScan();
             evaluerMode();
         };
         tic();

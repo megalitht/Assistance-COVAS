@@ -71,7 +71,43 @@ window.COVAS_DEMO = (() => {
         },
     };
     // interface.html?demo=vrs ou ?demo=pied : aperçu de la vue de surface
-    const SCENE = ['vrs', 'pied'].find(s => s === new URLSearchParams(location.search).get('demo')) || null;
+    const SCENE = ['vrs', 'pied', 'nomade', 'chasseur', 'chasse', 'explo'].find(s => s === new URLSearchParams(location.search).get('demo')) || null;
+
+    // Corps d'exemple pour les vues exploration, Nomad et pied à terre
+    const biologie = (signaux, lignes, bonus) => {
+        const min = lignes.reduce((t, l) => t + l.min, 0), max = lignes.reduce((t, l) => t + l.max, 0), f = bonus ? 5 : 1;
+        return { signaux, lignes, min, max, min_bonus: min * f, max_bonus: max * f, bonus, approx: false, analysees: lignes.filter(l => l.etat === 'analyse').length };
+    };
+    const corpsDemo = (id, court, classe, valeur, valeur_carto, options = {}) => ({
+        id, nom: `Alpha Centauri ${court}`, court, classe, etoile: false, terraformable: false, atterrissable: true, distance_ls: 1200 + id * 310, connu: true,
+        premiere_decouverte: false, premiere_carto: false, premier_pas: false, balise: false, cartographie: false, valeur, valeur_carto, bio: null, ...options,
+        potentiel: valeur_carto + (options.bio ? options.bio.max_bonus : 0),
+    });
+    const explorationDemo = () => {
+        const corps = [
+            corpsDemo(7, 'A 2 b', 'Rocheux', 1480, 18340, { premiere_decouverte: true, premiere_carto: true, premier_pas: true, bio: biologie(3, [
+                { genre: 'Stratum', espece: 'Stratum Tectonicas', min: 19010800, max: 19010800, etat: 'prelevement', possibles: 1 },
+                { genre: 'Bacterium', espece: null, min: 1000000, max: 1689800, etat: 'detecte', possibles: 3 },
+                { genre: 'Touradon', espece: 'Touradon Ignis', min: 1849000, max: 1849000, etat: 'analyse', possibles: 1 },
+            ], true) }),
+            corpsDemo(4, 'A 1', 'Monde terrestre', 695400, 7842100, { atterrissable: false, premiere_decouverte: true, premiere_carto: true, terraformable: true }),
+            corpsDemo(9, 'A 3', 'Haute teneur en métaux', 13200, 142800, { terraformable: true, cartographie: true, valeur: 142800 }),
+            corpsDemo(12, 'B 1 a', 'Glacé', 520, 2380, { bio: biologie(1, [{ genre: 'Fonticulua', espece: null, min: 1000000, max: 1804100, etat: 'detecte', possibles: 2 }], false) }),
+            corpsDemo(15, 'B 2', 'Géante gazeuse I', 3820, 14900, { atterrissable: false }),
+        ].sort((a, b) => b.potentiel - a.potentiel);
+        return {
+            systeme: 'Alpha Centauri', corps, dernier: 7, total: corps.reduce((t, c) => t + c.valeur, 0), total_carto: corps.reduce((t, c) => t + c.valeur_carto, 0),
+            bio_min: corps.reduce((t, c) => t + (c.bio?.min_bonus || 0), 0), bio_max: corps.reduce((t, c) => t + (c.bio?.max_bonus || 0), 0), premieres: 2,
+            session: { a_vendre: 8420300, corps: 23, exo: 9245000, exo_especes: 1, vendu: 0, exo_vendu: 0 },
+        };
+    };
+    const verdictDemo = (code, libelle, tirer, conseil, prime = 0, extra = {}) => ({ code, libelle, tirer, conseil, prime, joueur: false, dangereux: false, gros: prime >= 500000, ...extra });
+    const CIBLES_DEMO = [
+        { vaisseau: 'Python', pilote: 'Lawrence Yuki', rang: 'Deadly', faction: 'Pikum Family', statut: 'Wanted', prime: 668764, boucliers: 100, coque: 100, verdict: verdictDemo('recherche', 'Recherché', true, 'Feu autorisé', 668764, { dangereux: true }) },
+        { vaisseau: 'Eagle', pilote: 'Joseph Pimley', rang: 'Expert', faction: 'Pranav Antal', statut: 'Clean', boucliers: 82, coque: 100, verdict: verdictDemo('clean', 'En règle', false, 'Ne tirez pas') },
+        { vaisseau: 'Viper Mk III', pilote: 'Vaisseau des autorités', rang: 'Expert', faction: 'Pikum Public Group', statut: 'Clean', boucliers: 100, coque: 100, verdict: verdictDemo('autorite', 'Autorités', false, 'Ne tirez surtout pas') },
+        { vaisseau: 'Cobra Mk III', pilote: 'Will Blackburn', rang: 'Master', faction: 'Baldr Camorra', statut: 'Wanted', prime: 73686, boucliers: 45, coque: 88, verdict: verdictDemo('recherche', 'Recherché', true, 'Feu autorisé', 73686) },
+    ];
     const BASCULES_VRS = { vrs_frein: 1 << 12, vrs_assistance: 1 << 15, vrs_phares: 1 << 8, vrs_tourelle: 1 << 13, vrs_soute: 1 << 9 };
     let actionCourante = null;       // réponse de la simulation aux boutons de l'interface
     let questionCourante = null;     // réponse de la simulation aux phrases écrites au COVAS
@@ -164,6 +200,59 @@ window.COVAS_DEMO = (() => {
             }, 1500)];
         }
 
+        /** Chasse aux primes, chasseur embarqué, Nomad ou exploration : un état fixe, les cibles défilent. */
+        function scenarioChasse() {
+            const chasseur = SCENE === 'chasseur';
+            Object.assign(status, { flags: chasseur ? D.boucliers | D.danger | (1 << 25) : D.vaisseau | D.boucliers | D.armes | D.danger, pips: [4, 2, 6] });
+            etat.pilotage = chasseur ? { genre: 'chasseur', modele: 'Gu-97', coque: 0.8 } : { genre: null, modele: null, coque: null };
+            etat.vaisseau.chasseur = chasseur ? 'deploye' : null;
+            etat.position.corps = 'Alpha Centauri A 2 Ring';
+            etat.chasse = {
+                actif: true, manuel: false, zone: 'res_danger', zone_nom: "Site d'extraction [Danger]", depuis: new Date(Date.now() - 1460000).toISOString(),
+                profil: { armes: 6, scanner: true, pret: true }, eliminations: 14, gains: 8650400, meilleure: 1240500, scannes: 31, recherches: 18,
+                a_encaisser: { 'Pikum Public Group': 6120300, 'Alliance de Baldr': 2530100 }, a_encaisser_total: 8650400,
+            };
+            etat.cible = { verrouillee: true, scan: 3, ...CIBLES_DEMO[0] };
+            recevoir({ type: 'etat', etat, historique: [] });
+            note('Chasse', 'combat', "Mode chasseur de primes activé — Site d'extraction [Danger]", 'succes');
+            note('ShipTargeted', 'combat', 'Cible recherchée : Lawrence Yuki — prime 668 764 cr', 'attention');
+            let i = 0;
+            minuteries = [setInterval(() => {
+                i = (i + 1) % CIBLES_DEMO.length;
+                recevoir({ type: 'maj', section: 'cible', donnees: { verrouillee: true, scan: 3, ...CIBLES_DEMO[i] } });
+            }, 4000)];
+            actionCourante = action => {
+                if (!action.startsWith('chasse|')) return;
+                etat.chasse.actif = action === 'chasse|active';
+                recevoir({ type: 'maj', section: 'chasse', donnees: etat.chasse });
+            };
+        }
+
+        function scenarioNomade() {
+            Object.assign(status, { flags: D.boucliers | (1 << 26) | (1 << 21), flags2: 0, pips: [4, 4, 4], corps: 'Alpha Centauri A 2 b', latitude: -20.6143, longitude: 102.1771, altitude: 842, cap: 40, rayon: 1800000 });
+            etat.position.corps = status.corps;
+            etat.pilotage = { genre: 'nomade', modele: 'Nomad', coque: 1 };
+            recevoir({ type: 'etat', etat, historique: [] });
+            note('LaunchVessel', 'exploration', 'Nomad déployé');
+            note('SAASignalsFound', 'exploration', 'Vie sur Alpha Centauri A 2 b : Stratum, Bacterium, Touradon', 'succes');
+            minuteries = [setInterval(() => majStatus({ cap: (status.cap + 4) % 360, altitude: Math.max(40, status.altitude - 25) }), 1200)];
+        }
+
+        function scenarioExplo() {
+            Object.assign(status, { flags: D.vaisseau | D.boucliers | D.supercroisiere });
+            recevoir({ type: 'etat', etat, historique: [] });
+            note('FSSDiscoveryScan', 'exploration', 'Balayage du système — 17 corps détectés');
+            let i = 1;
+            const relancer = () => {
+                const liste = etat.exploration.corps;
+                etat.exploration = { ...etat.exploration, dernier: liste[i++ % liste.length].id };
+                recevoir({ type: 'maj', section: 'exploration', donnees: etat.exploration });
+            };
+            relancer();
+            minuteries = [setInterval(relancer, 6000)];
+            document.querySelector('[data-onglet="exploration"]')?.click();
+        }
+
         function scenario() {
             const [type, modele, nom, immat] = VITRINE[rang % VITRINE.length];
             status = { flags: D.vaisseau | D.boucliers | D.supercroisiere, flags2: 0, pips: [4, 4, 4], groupe_tir: 0, carburant: 24.3, reserve: 0.41, soute: 14, statut_legal: 'Clean', credits: 148230511, destination: 'Alpha Centauri' };
@@ -181,6 +270,12 @@ window.COVAS_DEMO = (() => {
                 missions: { liste: [{ id: 1, nom: 'Livrer 8 unités d\'or', systeme: 'Sirius', station: 'Patterson Enterprise' }], anterieures: 2 },
                 proches: { etat: 'ok', systeme: 'Sol', rayon: 31.42, total: 7, liste: [['Alpha Centauri', 'G', 4.38], ['Barnard\'s Star', 'M', 5.95], ['Luhman 16', 'L', 6.57], ['Wolf 359', 'M', 7.78], ['Lalande 21185', 'M', 8.29], ['Sirius', 'A', 8.59], ['Duamta', 'M', 9.88]].map(([nom, classe, distance]) => ({ nom, classe, distance, ravitaillable: 'KGBFOAM'.includes(classe) })) },
             };
+            etat.exploration = explorationDemo();
+            etat.chasse = { actif: false, profil: { armes: 6, scanner: true, pret: true }, eliminations: 0, gains: 0, meilleure: 0, a_encaisser: {}, a_encaisser_total: 0 };
+            etat.pilotage = { genre: null, modele: null, coque: null };
+            if (SCENE === 'chasse' || SCENE === 'chasseur') { scenarioChasse(); return; }
+            if (SCENE === 'nomade') { scenarioNomade(); return; }
+            if (SCENE === 'explo') { scenarioExplo(); return; }
             if (SCENE) { scenarioSurface(); return; }
             recevoir({ type: 'etat', etat, historique: [] });
             note('LoadGame', 'systeme', 'Session ouverte — CMDR Démo', 'succes');

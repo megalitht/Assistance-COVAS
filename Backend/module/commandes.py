@@ -32,6 +32,7 @@ TOUCHES_SECOURS = {
     "poussee_haut": "r",
     "tangage_haut": None,
     "tangage_bas": None,
+    "assistance_vol": "z",      # emplacement physique : la touche W d'un clavier AZERTY
     # Répartition d'énergie (pips)
     "pips_sys": "left",
     "pips_moteurs": "up",
@@ -82,7 +83,8 @@ TOUCHES_SECOURS = {
 
 GROUPES = (
     ("vol", "Vol", ("train", "soute", "cible", "boost", "saut", "supercroisiere", "vitesse_zero",
-                    "vitesse_75", "vitesse_max", "poussee_haut", "tangage_haut", "tangage_bas")),
+                    "vitesse_75", "vitesse_max", "poussee_haut", "tangage_haut", "tangage_bas",
+                    "assistance_vol")),
     ("energie", "Énergie", ("pips_sys", "pips_moteurs", "pips_armes", "pips_equilibre")),
     ("menus", "Menus du jeu", ("ui_haut", "ui_bas", "ui_gauche", "ui_droite", "ui_onglet_gauche",
                                "ui_onglet_droite", "ui_selection", "ui_retour")),
@@ -125,9 +127,17 @@ SEQUENCES = {
     },
     "ravitaillement": {
         "nom": "Ravitaillement",
-        "note": "Une fois dans les services : Ravitailler, Réparer, Réarmer (curseur déjà sur Ravitailler).",
+        "note": "Jouée juste après « Ouvrir les services », depuis la position du curseur à "
+                "l'ouverture de l'écran : Ravitailler, Réparer, Réarmer.",
         "pause": 0.25,
         "etapes": ["ui_selection", "ui_droite", "ui_selection", "ui_droite", "ui_selection"],
+    },
+    "amarrage_nomade": {
+        "nom": "Amarrage du Nomad",
+        "note": "Demande au vaisseau principal de récupérer le Nomad. Par défaut : la touche "
+                "« rappel » du chasseur. Remplace-la ici si ton jeu demande une autre combinaison.",
+        "pause": 0.25,
+        "etapes": ["chasseur_rappel"],
     },
     "assistance_sc": {
         "nom": "Assistance de supercroisière",

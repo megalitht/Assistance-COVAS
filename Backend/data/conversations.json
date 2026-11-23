@@ -468,12 +468,13 @@
         },
         "cible_avis": {
             "titre": "Que penses-tu de la cible ?", "dossier": "Bord",
-            "questions": ["c'est qui", "qui est-ce", "c'est qui lui", "c'est qui ce vaisseau", "il est dangereux", "elle est dangereuse", "cette cible", "que penses-tu de la cible", "parle-moi de la cible", "la cible est dangereuse", "c'est quoi ce vaisseau", "qui c'est", "il est recherché", "il a une prime"],
+            "questions": ["c'est qui", "qui est-ce", "c'est qui lui", "c'est qui ce vaisseau", "il est dangereux", "elle est dangereuse", "cette cible", "que penses-tu de la cible", "parle-moi de la cible", "la cible est dangereuse", "c'est quoi ce vaisseau", "qui c'est", "il est recherché", "il a une prime", "il est clean", "il est en règle", "on peut lui tirer dessus", "je peux tirer"],
             "repliques": [
                 {"id": "CibleAucune", "texte": "Je ne vois rien de verrouillé, commandant. Ciblez d'abord, je commente ensuite."},
                 {"id": "Cible1", "si": ["cible"], "texte": "Les détails sont à l'écran. Pour l'instant, rien d'alarmant.", "ecran": "{cible_vaisseau} · {cible_pilote} ({cible_rang})"},
                 {"id": "Cible2", "si": ["cible"], "texte": "Un contact verrouillé. Dites-moi si on doit s'en occuper.", "ecran": "{cible_vaisseau} · {cible_pilote} ({cible_rang})"},
                 {"id": "CibleRecherchee", "si": ["cible", "cible_recherchee"], "priorite": 5, "texte": "Il est recherché. Une prime, une cible légale… c'est Noël, commandant.", "ecran": "{cible_vaisseau} · {cible_pilote} · {cible_statut}"},
+                {"id": "CibleEnRegle", "si": ["cible", "cible_en_regle"], "priorite": 7, "texte": "Celui-là, on n'y touche pas, commandant. Il est en règle.", "ecran": "{cible_vaisseau} · {cible_pilote} · {cible_statut}"},
                 {"id": "CibleDangereuse", "si": ["cible", "cible_dangereuse"], "priorite": 6, "texte": "Pilote très expérimenté, commandant. Je vous déconseille de le sous-estimer.", "ecran": "{cible_vaisseau} · {cible_pilote} ({cible_rang})"}
             ]
         },
@@ -513,6 +514,41 @@
                 {"id": "ExploInconnu", "texte": "Lancez un balayage du système, commandant. Je vous dirai ce qu'il cache."},
                 {"id": "ExploReste", "si": ["systeme_a_scanner"], "priorite": 5, "texte": "Il reste des corps à découvrir. Le scanner a encore du travail.", "ecran": "Corps scannés : {corps_scannes} sur {corps_total}"},
                 {"id": "ExploComplet", "si": ["systeme_complet"], "priorite": 5, "texte": "Tout est cartographié, commandant. Ce système n'a plus de secrets pour nous.", "ecran": "Corps scannés : {corps_scannes} sur {corps_total}"}
+            ]
+        },
+        "valeur_corps": {
+            "titre": "Combien vaut ce corps ?", "dossier": "Bord",
+            "questions": ["combien vaut cette planète", "combien vaut ce corps", "combien elle vaut", "elle vaut combien", "combien ça vaut", "valeur de la planète", "quelle est la valeur de cette planète", "cette planète a déjà été découverte", "elle a déjà été découverte", "on est les premiers", "on est les premiers ici", "quelqu'un a déjà découvert cette planète"],
+            "repliques": [
+                {"id": "ValeurInconnue", "texte": "Je n'ai pas encore de scan de ce corps, commandant."},
+                {"id": "ValeurCorps", "si": ["corps_evalue"], "priorite": 3, "texte": "Le chiffre est à l'écran, commandant.", "ecran": "{corps_nom} : {corps_detail}"},
+                {"id": "ValeurPremiere", "si": ["corps_evalue", "corps_premiere"], "priorite": 5, "texte": "Personne ne l'a encore découvert. Vendez ces données et votre nom y restera.", "ecran": "{corps_nom} : {corps_detail}"},
+                {"id": "ValeurVivante", "si": ["corps_evalue", "corps_vivant"], "priorite": 6, "texte": "Il y a de la vie là-dessous, commandant. Et elle vaut cher.", "ecran": "{corps_nom} : {corps_detail}"}
+            ]
+        },
+        "valeur_systeme": {
+            "titre": "Combien vaut ce système ?", "dossier": "Bord",
+            "questions": ["combien vaut ce système", "valeur du système", "ce système vaut combien", "ça rapporte combien ce système", "combien rapporte ce système"],
+            "repliques": [
+                {"id": "SystemeSansValeur", "texte": "Scannez d'abord quelques corps, commandant. Je ferai les comptes."},
+                {"id": "SystemeValeur", "si": ["systeme_evalue"], "priorite": 5, "texte": "Voilà l'estimation, commandant.", "ecran": "{systeme} : ≈ {systeme_valeur} cartographié · vie : {systeme_vie}"}
+            ]
+        },
+        "donnees_a_vendre": {
+            "titre": "Combien j'ai à vendre ?", "dossier": "Bord",
+            "questions": ["combien j'ai à vendre", "mes données à vendre", "combien valent mes données", "combien valent mes échantillons", "exobiologie à vendre", "combien vaut mon exobiologie", "combien j'ai d'exobiologie"],
+            "repliques": [
+                {"id": "RienAVendre", "texte": "Rien à vendre pour cette session, commandant."},
+                {"id": "AVendre", "si": ["donnees_a_vendre"], "priorite": 5, "texte": "Un joli pécule. Ne vous faites pas détruire avant de le vendre.", "ecran": "Exploration ≈ {a_vendre} · exobiologie {exo_a_vendre}"}
+            ]
+        },
+        "bilan_primes": {
+            "titre": "Combien de primes ?", "dossier": "Bord",
+            "questions": ["combien j'ai de primes", "primes à encaisser", "combien de primes à encaisser", "mon tableau de chasse", "bilan de la chasse", "combien on a gagné en primes", "combien de primes"],
+            "repliques": [
+                {"id": "AucunePrime", "texte": "Aucune prime à encaisser, commandant. Il est temps d'aller chasser."},
+                {"id": "PrimesEncaisser", "si": ["primes_a_encaisser"], "priorite": 4, "texte": "Il y a de quoi passer à la banque, commandant.", "ecran": "À encaisser : {primes_total}"},
+                {"id": "PrimesChasse", "si": ["chasse_active", "primes_a_encaisser"], "priorite": 6, "texte": "Belle chasse, commandant. Le tableau est à l'écran.", "ecran": "Cette chasse : {chasse_eliminations} élimination(s), {chasse_gains} · à encaisser : {primes_total}"}
             ]
         },
         "thargoides": {

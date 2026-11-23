@@ -57,6 +57,7 @@ COMMANDES_JEU = {
     "poussee_haut": ("UpThrustButton", "Poussée verticale vers le haut"),
     "tangage_haut": ("PitchUpButton", "Tangage : cabrer (nez vers le haut)"),
     "tangage_bas": ("PitchDownButton", "Tangage : piquer (nez vers le bas)"),
+    "assistance_vol": ("ToggleFlightAssist", "Assistance de vol"),
     # Énergie
     "pips_sys": ("IncreaseSystemsPower", "Énergie vers les systèmes"),
     "pips_moteurs": ("IncreaseEnginesPower", "Énergie vers les moteurs"),

@@ -71,7 +71,7 @@ ETOILE_ZONE = 0.20              # côté du carré central analysé (part de la 
 ETOILE_SEUIL_LUMIERE = 235      # un pixel compte comme « étoile » si R, G et B dépassent ça
 ETOILE_PART_OBSTRUCTION = 0.02  # au-delà de cette part de pixels blancs : étoile devant
 
-# Sortir le train tout seul dès que la station autorise l'apontage
+# Sortir le train tout seul à l'approche finale (repère du journal, pas dès l'autorisation)
 TRAIN_AUTO_APONTAGE = True
 
 # Drones : numéro du groupe de tir (1 = le premier) et gâchette ("principal" ou

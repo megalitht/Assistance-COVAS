@@ -1,6 +1,6 @@
 # Script des répliques du COVAS
 
-**133 répliques** au total.
+**153 répliques** au total.
 
 Chaque ligne = un fichier.
 
@@ -181,3 +181,33 @@ un, le rapport reste à l'écran et la réplique ci-dessus l'annonce.
 | `manuel_silencieux_off` | `data/son/Manuel/SilencieuxOff.mp3` | Mode silencieux coupé. |
 | `manuel_analyse` | `data/son/Manuel/ModeAnalyse.mp3` | Mode analyse. |
 | `manuel_combat` | `data/son/Manuel/ModeCombat.mp3` | Mode combat. |
+
+## Chasse aux primes
+
+| Quand | Fichier | Phrase à dire |
+|---|---|---|
+| `chasse_active` | `data/son/Chasse/ChasseActive1.mp3` | Zone de chasse. Mode chasseur de primes activé, commandant. |
+| `chasse_active` | `data/son/Chasse/ChasseActive2.mp3` | Bon terrain de chasse. Je vous signale chaque cible scannée. |
+| `chasse_coupee` | `data/son/Chasse/ChasseCoupee.mp3` | Mode chasseur de primes coupé. |
+| `chasse_fin` | `data/son/Chasse/ChasseFin.mp3` | Fin de la chasse. Le tableau est à l'écran, commandant. |
+| `chasse_recherchee` | `data/son/Chasse/Recherchee1.mp3` | Cible recherchée. |
+| `chasse_recherchee` | `data/son/Chasse/Recherchee2.mp3` | Celui-là est recherché, commandant. |
+| `chasse_recherchee` | `data/son/Chasse/Recherchee3.mp3` | Recherché. Vous pouvez ouvrir le feu. |
+| `chasse_clean` | `data/son/Chasse/Clean1.mp3` | Cible en règle. Ne tirez pas. |
+| `chasse_clean` | `data/son/Chasse/Clean2.mp3` | Il est clean, commandant. On le laisse tranquille. |
+| `chasse_autorite` | `data/son/Chasse/Autorites.mp3` | Vaisseau des autorités. Surtout, ne tirez pas. |
+| `chasse_sans_loi` | `data/son/Chasse/SansJuridiction.mp3` | Aucune juridiction ici. Pas de prime sur cette cible. |
+| `chasse_joueur` | `data/son/Chasse/Joueur.mp3` | Attention, c'est un autre commandant. |
+| `chasse_gros_gibier` | `data/son/Chasse/GrosGibier.mp3` | Gros gibier, commandant. La prime est belle. |
+| `chasse_dangereux` | `data/son/Chasse/Dangereux.mp3` | Pilote dangereux. Restez vigilant. |
+| `chasse_tir_clean` | `data/son/Chasse/TirClean.mp3` | Commandant, vous venez de toucher une cible en règle ! |
+
+## Exploration et exobiologie
+
+| Quand | Fichier | Phrase à dire |
+|---|---|---|
+| `scan_valeur` | `data/son/Exploration/ScanValeur.mp3` | Corps de grande valeur, commandant. Le détail est à l'écran. |
+| `scan_premiere` | `data/son/Exploration/ScanPremiere.mp3` | Corps de grande valeur, et personne ne l'a encore découvert. |
+| `scan_bio` | `data/son/Exploration/ScanBio.mp3` | Signaux biologiques détectés sur ce corps. |
+| `exo_analyse` | `data/son/Exploration/ExoAnalyse.mp3` | Analyse terminée, commandant. Échantillon enregistré. |
+| `exo_distance_ok` | `data/son/Exploration/ExoDistance.mp3` | Distance suffisante. Vous pouvez prélever. |

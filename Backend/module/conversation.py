@@ -172,6 +172,36 @@ def _soute(etat):
     return _section(etat, "soute")
 
 
+def _corps_evalue(etat):
+    """Fiche du corps où l'on est, sinon du dernier corps scanné."""
+    explo = _section(etat, "exploration")
+    fiches = [f for f in explo.get("corps") or [] if f.get("connu")]
+    ici = _section(etat, "status").get("corps") or _section(etat, "position").get("corps")
+    return next((f for f in fiches if f["nom"] == ici), None) \
+        or next((f for f in fiches if f["id"] == explo.get("dernier")), None)
+
+
+def _montant(n):
+    if n is None:
+        return None
+    for seuil, unite in ((1e9, "Md"), (1e6, "M")):
+        if n >= seuil:
+            return f"{_format_nombre(n / seuil, 1)} {unite} cr"
+    return f"{_format_nombre(n)} cr"
+
+
+def _detail_corps(f):
+    if not f:
+        return None
+    morceaux_detail = [f["classe"], f"≈ {_montant(f['valeur'])}"]
+    if f.get("valeur_carto") != f["valeur"]:
+        morceaux_detail.append(f"cartographié ≈ {_montant(f['valeur_carto'])}")
+    morceaux_detail.append("première découverte" if f["premiere_decouverte"] else "déjà découvert")
+    if f.get("bio") and f["bio"]["max_bonus"]:
+        morceaux_detail.append(f"vie : {_montant(f['bio']['min_bonus'])} à {_montant(f['bio']['max_bonus'])}")
+    return " · ".join(morceaux_detail)
+
+
 # nom -> (fonction(etat, paramètre) -> bool, description pour le script d'enregistrement)
 CONDITIONS = {
     "matin": (lambda e, p: 5 <= _maintenant().hour < 12, "le matin"),
@@ -220,6 +250,18 @@ CONDITIONS = {
     "cible_recherchee": (lambda e, p: _cible(e).get("statut") == "Wanted", "cible recherchée"),
     "cible_dangereuse": (lambda e, p: _cible(e).get("rang") in ("Dangerous", "Deadly", "Elite"),
                          "pilote dangereux ou mieux"),
+    "cible_en_regle": (lambda e, p: (_cible(e).get("verdict") or {}).get("tirer") is False, "cible à ne pas toucher"),
+    "chasse_active": (lambda e, p: bool(_section(e, "chasse").get("actif")), "mode chasseur de primes actif"),
+    "primes_a_encaisser": (lambda e, p: (_section(e, "chasse").get("a_encaisser_total") or 0) > 0,
+                           "primes à encaisser"),
+    "corps_evalue": (lambda e, p: bool(_corps_evalue(e)), "corps scanné"),
+    "corps_premiere": (lambda e, p: bool((_corps_evalue(e) or {}).get("premiere_decouverte")),
+                       "corps jamais découvert"),
+    "corps_vivant": (lambda e, p: bool((_corps_evalue(e) or {}).get("bio")), "vie détectée sur le corps"),
+    "systeme_evalue": (lambda e, p: bool(_section(e, "exploration").get("total")), "corps scannés ici"),
+    "donnees_a_vendre": (lambda e, p: bool((_section(e, "exploration").get("session") or {}).get("a_vendre")
+                                           or (_section(e, "exploration").get("session") or {}).get("exo")),
+                         "données à vendre"),
     "soute_vide": (lambda e, p: not _soute(e).get("total"), "soute vide"),
     "soute_pleine": (lambda e, p: bool(_section(e, "vaisseau").get("soute_max"))
                      and (_soute(e).get("total") or 0) >= _section(e, "vaisseau")["soute_max"],
@@ -320,7 +362,18 @@ def valeurs(etat):
     sauts = _sauts_restants(etat)
     coque = _coque(etat)
     etapes = route.get("etapes") or []
+    explo, tableau = _section(etat, "exploration"), _section(etat, "chasse")
+    session, corps_vu = explo.get("session") or {}, _corps_evalue(etat)
     return {
+        "corps_nom": corps_vu["nom"] if corps_vu else None,
+        "corps_detail": _detail_corps(corps_vu),
+        "systeme_valeur": _montant(explo.get("total_carto")) if explo.get("total") else None,
+        "systeme_vie": _montant(explo.get("bio_max")) if explo.get("bio_max") else "aucune détectée",
+        "a_vendre": _montant(session.get("a_vendre") or 0),
+        "exo_a_vendre": _montant(session.get("exo") or 0),
+        "primes_total": _montant(tableau.get("a_encaisser_total") or 0),
+        "chasse_gains": _montant(tableau.get("gains") or 0),
+        "chasse_eliminations": str(tableau.get("eliminations") or 0),
         "commandant": _section(etat, "commandant").get("nom"),
         "vaisseau": vaisseau.get("modele") or vaisseau.get("type"),
         "nom_vaisseau": vaisseau.get("nom"),

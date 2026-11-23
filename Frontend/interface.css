@@ -165,16 +165,20 @@ body[data-mode="combat"] .alerte-combat { display: flex; }
 .vue-combat { grid-template-columns: 24rem minmax(0, 1fr) 25rem 25rem; grid-template-rows: minmax(0, 1fr); }
 
 .vue-surface { grid-template-columns: 23rem minmax(0, 1fr) 26rem 25rem; grid-template-rows: minmax(0, 1fr); }
+.vue-chasseur { grid-template-columns: 24rem minmax(0, 1fr) 25rem 25rem; grid-template-rows: minmax(0, 1fr); }
 
 body:not([data-mode="nav"]) .vue-nav,
 body:not([data-mode="combat"]) .vue-combat,
-body:not([data-mode="vrs"]):not([data-mode="pied"]) .vue-surface {
+body:not([data-mode="chasseur"]) .vue-chasseur,
+body:not([data-mode="vrs"]):not([data-mode="pied"]):not([data-mode="nomade"]) .vue-surface {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
 }
 body:not([data-mode="vrs"]) [data-seul="vrs"],
-body:not([data-mode="pied"]) [data-seul="pied"] { display: none !important; }
+body:not([data-mode="pied"]) [data-seul="pied"],
+body:not([data-mode="nomade"]) [data-seul="nomade"],
+body[data-mode="nomade"] [data-sauf="nomade"] { display: none !important; }
 
 /* Hors du vaisseau, la teinte dit tout de suite où on est : sable en VRS, lichen à pied */
 body[data-mode="vrs"] {
@@ -193,6 +197,31 @@ body[data-mode="pied"] {
     --marron-3: #84996a;
     background: radial-gradient(120% 80% at 50% 45%, #18280f 0%, #0c1408 45%, var(--noir) 100%);
 }
+/* Aux commandes d'un engin embarqué : turquoise pour le Nomad, violet pour le chasseur */
+body[data-mode="nomade"] {
+    --accent: #4fd8c4;
+    --accent-doux: rgba(79, 216, 196, 0.12);
+    --trait: rgba(79, 216, 196, 0.34);
+    --lueur: rgba(79, 216, 196, 0.45);
+    --marron-3: #6fa39a;
+    background: radial-gradient(120% 80% at 50% 45%, #0d2b29 0%, #081615 45%, var(--noir) 100%);
+}
+body[data-mode="chasseur"] {
+    --accent: #c79bff;
+    --accent-doux: rgba(199, 155, 255, 0.13);
+    --trait: rgba(199, 155, 255, 0.36);
+    --lueur: rgba(199, 155, 255, 0.5);
+    --marron-3: #9682b4;
+    background: radial-gradient(120% 80% at 50% 45%, #241538 0%, #120b1c 45%, var(--noir) 100%);
+}
+body[data-mode="nomade"] .panneau { background: linear-gradient(160deg, rgba(16, 58, 54, 0.44), rgba(6, 18, 17, 0.66)); }
+body[data-mode="chasseur"] .panneau { background: linear-gradient(160deg, rgba(48, 28, 76, 0.44), rgba(14, 9, 22, 0.66)); }
+.vue-chasseur .jauge:not([data-etat="attention"]):not([data-etat="critique"]) i { background: var(--accent); }
+.vue-chasseur .pips .pip.plein { background: var(--accent); }
+.vue-chasseur .pips .pip.demi { background: linear-gradient(90deg, var(--accent) 50%, var(--marron-2) 50%); }
+.vue-chasseur .voyants { grid-template-columns: repeat(5, 1fr); }
+.vue-chasseur .voyants li.allume[data-type="info"] { background: var(--accent); border-color: var(--accent); }
+.vue-chasseur .vital small { text-transform: none; letter-spacing: 0; }
 body[data-mode="vrs"] .panneau { background: linear-gradient(160deg, rgba(66, 48, 12, 0.42), rgba(20, 14, 5, 0.62)); }
 body[data-mode="pied"] .panneau { background: linear-gradient(160deg, rgba(36, 56, 22, 0.42), rgba(10, 16, 7, 0.64)); }
 body[data-alerte] .alerte-combat { display: flex; }
@@ -234,6 +263,55 @@ body[data-alerte] .alerte-combat { display: flex; }
 .exo-points li.fait { background: var(--accent); box-shadow: 0 0 0.45rem var(--lueur); }
 .exo-consigne { font-size: 0.9rem; line-height: 1.2; color: var(--jaune); }
 .exo-consigne[data-etat="ok"] { color: var(--accent); }
+.exo-valeur { font-size: 1rem; color: var(--creme); }
+
+/* Verdict sur la cible : la couleur se lit sans lire le mot */
+.verdict { display: flex; align-items: baseline; justify-content: space-between; gap: 0.8rem; padding: 0.3rem 0.6rem; margin-bottom: 0.35rem; border-left: 4px solid var(--eteint); background: rgba(110, 90, 73, 0.2); }
+.verdict b { font-size: 1.35rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--creme); }
+.verdict span { font-size: 0.86rem; text-align: right; color: var(--creme); }
+.verdict[data-code="recherche"], .verdict[data-code="mandat"], .verdict[data-code="ennemi"] { border-left-color: #ff3a1c; background: rgba(255, 58, 28, 0.26); }
+.verdict[data-code="clean"], .verdict[data-code="allie"] { border-left-color: #5fe08a; background: rgba(95, 224, 138, 0.17); }
+.verdict[data-code="autorite"] { border-left-color: var(--glace); background: rgba(159, 220, 255, 0.17); }
+.verdict[data-code="sans_loi"] { border-left-color: var(--jaune); background: rgba(255, 210, 63, 0.14); }
+
+/* Viseur de la vue chasseur : même code couleur que le verdict */
+.viseur-zone { --teinte: var(--accent); position: relative; flex: 1; min-height: 0; display: grid; place-items: center; }
+.viseur-zone[data-teinte-verdict="recherche"], .viseur-zone[data-teinte-verdict="mandat"], .viseur-zone[data-teinte-verdict="ennemi"] { --teinte: #ff3a1c; }
+.viseur-zone[data-teinte-verdict="clean"], .viseur-zone[data-teinte-verdict="allie"] { --teinte: #5fe08a; }
+.viseur-zone[data-teinte-verdict="autorite"] { --teinte: var(--glace); }
+.viseur-zone[data-teinte-verdict="sans_loi"] { --teinte: var(--jaune); }
+.viseur { grid-area: 1 / 1; width: 100%; height: 100%; min-height: 0; overflow: visible; }
+.viseur-anneau { fill: rgba(0, 0, 0, 0.24); stroke: var(--teinte); stroke-width: 1.5; }
+.viseur-anneau.fin { fill: none; stroke-width: 1; stroke-dasharray: 3 7; }
+.viseur-repere { fill: none; stroke: var(--teinte); stroke-width: 2; }
+.viseur-coin { fill: none; stroke: var(--teinte); stroke-width: 4; filter: drop-shadow(0 0 5px var(--teinte)); }
+.viseur-centre { grid-area: 1 / 1; z-index: 1; display: grid; justify-items: center; gap: 0.2rem; max-width: 17rem; text-align: center; pointer-events: none; }
+.viseur-centre b { font-size: 2.3rem; line-height: 1; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--creme); text-shadow: 0 0 1.1rem var(--teinte); }
+.viseur-centre strong { font-size: 1.35rem; font-weight: 400; color: var(--creme); min-height: 1.2em; }
+.viseur-centre span { font-size: 0.95rem; line-height: 1.15; color: var(--ambre); }
+.fiche-cible { display: flex; flex-direction: column; gap: 0.3rem; }
+
+/* Mode chasse sans menace immédiate : le bandeau informe, il n'alarme pas */
+body[data-chasse-calme] .alerte-combat { background: rgba(255, 58, 28, 0.13); }
+body[data-chasse-calme] .alerte-combat strong { animation: none; }
+.liste.primes { flex: none; max-height: 4.4rem; }
+
+/* Exploration : corps du système et dernier scan */
+.vue-nav .colonne.centre { position: relative; }
+.carte-scan { position: absolute; z-index: 3; top: 0; left: 0; width: min(29rem, 100%); display: flex; flex-direction: column; gap: 0.35rem; padding: 0.6rem 0.85rem 0.7rem; background: #120a05; border: 1px solid var(--trait); border-left: 3px solid var(--accent); }
+.carte-scan-titre { display: flex; align-items: baseline; gap: 0.6rem; min-width: 0; }
+.carte-scan-titre span { font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.carte-scan-titre b { font-size: 1.3rem; font-weight: 500; color: var(--creme); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.carte-scan .chiffres dd, .vue-surface .chiffres dd { font-size: 1.15rem; }
+.pastilles li[data-t="or"] { color: var(--noir); background: var(--jaune); border-color: var(--jaune); font-weight: 600; }
+.pastilles li[data-t="vie"] { color: var(--noir); background: #8fce6a; border-color: #8fce6a; font-weight: 600; }
+.corps-liste .marque { flex: none; font-size: 0.72rem; padding: 0 0.3rem; color: var(--noir); background: var(--jaune); }
+.corps-liste .marque[data-t="vie"] { background: #8fce6a; }
+.corps-liste li.ici { background: var(--accent-doux); box-shadow: inset 2px 0 var(--accent); padding-left: 0.4rem; }
+.bio-liste > li { flex-wrap: wrap; gap: 0 0.6rem; }
+.bio-liste .detail-bio { flex-basis: 100%; font-size: 0.8rem; color: var(--marron-3); }
+.bio-liste li[data-etat="analyse"] .nom { color: var(--accent); }
+.bio-note { flex: none; font-size: 0.78rem; line-height: 1.2; color: var(--marron-3); }
 
 /* Parasites entre deux versions de l'interface : sous la trame, sans jamais capter la souris */
 .gresillement {
@@ -901,7 +979,11 @@ body.secoue .vue-combat { animation: secousse 0.3s; }
     .bandeau, .identite { flex-wrap: wrap; gap: 0.8rem 1.4rem; }
     .vue { display: flex; flex-direction: column; }
     body:not([data-mode="nav"]) .vue-nav, body:not([data-mode="combat"]) .vue-combat,
-    body:not([data-mode="vrs"]):not([data-mode="pied"]) .vue-surface { display: none; }
+    body:not([data-mode="chasseur"]) .vue-chasseur,
+    body:not([data-mode="vrs"]):not([data-mode="pied"]):not([data-mode="nomade"]) .vue-surface { display: none; }
+    .viseur-zone { height: 22rem; flex: none; }
+    .vue-chasseur .voyants { grid-template-columns: repeat(3, 1fr); }
+    .carte-scan { position: static; width: 100%; }
     .boussole-zone { height: 22rem; flex: none; }
     .constantes { grid-auto-flow: row; }
     .vue-surface .voyants { grid-template-columns: repeat(3, 1fr); }

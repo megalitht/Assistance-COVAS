@@ -179,6 +179,16 @@ def _deplace_les_armes(texte_norm):
     return intention(texte_norm) is not None and not _ENERGIE_ARMES.search(texte_norm)
 
 
+# « Coupe l'assistance » tout court, mais ni « appel à l'assistance » ni celle de supercroisière
+_ASSISTANCE_SEULE = re.compile(r"(\w+)(?:[ -](?:moi|nous))? l'? ?assistance\b"
+                               r"(?! (?:de |a la |au )?(?:supercroisiere|conduite))")
+
+
+def _ordre_sur_l_assistance(texte_norm):
+    trouve = _ASSISTANCE_SEULE.search(texte_norm)
+    return bool(trouve) and intention(trouve.group(1)) is not None
+
+
 class Correspondance(NamedTuple):
     cle: str | None          # clé de barks.json, ou None
     mot_cle: str | None      # mot-clé reconnu (normalisé)
@@ -212,7 +222,9 @@ def trouver_action_detail(texte: str, actions: dict, ignorees=()) -> Corresponda
             if present(mot_cle, texte_norm):
                 if len(mot_cle) > len(mot_exact):
                     exacte, mot_exact = cle, mot_cle
-            elif exacte is None and len(mot_cle.replace(" ", "")) >= LONGUEUR_MIN_APPROCHE:
+            elif exacte is None and cle != "assistance_vol" \
+                    and len(mot_cle.replace(" ", "")) >= LONGUEUR_MIN_APPROCHE:   # pas d'à-peu-près :
+                # « assistance de supercroisière » ou « distance de vol » couperaient l'assistance
                 score = meilleure_approche(texte_norm, mot_cle)
                 if score > score_max:
                     approchee, mot_approche, score_max = cle, mot_cle, score
@@ -220,6 +232,9 @@ def trouver_action_detail(texte: str, actions: dict, ignorees=()) -> Corresponda
     if exacte == "energie_arm" and mot_exact.startswith("arme") and "armement" in actions \
             and "armement" not in ignorees and _deplace_les_armes(texte_norm):
         exacte = "armement"
+    if not exacte and "assistance_vol" in actions and "assistance_vol" not in ignorees \
+            and _ordre_sur_l_assistance(texte_norm):
+        return Correspondance("assistance_vol", "assistance", True, 1.0)
     if exacte:
         return Correspondance(exacte, mot_exact, True, 1.0)
     if approchee and score_max >= SEUIL_APPROCHE:
@@ -260,7 +275,7 @@ def vocabulaire_pour_whisper(actions: dict) -> str:
     """Phrase d'amorce : Whisper écrit beaucoup mieux les mots qu'il « a déjà vus » ici."""
     return ("Commandes vocales du COVAS dans Elite Dangerous. Covas, mets les NVG. "
             "Covas, active le FSD. Sors le train d'atterrissage. Rentre le train d'atterrissage. "
-            "Remballe les points d'emport. Ouvre la soute. Boost. "
+            "Remballe les points d'emport. Ouvre la soute. Coupe l'assistance de vol. Boost. "
             "Pips aux moteurs, aux armes, aux boucliers. Mode croisière, mode combat. "
             "Puce thermique, leurres, appontage, décollage, autopilote, HUD, "
             "vision nocturne, phares, drone de prospection, chasseur, sous-système. "

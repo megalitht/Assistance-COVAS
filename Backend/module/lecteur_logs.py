@@ -24,7 +24,10 @@ import time
 from collections import deque
 from datetime import datetime, timezone
 
+from module import chasse
 from module import edsm
+from module import exploration
+from module import morceaux
 from module import sol
 from module.avaries import nommer
 from module.serveur_ws import definir_instantane, envoyer_donnees_web
@@ -47,6 +50,13 @@ SYSTEMES_PROCHES_MAX = 120       # nombre de systèmes transmis à l'interface
 DELAI_ENTRE_REPLIQUES = 15       # secondes avant de redire la même alerte
 DELAI_MEME_SON = 8               # secondes avant de rejouer le même fichier audio
 TAILLE_HISTORIQUE = 200          # lignes de journal de bord gardées en mémoire
+SEUIL_VOIX_CORPS = 1_000_000     # cr une fois cartographié : en dessous, le scan reste à l'écran
+FILE_MAX_ANNONCES = 2            # annonces en attente : au-delà, une nouvelle serait déjà périmée
+# Annonces de chasse et de scan : elles s'enchaînent bien plus vite que les alertes
+DELAIS_REPLIQUES = {"chasse_recherchee": 2, "chasse_clean": 2, "chasse_autorite": 2,
+                    "chasse_sans_loi": 2, "chasse_joueur": 4, "chasse_gros_gibier": 4,
+                    "chasse_dangereux": 6, "chasse_tir_clean": 8, "scan_valeur": 3, "scan_bio": 3,
+                    "scan_premiere": 3, "exo_analyse": 3, "exo_distance_ok": 3}
 
 # Drapeaux de Status.json utilisés ici (la liste complète est décodée par l'interface)
 DRAPEAU_BOUCLIERS = 1 << 3
@@ -70,11 +80,19 @@ else:
 ETAT = {}
 HISTORIQUE = deque(maxlen=TAILLE_HISTORIQUE)
 _identifiants = itertools.count(1)
+_carnet = exploration.Carnet()   # corps du système et données à vendre
+_veille = chasse.Veille()        # pilotes déjà annoncés
+_corps_annonces = set()          # (système, corps, "valeur" ou "bio") déjà dits à voix haute
 
 
 def _combat_vierge():
     return {"eliminations": 0, "primes": 0, "bons": 0, "coups_coque": 0, "boucliers_tombes": 0,
             "interdictions": 0, "morts": 0, "assaillant": None}
+
+
+def _pilotage_vierge():
+    """Ce que le commandant pilote hors du vaisseau mère : 'chasseur', 'nomade' ou rien."""
+    return {"genre": None, "modele": None, "coque": None}
 
 
 def _reinitialiser_etat():
@@ -103,6 +121,9 @@ def _reinitialiser_etat():
         "missions": {"liste": [], "anterieures": 0},
         "proches": {"etat": "attente", "systeme": None, "rayon": None, "total": 0, "liste": []},
         "sol": sol.vierge(),      # VRS et pied à terre : voir module/sol.py
+        "chasse": chasse.vierge(),            # mode chasseur de primes : voir module/chasse.py
+        "exploration": _carnet.vue(),         # valeur des corps : voir module/exploration.py
+        "pilotage": _pilotage_vierge(),
     })
 
 
@@ -189,6 +210,11 @@ def _parle(cle):
     _lot["repliques"].append(cle)
 
 
+def _parle_morceaux(ids, secours):
+    """Phrase chiffrée faite de morceaux enregistrés ; s'il en manque un, la réplique `secours`."""
+    _lot["repliques"].append({"morceaux": ids, "secours": secours})
+
+
 # --- Petits outils de mise en forme ---
 def _nombre(n):
     return f"{int(n or 0):,}".replace(",", " ")
@@ -200,6 +226,15 @@ def _pourcent(x):
 
 def _credits(n):
     return f"{_nombre(n)} cr"
+
+
+def _credits_courts(n):
+    """12 400 cr, 3,4 M cr, 1,2 Md cr."""
+    n = n or 0
+    for seuil, unite in ((1e9, "Md"), (1e6, "M")):
+        if n >= seuil:
+            return f"{n / seuil:.1f}".replace(".", ",") + f"\u00a0{unite}\u00a0cr"
+    return _credits(n)
 
 
 def _loc(e, cle):
@@ -231,7 +266,10 @@ async def _dire(cle):
     if not _voix["generer"]:
         return
     maintenant = time.monotonic()
-    if maintenant - _derniere_replique.get(cle, -1e9) < DELAI_ENTRE_REPLIQUES:
+    delai = DELAIS_REPLIQUES.get(cle, DELAI_ENTRE_REPLIQUES)
+    if maintenant - _derniere_replique.get(cle, -1e9) < delai:
+        return
+    if cle in DELAIS_REPLIQUES and _voix["file"].qsize() >= FILE_MAX_ANNONCES:
         return
     _derniere_replique[cle] = maintenant
 
@@ -241,10 +279,21 @@ async def _dire(cle):
             _cles_sans_son.add(cle)
             print(f'[Voix] Aucune réplique audio pour "{cle}" dans barks.json.')
         return
-    if maintenant - _dernier_son.get(chemin_audio, -1e9) < DELAI_MEME_SON:
+    if maintenant - _dernier_son.get(chemin_audio, -1e9) < min(delai, DELAI_MEME_SON):
         return
     _dernier_son[chemin_audio] = maintenant
     await _voix["file"].put(chemin_audio)
+
+
+async def _dire_morceaux(ids, secours):
+    """Dit une phrase assemblée (prime, valeur d'un corps) sans jamais laisser la file s'allonger."""
+    if not _voix["generer"] or _voix["file"].qsize() >= FILE_MAX_ANNONCES:
+        return
+    chemin = await asyncio.to_thread(morceaux.assembler, ids)
+    if chemin:
+        await _voix["file"].put(chemin)
+    else:
+        await _dire(secours)
 
 
 # =====================================================================
@@ -269,7 +318,13 @@ def _entete(e):
     if e.get("part", 1) == 1:          # nouvelle session de jeu : compteurs remis à zéro
         ETAT["combat"] = _combat_vierge()
         ETAT["missions"] = {"liste": [], "anterieures": 0}
-        _touche("combat", "missions")
+        chasse.arreter(ETAT["chasse"])
+        _veille.oublier()
+        _corps_annonces.clear()
+        _carnet.nouvelle_session()
+        ETAT["exploration"] = _carnet.vue()
+        ETAT["pilotage"] = _pilotage_vierge()
+        _touche("combat", "missions", "chasse", "exploration", "pilotage")
     _touche("session")
 
 
@@ -284,11 +339,18 @@ def _chargement(e):
     ETAT["session"]["jeu_actif"] = True
     ETAT["commandant"].update(nom=e.get("Commander"), credits=e.get("Credits"),
                               mode_jeu=e.get("GameMode"))
-    ETAT["vaisseau"].update(type=e.get("Ship"), modele=e.get("Ship_Localised"),
-                            nom=e.get("ShipName"), immat=e.get("ShipIdent"))
+    engin = (e.get("Ship") or "").lower()
+    # Partie reprise à pied, en VRS ou en Nomad : le vaisseau du commandant reste le dernier connu
+    if not ("suit" in engin or engin.startswith("lander") or "buggy" in engin or "_srv" in engin):
+        ETAT["vaisseau"].update(type=e.get("Ship"), modele=e.get("Ship_Localised"),
+                                nom=e.get("ShipName"), immat=e.get("ShipIdent"))
+    if engin.startswith("lander"):
+        _piloter("nomade", e.get("Ship_Localised") or "Nomad")
+    else:
+        _piloter(None)
     _touche("session", "commandant", "vaisseau")
     _note(e, "systeme", f"Session ouverte — CMDR {e.get('Commander', '?')}", "succes")
-    if "suit" not in (e.get("Ship") or "").lower():      # pas à pied
+    if "suit" not in engin:      # pas à pied
         _parle("bienvenue")
 
 
@@ -348,7 +410,8 @@ def _equipement(e):
             if ingenierie else None,
         })
     ETAT["modules"] = {"liste": liste, "releve": e.get("timestamp")}
-    _touche("vaisseau", "modules")
+    ETAT["chasse"]["profil"] = chasse.profil(liste)
+    _touche("vaisseau", "modules", "chasse")
 
 
 def _modules_par_objet(nom_objet):
@@ -367,6 +430,9 @@ def _degats_coque(e):
     # Écrit seulement au passage des paliers 80, 60, 40 et 20 % (pas à chaque coup)
     sante = e.get("Health", 1.0)
     if e.get("Fighter"):
+        if e.get("PlayerPilot") and ETAT["pilotage"]["genre"] == "chasseur":
+            ETAT["pilotage"]["coque"] = sante
+            _touche("pilotage")
         _note(e, "combat", f"Chasseur touché — coque {_pourcent(sante)}", "attention", hostile=True)
         return
     ETAT["vaisseau"].update(coque=sante, coque_palier=True)
@@ -456,7 +522,12 @@ def _mort(e):
     tueurs = [t for t in tueurs if t]
     ETAT["combat"]["morts"] += 1
     ETAT["vaisseau"]["coque"] = 0
-    _touche("combat", "vaisseau")
+    _fin_chasse(e, forcer=True)
+    chasse.perdre_primes(ETAT["chasse"])       # primes et données non vendues sont perdues
+    _carnet.perdre_donnees()
+    _publier_exploration()
+    _piloter(None)
+    _touche("combat", "vaisseau", "chasse")
     _note(e, "combat", "Vaisseau détruit" + (f" par {', '.join(tueurs)}" if tueurs else ""),
           "alerte")
 
@@ -513,16 +584,55 @@ def _reparation(e):
     _note(e, "station", f"Réparation — {_credits(e.get('Cost'))}")
 
 
+def _piloter(genre, modele=None):
+    """Le commandant prend (ou quitte) les commandes d'un chasseur ou d'un Nomad."""
+    nouveau = {"genre": genre, "modele": modele, "coque": 1.0 if genre else None}
+    if nouveau != ETAT["pilotage"]:
+        ETAT["pilotage"] = nouveau
+        _touche("pilotage")
+
+
+def _lache_commandes(genre):
+    if ETAT["pilotage"]["genre"] == genre:
+        _piloter(None)
+
+
 @_sur("LaunchFighter")
 def _chasseur_lance(e):
+    # Les anciennes versions du jeu annonçaient le Nomad comme un chasseur (équipement base/starter)
+    if e.get("Loadout") in ("base", "starter") and not e.get("") and e.get("PlayerControlled"):
+        _piloter("nomade", "Nomad")
+        _note(e, "exploration", "Nomad déployé")
+        return
     ETAT["vaisseau"]["chasseur"] = "deploye"
     _touche("vaisseau")
+    if e.get("PlayerControlled"):
+        _piloter("chasseur", e.get("_Localised") or e.get("Type_Localised") or "Chasseur")
     _note(e, "combat", "Chasseur déployé")
+
+
+@_sur("LaunchVessel")
+def _vehicule_lance(e):
+    if str(e.get("VesselType") or "").lower().startswith("lander"):
+        if e.get("PlayerControlled", True):
+            _piloter("nomade", e.get("VesselType_Localised") or "Nomad")
+        _note(e, "exploration", "Nomad déployé")
+
+
+@_sur("VehicleSwitch")
+def _changement_poste(e):
+    if e.get("To") == "Fighter":
+        _piloter("chasseur", "Chasseur")
+        _note(e, "combat", "Commandes du chasseur")
+    elif e.get("To") == "Mothership":
+        _lache_commandes("chasseur")
+        _note(e, "combat", "Retour aux commandes du vaisseau")
 
 
 @_sur("DockFighter")
 def _chasseur_rentre(e):
     ETAT["vaisseau"]["chasseur"] = "a_bord"
+    _lache_commandes("chasseur")
     _touche("vaisseau")
     _note(e, "combat", "Chasseur récupéré")
 
@@ -530,6 +640,7 @@ def _chasseur_rentre(e):
 @_sur("FighterDestroyed")
 def _chasseur_detruit(e):
     ETAT["vaisseau"]["chasseur"] = "detruit"
+    _lache_commandes("chasseur")
     _touche("vaisseau")
     _note(e, "combat", "Chasseur détruit", "alerte", hostile=True)
 
@@ -554,18 +665,22 @@ def _vrs_sorti(e):
 def _vrs_rentre(e):
     ETAT["sol"]["vrs"] = None
     _touche("sol")
-    _note(e, "vaisseau", "VRS récupéré — retour à bord")
+    nomad = str(e.get("SRVType") or "").lower().startswith("lander")
+    if nomad:
+        _lache_commandes("nomade")
+    _note(e, "vaisseau", f"{'Nomad' if nomad else 'VRS'} récupéré — retour à bord")
     _parle("bienvenue")
 
 
 @_sur("Embark")
 def _embarquement(e):
-    if e.get("SRV"):
-        _note(e, "vaisseau", "À bord du VRS")
+    if e.get("SRV"):         # le jeu écrit aussi SRV pour le Nomad
+        _note(e, "vaisseau", f"À bord du {'Nomad' if ETAT['pilotage']['genre'] == 'nomade' else 'VRS'}")
     elif e.get("Taxi") or e.get("Multicrew"):
         _note(e, "vaisseau", "Embarquement (taxi ou équipage)")
     else:
-        _note(e, "vaisseau", "Retour à bord du vaisseau", "succes")
+        engin = "du Nomad" if ETAT["pilotage"]["genre"] == "nomade" else "du vaisseau"
+        _note(e, "vaisseau", f"Retour à bord {engin}", "succes")
         _parle("bienvenue")
 
 
@@ -577,7 +692,9 @@ def _debarquement(e):
     elif not e.get("SRV") and e.get("OnPlanet"):
         sol.reperer_vaisseau(ETAT["sol"], ETAT["status"], e.get("Body"))
         _touche("sol")
-    _note(e, "vaisseau", "Débarquement du VRS" if e.get("SRV") else "Débarquement à pied")
+    nomad = ETAT["pilotage"]["genre"] == "nomade"
+    _note(e, "vaisseau", "Débarquement du Nomad" if nomad else
+          "Débarquement du VRS" if e.get("SRV") else "Débarquement à pied")
 
 
 @_sur("SuitLoadout", "SwitchSuitLoadout")
@@ -590,19 +707,37 @@ def _combinaison(e):
 def _scan_organique(e):
     sol.scan_organique(ETAT["sol"], e, ETAT["status"])
     sol.actualiser(ETAT["sol"], ETAT["status"])
-    _touche("sol")
+    analyse = _carnet.organique(e)
     exo = ETAT["sol"]["exobio"]
+    prix = (exploration._especes_par_id().get(e.get("Species")) or {}).get("valeur")
+    exo["valeur"] = prix
+    exo["premier_pas"] = (((_carnet.corps.get(e.get("Body")) or {}).get("scan") or {})
+                          .get("WasFootfalled") is False) and not e.get("WasLogged")
+    _publier_exploration()
+    _touche("sol")
     if exo["termine"]:
-        _note(e, "exploration", f"Analyse terminée — {exo['espece']}", "succes")
+        detail = ""
+        if analyse:
+            total, bonus = analyse
+            if total:
+                detail = f" — {_credits_courts(total)}" + (" avec bonus du premier pas" if bonus else "")
+                _parle_morceaux(morceaux.pour_analyse(total, bonus), "exo_analyse")
+            else:
+                _parle("exo_analyse")
+        _note(e, "exploration", f"Analyse terminée — {exo['espece']}{detail}", "succes")
     else:
-        _note(e, "exploration", f"Prélèvement {exo['echantillons']}/{sol.ECHANTILLONS} — {exo['espece']}")
+        valeur = f" — {_credits_courts(prix)}" if prix else ""
+        _note(e, "exploration", f"Prélèvement {exo['echantillons']}/{sol.ECHANTILLONS} — {exo['espece']}{valeur}")
 
 
 @_sur("SRVDestroyed")
 def _vrs_detruit(e):
     ETAT["sol"]["vrs"] = None
     _touche("sol")
-    _note(e, "vaisseau", "VRS détruit", "alerte")
+    nomad = str(e.get("SRVType") or "").lower().startswith("lander")
+    if nomad:
+        _lache_commandes("nomade")
+    _note(e, "vaisseau", f"{'Nomad' if nomad else 'VRS'} détruit", "alerte")
 
 
 # ---------- Combat ----------
@@ -636,9 +771,59 @@ def _elimination(e, recompense, cle_total, texte):
     _parle("kill_confirme")
 
 
+# ---------- Mode chasseur de primes ----------
+def _demarrer_chasse(e, zone=None, zone_nom=None, manuel=False):
+    if chasse.activer(ETAT["chasse"], e.get("timestamp"), zone, zone_nom, manuel):
+        _veille.oublier()
+        lieu = f" — {zone_nom}" if zone_nom else ""
+        _note(e, "combat", f"Mode chasseur de primes activé{lieu}", "succes")
+        _parle("chasse_active")
+    _touche("chasse")
+
+
+def _fin_chasse(e, forcer=False):
+    """Fin de la zone de chasse. Un mode allumé à la voix reste allumé jusqu'à l'ordre contraire."""
+    if ETAT["chasse"]["manuel"] and not forcer:
+        return
+    bilan = chasse.arreter(ETAT["chasse"])
+    if bilan is None:
+        return
+    _touche("chasse")
+    _note(e, "combat", f"Fin de chasse — {bilan['eliminations']} élimination(s), "
+                       f"{_credits_courts(bilan['gains'])}", "succes")
+    if bilan["eliminations"]:
+        _parle("chasse_fin")
+
+
+async def commander_chasse(actif):
+    """Ordre vocal ou bouton : allume ou coupe le mode chasseur de primes."""
+    e = {"timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "event": "Chasse"}
+    _lot["sections"], _lot["lignes"], _lot["repliques"] = set(), [], []
+    if actif:
+        _demarrer_chasse(e, manuel=True)
+    else:
+        _fin_chasse(e, forcer=True)
+    sections, lignes, repliques = _lot["sections"], _lot["lignes"], _lot["repliques"]
+    await _publier(*sections)
+    for entree in lignes:
+        await envoyer_donnees_web({"type": "evenement", "evenement": entree})
+    for cle in repliques or ([] if actif else ["chasse_coupee"]):
+        await _dire(cle)
+
+
+@_sur("SupercruiseDestinationDrop")
+def _arrivee_destination(e):
+    zone, zone_nom = chasse.type_zone(e.get("Type"))
+    if zone and ETAT["chasse"]["profil"]["pret"]:
+        _demarrer_chasse(e, zone, zone_nom)
+
+
 @_sur("Bounty")
 def _prime(e):
-    recompense = e.get("TotalReward", e.get("Reward", 0))
+    if not ETAT["chasse"]["actif"] and ETAT["chasse"]["profil"]["pret"]:
+        _demarrer_chasse(e)                 # une prime touchée : on est en chasse, où qu'on soit
+    recompense = chasse.prime(ETAT["chasse"], e)
+    _touche("chasse")
     cible = _loc(e, "Target") or "Cible"
     _elimination(e, recompense, "primes", f"{cible} détruit — prime {_credits(recompense)}")
 
@@ -666,18 +851,39 @@ def _cible(e):
             "faction": e.get("Faction"), "statut": e.get("LegalStatus"),
             "prime": e.get("Bounty"), "sous_systeme": _loc(e, "Subsystem"),
             "sous_systeme_sante": e.get("SubsystemHealth"),
+            "verdict": chasse.verdict(e),
         }
-        if e.get("ScanStage") == 3 and e.get("LegalStatus") == "Wanted":
-            _note(e, "combat", f"Cible recherchée : {_loc(e, 'PilotName') or _loc(e, 'Ship')}"
-                               f" — prime {_credits(e.get('Bounty'))}", "attention", fusion=True)
+        if e.get("ScanStage") == 3 and _veille.nouvelle(e, time.monotonic()):
+            _annoncer_cible(e, ETAT["cible"]["verdict"])
     _touche("cible")
+
+
+def _annoncer_cible(e, fiche):
+    """Première fois qu'on finit de scanner ce pilote : journal de bord et, en chasse, à voix haute."""
+    chasse.compter_scan(ETAT["chasse"], fiche)
+    _touche("chasse")
+    nom = _loc(e, "PilotName") or _loc(e, "Ship") or "Contact"
+    if fiche["code"] in ("recherche", "mandat"):
+        _note(e, "combat", f"Cible recherchée : {nom} — prime {_credits(fiche['prime'])}", "attention")
+    elif ETAT["chasse"]["actif"] and fiche["tirer"] is False and fiche["code"] != "allie":
+        _note(e, "combat", f"{fiche['libelle']} : {nom} — {fiche['conseil'].lower()}")
+    if not ETAT["chasse"]["actif"]:
+        return
+    for cle in chasse.repliques_cible(fiche):
+        if cle == "chasse_recherchee" and fiche["prime"]:
+            _parle_morceaux(morceaux.pour_cible(fiche["prime"]), cle)
+        else:
+            _parle(cle)
 
 
 @_sur("CommitCrime")
 def _infraction(e):
     montant = e.get("Fine") or e.get("Bounty") or 0
+    tir_ami = ETAT["chasse"]["actif"] and e.get("CrimeType") in ("assault", "murder")
     _note(e, "combat", f"Infraction ({e.get('CrimeType', '?')}) — {_credits(montant)}",
-          "attention")
+          "alerte" if tir_ami else "attention")
+    if tir_ami:
+        _parle("chasse_tir_clean")
 
 
 @_sur("CrimeVictim")
@@ -705,6 +911,8 @@ def _maj_systeme(e):
     if ancien != e.get("StarSystem"):
         _corps_scannes.clear()
         ETAT["position"].update(corps_total=None, corps_scannes=0)
+    _carnet.assurer_systeme(e.get("SystemAddress"), e.get("StarSystem"))
+    _publier_exploration()
     _maj_progression_route()
     _touche("position", "route")
 
@@ -734,6 +942,9 @@ def _localisation(e):
 
 @_sur("FSDJump", "CarrierJump")
 def _saut(e):
+    if e.get("event") == "FSDJump":
+        _fin_chasse(e)
+        _piloter(None)
     _maj_systeme(e)
     ETAT["position"]["dernier_saut"] = e.get("JumpDist")
     if e.get("Docked"):
@@ -770,6 +981,8 @@ def _route_effacee(e):
 @_sur("SupercruiseEntry")
 def _entree_supercroisiere(e):
     ETAT["position"].update(corps=None, station=None, amarre=False)
+    _fin_chasse(e)
+    _piloter(None)
     _touche("position")
 
 
@@ -865,6 +1078,8 @@ def _appontage_annule(e):
 def _amarre(e):
     plateforme = (ETAT["position"]["station"] or {}).get("plateforme")
     ETAT["position"].update(amarre=True, station=_fiche_station(e, plateforme))
+    _fin_chasse(e, forcer=True)
+    _piloter(None)
     _touche("position")
     _note(e, "station", f"Amarré à {e.get('StationName', '?')}", "succes")
 
@@ -888,6 +1103,8 @@ def _munitions(e):
 
 @_sur("RedeemVoucher")
 def _bons_encaisses(e):
+    if chasse.encaisser(ETAT["chasse"], e):
+        _touche("chasse")
     _note(e, "station", f"Bons encaissés ({e.get('Type', '?')}) — {_credits(e.get('Amount'))}",
           "succes")
 
@@ -905,6 +1122,42 @@ def _balayage(e):
     _note(e, "exploration", f"Balayage du système — {e.get('BodyCount', '?')} corps détectés")
 
 
+def _publier_exploration():
+    ETAT["exploration"] = _carnet.vue()
+    _touche("exploration")
+
+
+def _annoncer_valeur(fiche):
+    """Un corps qui vaut le détour : le COVAS dit combien, une seule fois par corps."""
+    cle = (_carnet.adresse, fiche["id"], "valeur")
+    if cle in _corps_annonces or fiche["etoile"] or fiche["balise"] \
+            or (fiche["valeur_carto"] or 0) < SEUIL_VOIX_CORPS:
+        return
+    _corps_annonces.add(cle)
+    _parle_morceaux(morceaux.pour_corps(fiche),
+                    "scan_premiere" if fiche["premiere_decouverte"] else "scan_valeur")
+
+
+def _annoncer_bio(fiche):
+    bio = fiche["bio"]
+    cle = (_carnet.adresse, fiche["id"], "bio")
+    if not bio or not fiche["connu"] or cle in _corps_annonces:
+        return
+    _corps_annonces.add(cle)
+    if bio["max_bonus"]:
+        _parle_morceaux(morceaux.pour_bio(bio), "scan_bio")
+    else:
+        _parle("scan_bio")
+
+
+def _texte_bio(bio):
+    if bio["max_bonus"]:
+        ecart = _credits_courts(bio["max_bonus"]) if bio["min_bonus"] == bio["max_bonus"] else (
+            f"{_credits_courts(bio['min_bonus'])} à {_credits_courts(bio['max_bonus'])}")
+        return f"{bio['signaux']} forme(s) de vie, {ecart}" + (" (bonus du premier pas)" if bio["bonus"] else "")
+    return f"{bio['signaux']} forme(s) de vie"
+
+
 @_sur("Scan")
 def _scan(e):
     nom = e.get("BodyName")
@@ -912,24 +1165,74 @@ def _scan(e):
         _corps_scannes.add(nom)
         ETAT["position"]["corps_scannes"] = len(_corps_scannes)
         _touche("position")
-    nature = e.get("PlanetClass") or (f"étoile {e['StarType']}" if e.get("StarType") else "")
-    details = [nature] if nature else []
-    if e.get("TerraformState"):
+    fiche, _neuf = _carnet.scan(e)
+    if not fiche:
+        _note(e, "exploration", f"Scan : {nom}", fusion=True)
+        return
+    _publier_exploration()
+    details = [fiche["classe"]]
+    if fiche["terraformable"]:
         details.append("terraformable")
-    if e.get("WasDiscovered") is False:
-        details.append("première découverte")
-    _note(e, "exploration", f"Scan : {nom}" + (f" — {', '.join(details)}" if details else ""),
-          fusion=True)
+    if fiche["balise"]:
+        details.append("données de balise")
+    else:
+        details.append(f"≈ {_credits_courts(fiche['valeur'])}")
+        if not fiche["etoile"] and fiche["valeur_carto"] != fiche["valeur"]:
+            details.append(f"cartographié ≈ {_credits_courts(fiche['valeur_carto'])}")
+        details.append("première découverte" if fiche["premiere_decouverte"] else "déjà découvert")
+    if fiche["bio"]:
+        details.append(_texte_bio(fiche["bio"]))
+    _note(e, "exploration", f"Scan : {nom} — {', '.join(details)}", fusion=True)
+    _annoncer_valeur(fiche)
+    _annoncer_bio(fiche)
+
+
+@_sur("FSSBodySignals")
+def _signaux_corps(e):
+    fiche = _carnet.signaux_fss(e)
+    _publier_exploration()
+    if fiche["bio"]:
+        _note(e, "exploration", f"Biologie sur {e.get('BodyName', '?')} — {_texte_bio(fiche['bio'])}")
+        _annoncer_bio(fiche)
+
+
+@_sur("SAASignalsFound")
+def _signaux_cartographie(e):
+    fiche = _carnet.signaux_saa(e)
+    _publier_exploration()
+    if fiche["bio"] and e.get("Genuses"):
+        genres = ", ".join(g.get("Genus_Localised") or "?" for g in e["Genuses"])
+        _note(e, "exploration", f"Vie sur {e.get('BodyName', '?')} : {genres} — {_texte_bio(fiche['bio'])}", "succes")
 
 
 @_sur("FSSAllBodiesFound")
 def _systeme_complet(e):
-    _note(e, "exploration", f"Système entièrement scanné ({e.get('Count', '?')} corps)", "succes")
+    total = ETAT["exploration"]["total_carto"]
+    suffixe = f" — jusqu'à ≈ {_credits_courts(total)} cartographié" if total else ""
+    _note(e, "exploration", f"Système entièrement scanné ({e.get('Count', '?')} corps){suffixe}", "succes")
 
 
 @_sur("SAAScanComplete")
 def _cartographie(e):
-    _note(e, "exploration", f"Cartographie terminée — {e.get('BodyName', '?')}", "succes")
+    fiche = _carnet.cartographie(e)
+    _publier_exploration()
+    _note(e, "exploration", f"Cartographie terminée — {e.get('BodyName', '?')}"
+                            f" ≈ {_credits_courts(fiche['valeur'])}", "succes")
+
+
+@_sur("MultiSellExplorationData", "SellExplorationData")
+def _vente_exploration(e):
+    _carnet.vente_exploration(e)
+    _publier_exploration()
+    _note(e, "station", f"Données d'exploration vendues — {_credits(e.get('TotalEarnings'))}", "succes")
+
+
+@_sur("SellOrganicData")
+def _vente_exobio(e):
+    _carnet.vente_exobio(e)
+    _publier_exploration()
+    total = sum((b.get("Value") or 0) + (b.get("Bonus") or 0) for b in e.get("BioData") or [])
+    _note(e, "station", f"Données d'exobiologie vendues — {_credits(total)}", "succes")
 
 
 @_sur("CodexEntry")
@@ -1139,6 +1442,9 @@ async def _traiter_ligne(ligne, en_direct):
     for entree in lignes:
         await envoyer_donnees_web({"type": "evenement", "evenement": entree})
     for cle in repliques:
+        if isinstance(cle, dict):           # phrase chiffrée, en morceaux
+            await _dire_morceaux(cle["morceaux"], cle["secours"])
+            continue
         print(f"[Logs] {evenement.get('event')} -> réplique \"{cle}\"")
         await _dire(cle)
     if sections & {"position", "vaisseau"}:
@@ -1339,8 +1645,12 @@ async def surveiller_status_json():
                     "arme": status.get("SelectedWeapon_Localised") or status.get("SelectedWeapon"),
                 }
                 await _publier("status")
+                exo = ETAT["sol"].get("exobio")
+                etait_libre = exo["libre"] if exo else None
                 if sol.actualiser(ETAT["sol"], ETAT["status"]):
                     await _publier("sol")
+                    if exo and etait_libre is False and exo["libre"]:   # assez loin : prélèvement possible
+                        await _dire("exo_distance_ok")
 
                 # Alertes vocales : seulement quand le drapeau vient de s'allumer sous nos yeux
                 if drapeaux_precedents is not None:

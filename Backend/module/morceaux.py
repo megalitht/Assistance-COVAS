@@ -70,9 +70,20 @@ _FIXES = {
         ("Poses", "Nous sommes posés, commandant."),
         ("Amarres", "Nous sommes amarrés, commandant."),
     ],
+    "Valeurs": [
+        ("Mille", "mille"), ("Million", "million"), ("Millions", "millions"),
+        ("Milliard", "milliard"), ("Milliards", "milliards"), ("Virgule", "virgule"),
+        ("DeCredits", "de crédits"), ("Credits", "crédits"),
+        ("CibleRecherchee", "Cible recherchée."), ("PrimeDe", "Prime de"),
+        ("CeCorpsVaut", "Ce corps vaut environ"), ("PremiereDecouverte", "Première découverte."),
+        ("VieDetectee", "Vie détectée. Jusqu'à"), ("PremierPas", "Personne n'y a encore posé le pied."),
+        ("AnalyseTerminee", "Analyse terminée."), ("ValeurDe", "Valeur :"),
+        ("AvecBonus", "avec le bonus du premier pas."),
+    ],
 }
 _GROUPES = {"Rapport": "Rapport d'avarie", "Modules": "Noms des modules", "Nombres": "Nombres",
-            "Heure": "Heure", "Date": "Date", "Position": "Position"}
+            "Heure": "Heure", "Date": "Date", "Position": "Position",
+            "Valeurs": "Primes et valeurs"}
 
 
 def nombre(n, feminin=False):
@@ -153,6 +164,8 @@ def catalogue():
         ajouter("Date", _ident("Date", f"Mois{i:02d}"), mois, "mois")
     for nom, texte in _FIXES["Position"]:
         ajouter("Position", _ident("Position", nom), texte, "le nom exact reste à l'écran")
+    for nom, texte in _FIXES["Valeurs"]:
+        ajouter("Valeurs", _ident("Valeurs", nom), texte, "primes, valeur des planètes et de la vie")
     return lignes
 
 
@@ -196,6 +209,55 @@ RECETTES = {
 
 def recette(nom, instant):
     return RECETTES[nom](instant)
+
+
+def _entier(n):
+    """0 à 999 avec les morceaux des nombres : « deux » + « cent » + « soixante-neuf »."""
+    if n <= 100:
+        return [_id_nombre(n)]
+    centaines, reste = divmod(n, 100)
+    morceaux = ([] if centaines == 1 else [_id_nombre(centaines)]) + [_id_nombre(100)]
+    return morceaux + ([_id_nombre(reste)] if reste else [])
+
+
+def montant(credits):
+    """Une somme à l'oreille, arrondie : « trois virgule quatre millions de crédits »."""
+    v = lambda nom: _ident("Valeurs", nom)
+    credits = max(0, int(round(credits or 0)))
+    for seuil, un, plusieurs in ((10 ** 9, "Milliard", "Milliards"), (10 ** 6, "Million", "Millions")):
+        dixiemes = int(credits / (seuil / 10) + 0.5)
+        if dixiemes >= 10:
+            entier, decimale = divmod(dixiemes, 10)
+            ids = _entier(min(entier, 999))
+            if decimale:
+                ids += [v("Virgule"), _id_nombre(decimale)]
+            return ids + [v(un if dixiemes < 20 else plusieurs), v("DeCredits")]
+    milliers = int(credits / 1000 + 0.5)
+    if milliers:
+        return ([] if milliers == 1 else _entier(milliers)) + [v("Mille"), v("Credits")]
+    return _entier(credits) + [v("Credits")]
+
+
+def pour_cible(prime):
+    v = lambda nom: _ident("Valeurs", nom)
+    return [v("CibleRecherchee"), PAUSE, v("PrimeDe"), *montant(prime)]
+
+
+def pour_corps(fiche):
+    v = lambda nom: _ident("Valeurs", nom)
+    ids = [v("CeCorpsVaut"), *montant(fiche.get("valeur_carto") or fiche.get("valeur"))]
+    return ids + ([PAUSE, v("PremiereDecouverte")] if fiche.get("premiere_decouverte") else [])
+
+
+def pour_bio(bio):
+    v = lambda nom: _ident("Valeurs", nom)
+    ids = [v("VieDetectee"), *montant(bio["max_bonus"])]
+    return ids + ([PAUSE, v("PremierPas")] if bio.get("bonus") else [])
+
+
+def pour_analyse(total, bonus):
+    v = lambda nom: _ident("Valeurs", nom)
+    return [v("AnalyseTerminee"), PAUSE, v("ValeurDe"), *montant(total)] + ([v("AvecBonus")] if bonus else [])
 
 
 def pour_rapport(rapport):

@@ -46,7 +46,8 @@ MODE_APPLICATION = False
 from module.macros import normaliser
 
 # Bits de Status.json utilisés ici
-BIT = {"amarre": 0, "pose": 1, "train": 2, "boucliers": 3, "supercroisiere": 4, "armes": 6,
+BIT = {"amarre": 0, "pose": 1, "train": 2, "boucliers": 3, "supercroisiere": 4,
+       "assistance_coupee": 5, "armes": 6,
        "feux": 8, "ecope": 9, "silencieux": 10, "ecopage_carburant": 11, "masse": 16, "fsd_charge": 17,
        "fsd_refroid": 18, "surchauffe": 20, "danger": 22, "interdiction": 23, "vaisseau": 24,
        "chasseur": 25, "vrs": 26, "analyse": 27, "nvg": 28, "saut": 30}
@@ -101,6 +102,13 @@ BASCULES = {
         # ici ce sont les mots « analyse » / « combat » qui donnent le sens voulu
         "mots": (("analys", "scan", "explor"), ("combat",)),
         "interdit": [],
+    },
+    "assistance_vol": {
+        # Le jeu signale l'assistance COUPÉE : le drapeau est inversé
+        "touche": "assistance_vol", "bit": "assistance_coupee", "inverse": True,
+        "nom": "Assistance de vol", "etats": ("activée", "coupée"),
+        "deja": ("affirmation", "affirmation"),
+        "interdit": [_AMARRE, ("pose", None, "refus_pose", "quand le vaisseau est posé")],
     },
 }
 
@@ -163,13 +171,20 @@ def etat_connu():
     return bool(_flags() or _flags2())
 
 
+def en_nomade():
+    """Aux commandes du Nomad (reconnu par le journal : le jeu le signale comme un VRS)."""
+    return (logs.ETAT.get("pilotage") or {}).get("genre") == "nomade" and not _flags2() & 1
+
+
 def drapeau(nom):
+    if nom == "vaisseau" and en_nomade():       # mêmes touches que le vaisseau
+        return True
     return bool(_flags() & (1 << BIT[nom]))
 
 
 def situation():
-    """'vaisseau', 'chasseur', 'vrs', 'pied', ou None si le jeu ne le dit pas."""
-    return sol.situation(_flags(), _flags2())
+    """'vaisseau', 'nomade', 'chasseur', 'vrs', 'pied', ou None si le jeu ne le dit pas."""
+    return "nomade" if en_nomade() else sol.situation(_flags(), _flags2())
 
 
 def _mots(texte):
@@ -259,7 +274,7 @@ async def touche_prete(dire, nom_touche, nom_commande):
 def _module_present(morceau):
     """True/False si la liste des modules est connue, None sinon."""
     liste = logs.ETAT["modules"]["liste"]
-    if not liste:
+    if not liste or en_nomade():                # la liste est celle du vaisseau principal
         return None
     return any(morceau in (m.get("objet") or "").lower() for m in liste)
 
@@ -417,6 +432,12 @@ async def executer_commande(action, texte, dire, poli=False):
     if cle in sol.COMMANDES:
         ici = "en VRS" if sol.COMMANDES[cle]["lieu"] == "vrs" else "à pied"
         return await refuser(dire, "refus", f"{sol.COMMANDES[cle]['nom']} : disponible seulement {ici}")
+    if lieu == "nomade":
+        if cle == "apontage":
+            return await _lancer_programme("Amarrage du Nomad", _amarrage_nomade(dire, poli), dire)
+        if cle in PROGRAMMES or cle in ("fsd", "chasseur", "drone"):
+            return await refuser(dire, "refus_hors_vaisseau",
+                                 "Commande du vaisseau principal : impossible en Nomad")
     if lieu in ("vrs", "pied") and _exige_vaisseau(cle, lieu):
         ici = "en VRS" if lieu == "vrs" else "à pied"
         return await refuser(dire, "refus_hors_vaisseau", f"Commande du vaisseau : impossible {ici}")
@@ -640,6 +661,10 @@ def _sens_voulu(cfg, texte):
     return nomme
 
 
+def _actif(cfg):
+    return drapeau(cfg["bit"]) != cfg.get("inverse", False)
+
+
 async def _bascule(action, cfg, texte, dire, poli):
     voulu = direction = _sens_voulu(cfg, texte)
 
@@ -650,7 +675,7 @@ async def _bascule(action, cfg, texte, dire, poli):
         if not (drapeau("vaisseau") or (cfg.get("vrs") and drapeau("vrs"))):
             return await refuser(dire, "refus_hors_vaisseau",
                                  f"{cfg['nom']} : impossible hors du vaisseau")
-        actuel = drapeau(cfg["bit"])
+        actuel = _actif(cfg)
         if voulu and actuel == (voulu == "sortir"):
             etat = cfg["etats"][0 if actuel else 1]
             return await refuser(dire, cfg["deja"][0 if actuel else 1], f"{cfg['nom']} déjà {etat}")
@@ -667,7 +692,7 @@ async def _bascule(action, cfg, texte, dire, poli):
 
     if actuel is None:
         return
-    if await attendre(lambda: drapeau(cfg["bit"]) != actuel, 3):
+    if await attendre(lambda: _actif(cfg) != actuel, 3):
         await logs.annoncer(f"{cfg['nom']} {cfg['etats'][0 if not actuel else 1]}")
     else:
         await logs.annoncer(sans_reaction(cfg["nom"], cfg["touche"]), "alerte")
@@ -756,6 +781,13 @@ async def _sous_systeme(action, texte, dire, poli):
     else:
         await logs.annoncer("Sous-système : cette cible n'a pas ce module", "attention")
     await dire("macro_echec", "refus")
+
+
+# =====================================================================
+#  MODE CHASSEUR DE PRIMES (aucune touche : ne change que ce que le COVAS annonce)
+# =====================================================================
+async def _mode_chasse(action, texte, dire, poli):
+    await logs.commander_chasse(not (intention(texte) == "rentrer" or _contient(texte, MOTS_ANNULER)))
 
 
 # =====================================================================
@@ -907,7 +939,8 @@ async def _reagir(nom, texte, dire, cle, *etapes):
     """Joue une réaction si elle est permise et si le jeu a déjà le clavier."""
     if not (_reactions["actives"] and macros.REACTIONS.get(nom)):
         return
-    if not drapeau("vaisseau") or not await asyncio.to_thread(macros.jeu_au_premier_plan):
+    if not drapeau("vaisseau") or en_nomade() \
+            or not await asyncio.to_thread(macros.jeu_au_premier_plan):
         return
     await logs.annoncer(f"Réaction automatique : {texte}", "attention")
     await dire(cle)
@@ -1116,6 +1149,45 @@ async def _demander_apontage(dire):
     return False
 
 
+async def _amarrage_nomade(dire, poli=False):
+    """Demande au vaisseau principal de récupérer le Nomad (séquence de Réglages > Commandes)."""
+    if not await preparer_jeu(dire):
+        return
+    if not await fermer_panneaux():
+        return await refuser(dire, "macro_echec",
+                             "Amarrage du Nomad : un menu reste ouvert, ferme-le et réessaie")
+    await confirmer(dire, "apontage", poli)
+    if await _jouer_sequence("amarrage_nomade", dire):
+        await logs.annoncer("Amarrage du Nomad demandé au vaisseau principal")
+
+
+def _suivre_approche(evenement, suivi):
+    """Repères du journal pendant l'approche. Le jeu ne donne jamais la distance à la station :
+    la musique « Starport » sert de repère d'approche finale."""
+    nom = evenement.get("event")
+    piste = evenement.get("MusicTrack") if nom == "Music" else None
+    if nom in ("DockingCancelled", "DockingTimeout"):
+        suivi["annulee"] = True
+    elif piste == "DockingComputer":
+        suivi["ordinateur"] = True
+    elif piste == "Starport":
+        suivi["proche"] = True
+
+
+async def _attendre_amarrage(suivi, delai=600):
+    """Attend l'amarrage et sort le train une seule fois, à l'approche finale.
+    Quand l'ordinateur d'appontage pilote, c'est lui qui s'en charge."""
+    fin = time.monotonic() + delai
+    train_traite = not macros.TRAIN_AUTO_APONTAGE
+    while time.monotonic() < fin and not drapeau("amarre") and not suivi["annulee"]:
+        if suivi["proche"] and not train_traite:
+            train_traite = True
+            if not suivi["ordinateur"] and not drapeau("train") and not drapeau("pose"):
+                await appuyer("train")
+                await logs.annoncer("Approche finale : train d'atterrissage sorti")
+        await asyncio.sleep(0.15)
+
+
 async def _apontage(dire, poli=False, annonce=True):
     if etat_connu():
         if not drapeau("vaisseau"):
@@ -1129,18 +1201,15 @@ async def _apontage(dire, poli=False, annonce=True):
         return
     if annonce:
         await confirmer(dire, "apontage", poli)
-    if not await _demander_apontage(dire):
-        return
 
-    if macros.TRAIN_AUTO_APONTAGE and not drapeau("train"):
-        await appuyer("train")
-
-    annulations = []
-    arreter_ecoute = logs.ecouter_evenements(
-        lambda e: annulations.append(e) if e.get("event") in
-        ("DockingCancelled", "DockingTimeout") else None)
+    # On écoute dès la demande : le repère d'approche peut tomber pendant la réplique d'accord
+    suivi = {"proche": False, "ordinateur": False, "annulee": False}
+    arreter_ecoute = logs.ecouter_evenements(lambda e: _suivre_approche(e, suivi))
     try:
-        amarre = await attendre(lambda: drapeau("amarre") or annulations, 600)
+        if not await _demander_apontage(dire):
+            return
+        suivi["annulee"] = False                 # seul ce qui suit l'accord compte
+        await _attendre_amarrage(suivi)
     finally:
         arreter_ecoute()
     if not drapeau("amarre"):
@@ -1588,7 +1657,7 @@ async def _ravitaillement(dire, poli=False):
             repare = not besoin_reparation or noms & {"RepairAll", "Repair"}
             return plein and repare
         await attendre(termine, 4)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1.5)                 # les munitions arrivent parfois juste après
         await fermer_panneaux()
     finally:
         arreter_ecoute()
@@ -1650,6 +1719,7 @@ PROGRAMMES = {
 SPECIALES = {
     "sous_systeme": _sous_systeme,
     "chasseur": _chasseur,
+    "chasse": _mode_chasse,
     "drone": _drone,
     "reactions": _basculer_reactions,
     "interface": _ouvrir_interface,

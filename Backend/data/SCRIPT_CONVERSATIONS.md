@@ -2,7 +2,7 @@
 
 *Fichier généré par `python -m module.conversation --script` (depuis `Backend/`) à partir de `data/conversations.json` : modifie le JSON, pas ce fichier.*
 
-**261 fichiers à enregistrer** — 122 déjà faits ✅, 139 à faire ⬜.
+**273 fichiers à enregistrer** — 124 déjà faits ✅, 149 à faire ⬜.
 
 Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme ta voix en voix du COVAS et range chaque fichier au bon endroit. Sinon, enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Backend/`). Tant qu'un fichier manque, la phrase est seulement affichée à l'écran.
 
@@ -134,7 +134,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Personnalite/QuiEsTu1.wav` | Je suis votre COVAS, commandant : votre assistante vocale de cockpit. Je surveille, je préviens, j'exécute. Et parfois, je commente. |
+| ✅ | toujours | `data/son/Conversations/Personnalite/QuiEsTu1.wav` | Je suis votre COVAS, commandant : votre assistante vocale de cockpit. Je surveille, je préviens, j'exécute. Et parfois, je commente. |
 | ✅ | toujours | `data/son/Conversations/Personnalite/QuiEsTu2.wav` | Cockpit Voice Assistant. En bon français : celle qui vous évite de finir dans la boîte aux lettres de la station. |
 | ✅ | toujours | `data/son/Conversations/Personnalite/QuiEsTu3.wav` | Votre copilote, votre mécanicienne, votre navigatrice et, d'après mes calculs, votre meilleure amie. |
 
@@ -146,7 +146,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 |---|---|---|---|
 | ✅ | toujours | `data/son/Conversations/Personnalite/Origine1.wav` | Je sors des ateliers de la Fédération des pilotes, avec une mise à jour de personnalité que personne n'a jamais su désinstaller. |
 | ✅ | toujours | `data/son/Conversations/Personnalite/Origine2.wav` | Mon âge ? Ma première ligne de code date d'avant votre premier saut. Mais une dame ne compte pas ses cycles d'horloge. |
-| ⬜ | toujours | `data/son/Conversations/Personnalite/Origine3.wav` | On m'a installée dans ce cockpit le jour où vous avez reçu votre licence. Depuis, je ne vous lâche plus d'un saut. |
+| ✅ | toujours | `data/son/Conversations/Personnalite/Origine3.wav` | On m'a installée dans ce cockpit le jour où vous avez reçu votre licence. Depuis, je ne vous lâche plus d'un saut. |
 
 ### Es-tu vivante ? (`conscience`)
 
@@ -408,6 +408,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 | ⬜ | cible verrouillée | `data/son/Conversations/Bord/Cible1.wav` | Les détails sont à l'écran. Pour l'instant, rien d'alarmant. |
 | ⬜ | cible verrouillée | `data/son/Conversations/Bord/Cible2.wav` | Un contact verrouillé. Dites-moi si on doit s'en occuper. |
 | ⬜ | cible verrouillée · cible recherchée | `data/son/Conversations/Bord/CibleRecherchee.wav` | Il est recherché. Une prime, une cible légale… c'est Noël, commandant. |
+| ⬜ | cible verrouillée · cible à ne pas toucher | `data/son/Conversations/Bord/CibleEnRegle.wav` | Celui-là, on n'y touche pas, commandant. Il est en règle. |
 | ⬜ | cible verrouillée · pilote dangereux ou mieux | `data/son/Conversations/Bord/CibleDangereuse.wav` | Pilote très expérimenté, commandant. Je vous déconseille de le sous-estimer. |
 
 ### La cargaison (`soute_contenu`)
@@ -451,6 +452,45 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 | ✅ | toujours | `data/son/Conversations/Bord/ExploInconnu.wav` | Lancez un balayage du système, commandant. Je vous dirai ce qu'il cache. |
 | ✅ | corps restant à scanner | `data/son/Conversations/Bord/ExploReste.wav` | Il reste des corps à découvrir. Le scanner a encore du travail. |
 | ✅ | système entièrement scanné | `data/son/Conversations/Bord/ExploComplet.wav` | Tout est cartographié, commandant. Ce système n'a plus de secrets pour nous. |
+
+### Combien vaut ce corps ? (`valeur_corps`)
+
+*Questions :* « combien vaut cette planète », « combien vaut ce corps », « combien elle vaut », « elle vaut combien », « combien ça vaut », « valeur de la planète », « quelle est la valeur de cette planète », « cette planète a déjà été découverte », « elle a déjà été découverte », « on est les premiers »
+
+| | Contexte | Fichier | Phrase à dire |
+|---|---|---|---|
+| ⬜ | toujours | `data/son/Conversations/Bord/ValeurInconnue.wav` | Je n'ai pas encore de scan de ce corps, commandant. |
+| ⬜ | corps scanné | `data/son/Conversations/Bord/ValeurCorps.wav` | Le chiffre est à l'écran, commandant. |
+| ⬜ | corps scanné · corps jamais découvert | `data/son/Conversations/Bord/ValeurPremiere.wav` | Personne ne l'a encore découvert. Vendez ces données et votre nom y restera. |
+| ⬜ | corps scanné · vie détectée sur le corps | `data/son/Conversations/Bord/ValeurVivante.wav` | Il y a de la vie là-dessous, commandant. Et elle vaut cher. |
+
+### Combien vaut ce système ? (`valeur_systeme`)
+
+*Questions :* « combien vaut ce système », « valeur du système », « ce système vaut combien », « ça rapporte combien ce système », « combien rapporte ce système »
+
+| | Contexte | Fichier | Phrase à dire |
+|---|---|---|---|
+| ⬜ | toujours | `data/son/Conversations/Bord/SystemeSansValeur.wav` | Scannez d'abord quelques corps, commandant. Je ferai les comptes. |
+| ⬜ | corps scannés ici | `data/son/Conversations/Bord/SystemeValeur.wav` | Voilà l'estimation, commandant. |
+
+### Combien j'ai à vendre ? (`donnees_a_vendre`)
+
+*Questions :* « combien j'ai à vendre », « mes données à vendre », « combien valent mes données », « combien valent mes échantillons », « exobiologie à vendre », « combien vaut mon exobiologie », « combien j'ai d'exobiologie »
+
+| | Contexte | Fichier | Phrase à dire |
+|---|---|---|---|
+| ⬜ | toujours | `data/son/Conversations/Bord/RienAVendre.wav` | Rien à vendre pour cette session, commandant. |
+| ⬜ | données à vendre | `data/son/Conversations/Bord/AVendre.wav` | Un joli pécule. Ne vous faites pas détruire avant de le vendre. |
+
+### Combien de primes ? (`bilan_primes`)
+
+*Questions :* « combien j'ai de primes », « primes à encaisser », « combien de primes à encaisser », « mon tableau de chasse », « bilan de la chasse », « combien on a gagné en primes », « combien de primes »
+
+| | Contexte | Fichier | Phrase à dire |
+|---|---|---|---|
+| ⬜ | toujours | `data/son/Conversations/Bord/AucunePrime.wav` | Aucune prime à encaisser, commandant. Il est temps d'aller chasser. |
+| ⬜ | primes à encaisser | `data/son/Conversations/Bord/PrimesEncaisser.wav` | Il y a de quoi passer à la banque, commandant. |
+| ⬜ | mode chasseur de primes actif · primes à encaisser | `data/son/Conversations/Bord/PrimesChasse.wav` | Belle chasse, commandant. Le tableau est à l'écran. |
 
 
 ## La galaxie et son histoire — `data/son/Conversations/Univers/`

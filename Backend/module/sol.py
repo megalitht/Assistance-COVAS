@@ -76,7 +76,7 @@ _ROUTES = {
     "vrs": {"phares": "vrs_phares", "soute": "vrs_soute", "energie_sys": "vrs_pips_sys",
             "energie_mtr": "vrs_pips_moteurs", "energie_arm": "vrs_pips_armes",
             "reset": "vrs_pips_equilibre", "carte_galaxie": "vrs_carte_galaxie",
-            "carte_systeme": "vrs_carte_systeme"},
+            "carte_systeme": "vrs_carte_systeme", "assistance_vol": "vrs_assistance"},
     "pied": {"phares": "pied_lampe", "nvg": "pied_vision", "armement": "pied_arme",
              "carte_galaxie": "pied_carte_galaxie", "carte_systeme": "pied_carte_systeme"},
 }

@@ -1085,6 +1085,10 @@
             "data/son/Manuel/ModeCombat.mp3"
         ]
     },
+    "assistance_vol": {
+        "mots_cles": ["assistance de vol", "assistance au vol", "assistance du vol", "assistance vol", "aide au vol", "aide de vol", "flight assist", "assistance off", "assistance on", "fa off", "fa on"],
+        "reponses": []
+    },
     "vrs_frein": {
         "mots_cles": ["frein à main", "frein", "handbrake"],
         "reponses": []
@@ -1128,5 +1132,73 @@
     "pied_analyseur": {
         "mots_cles": ["analyseur de profil", "scanner de profil"],
         "reponses": []
+    },
+    "chasse": {
+        "mots_cles": ["chasseur de primes", "chasse aux primes", "chasse à la prime", "mode chasse"],
+        "reponses": []
+    },
+    "chasse_active": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/ChasseActive1.mp3", "data/son/Chasse/ChasseActive2.mp3"]
+    },
+    "chasse_coupee": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/ChasseCoupee.mp3"]
+    },
+    "chasse_fin": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/ChasseFin.mp3"]
+    },
+    "chasse_recherchee": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/Recherchee1.mp3", "data/son/Chasse/Recherchee2.mp3", "data/son/Chasse/Recherchee3.mp3"]
+    },
+    "chasse_clean": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/Clean1.mp3", "data/son/Chasse/Clean2.mp3"]
+    },
+    "chasse_autorite": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/Autorites.mp3"]
+    },
+    "chasse_sans_loi": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/SansJuridiction.mp3"]
+    },
+    "chasse_joueur": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/Joueur.mp3"]
+    },
+    "chasse_gros_gibier": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/GrosGibier.mp3"]
+    },
+    "chasse_dangereux": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/Dangereux.mp3"]
+    },
+    "chasse_tir_clean": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/TirClean.mp3"]
+    },
+    "scan_valeur": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/ScanValeur.mp3"]
+    },
+    "scan_premiere": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/ScanPremiere.mp3"]
+    },
+    "scan_bio": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/ScanBio.mp3"]
+    },
+    "exo_analyse": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/ExoAnalyse.mp3"]
+    },
+    "exo_distance_ok": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/ExoDistance.mp3"]
     }
 }
