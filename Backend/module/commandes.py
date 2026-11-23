@@ -127,8 +127,8 @@ SEQUENCES = {
     },
     "ravitaillement": {
         "nom": "Ravitaillement",
-        "note": "Jouée juste après « Ouvrir les services », depuis la position du curseur à "
-                "l'ouverture de l'écran : Ravitailler, Réparer, Réarmer.",
+        "note": "Seule séquence jouée par la commande de ravitaillement : le COVAS n'ouvre pas les "
+                "services et ne ferme rien. Elle part de l'écran affiché à ce moment-là.",
         "pause": 0.25,
         "etapes": ["ui_selection", "ui_droite", "ui_selection", "ui_droite", "ui_selection"],
     },

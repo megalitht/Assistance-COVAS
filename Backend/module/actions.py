@@ -250,14 +250,18 @@ async def _jouer_sequence(cle, dire):
         await refuser(dire, "refus_touche_absente", f"{modele['nom']} : aucune touche pour "
                       f"« {touches.libelle(absente)} » (Réglages > Commandes)")
         return False
+    print(f"[Touche] --- Séquence « {modele['nom']} » : début (écran du jeu : {_focus()})")
     for etape in etapes:
         duree = commandes.duree_pause(etape)
         if duree is not None:
+            print(f"[Touche] pause de {duree:g} s")
             await asyncio.sleep(duree)
             continue
         if not await appuyer(etape):
+            print(f"[Touche] --- Séquence « {modele['nom']} » : interrompue")
             return False                        # « stop »
         await asyncio.sleep(modele["pause"])
+    print(f"[Touche] --- Séquence « {modele['nom']} » : fin (écran du jeu : {_focus()})")
     return True
 
 
@@ -1595,6 +1599,7 @@ async def fermer_panneaux(essais=6):
         focus = _focus()
         if not focus:
             return True
+        print(f"[Touche] --- Fermeture d'un menu (écran du jeu : {focus})")
         await appuyer("ui_retour")
         await attendre(lambda: _focus() != focus, 1.5)
     return not _focus()
@@ -1632,22 +1637,8 @@ async def _ravitaillement(dire, poli=False):
     arreter_ecoute = logs.ecouter_evenements(
         lambda e: achats.append(e) if e.get("event") in ACHATS else None)
     try:
-        if not await fermer_panneaux():
-            return await refuser(dire, "macro_echec",
-                                 "Ravitaillement : un menu reste ouvert, ferme-le et réessaie")
-
-        if not await _jouer_sequence("services", dire):
-            await fermer_panneaux()
-            return
-        if not await attendre(lambda: _focus() == 5, 5):     # 5 = services de la station
-            await fermer_panneaux()
-            return await refuser(dire, "macro_echec",
-                                 "Ravitaillement : les services de la station ne se sont pas ouverts "
-                                 "(séquence à vérifier dans Réglages > Commandes)")
-
-        await asyncio.sleep(macros.ATTENTE_ECRAN)
+        # Uniquement la séquence « Ravitaillement » : ni ouverture des services, ni fermeture
         if not await _jouer_sequence("ravitaillement", dire):
-            await fermer_panneaux()
             return
 
         # Le jeu écrit chaque achat dans le journal : on attend de les voir passer
@@ -1658,7 +1649,6 @@ async def _ravitaillement(dire, poli=False):
             return plein and repare
         await attendre(termine, 4)
         await asyncio.sleep(1.5)                 # les munitions arrivent parfois juste après
-        await fermer_panneaux()
     finally:
         arreter_ecoute()
 
