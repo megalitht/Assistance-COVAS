@@ -3,6 +3,7 @@
 __pycache__/
 *.pyc
 .gitattributes
+.github
 
 
 # Modèles téléchargés (trop lourds pour git ; voir les commentaires de main.py et synthese.py)
