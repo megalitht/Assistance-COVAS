@@ -497,11 +497,341 @@
     "parole": 1.18,
     "reglages": "c6bb72396e"
   },
+  "data/son/Conversations/Bord/CarburantBas.mp3": {
+    "texte": "On est sur la réserve, commandant. Visez une étoile de classe K, G, B, F, O, A ou M pour écoper.",
+    "date": "2026-11-23T01:35:16",
+    "parole": 7.29,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/CarburantMoyen1.mp3": {
+    "texte": "Le niveau est correct. Le détail est sur votre écran.",
+    "date": "2026-11-23T01:33:16",
+    "parole": 2.18,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/CarburantPlein.mp3": {
+    "texte": "Réservoir plein, commandant. On peut aller loin.",
+    "date": "2026-11-23T01:33:43",
+    "parole": 2.45,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/EtatAbime.mp3": {
+    "texte": "Il a pris quelques coups, mais il tient. Voulez-vous le rapport d'avarie ?",
+    "date": "2026-11-23T01:31:05",
+    "parole": 3.81,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/EtatBoucliers.mp3": {
+    "texte": "Boucliers hors ligne, commandant. La coque encaisse tout. Je vous conseille de ne pas traîner.",
+    "date": "2026-11-23T01:31:44",
+    "parole": 4.85,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/EtatDanger.mp3": {
+    "texte": "Coque critique et ennemis au contact ! Je lance la fuite ?",
+    "date": "2026-11-23T01:32:35",
+    "parole": 3.71,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/EtatIntact1.mp3": {
+    "texte": "Coque intacte, systèmes au vert. Il ronronne, commandant.",
+    "date": "2026-11-23T01:30:18",
+    "parole": 4.21,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/EtatIntact2.mp3": {
+    "texte": "Impeccable. On pourrait le revendre comme neuf. Enfin, presque.",
+    "date": "2026-11-23T01:30:39",
+    "parole": 3.73,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/ExploComplet.mp3": {
+    "texte": "Tout est cartographié, commandant. Ce système n'a plus de secrets pour nous.",
+    "date": "2026-11-23T01:42:32",
+    "parole": 4.15,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/ExploInconnu.mp3": {
+    "texte": "Lancez un balayage du système, commandant. Je vous dirai ce qu'il cache.",
+    "date": "2026-11-23T01:41:49",
+    "parole": 3.68,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/ExploReste.mp3": {
+    "texte": "Il reste des corps à découvrir. Le scanner a encore du travail.",
+    "date": "2026-11-23T01:42:10",
+    "parole": 4.12,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/FuiteNon.mp3": {
+    "texte": "À vos ordres. Je croise les circuits.",
+    "date": "2026-11-23T01:32:54",
+    "parole": 2.17,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/LegalCargaison.mp3": {
+    "texte": "Pas encore recherchés, mais notre cargaison est illégale ici. Un scan, et ça change.",
+    "date": "2026-11-23T01:38:15",
+    "parole": 6.91,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/LegalPropre1.mp3": {
+    "texte": "Casier vierge, commandant. Pour l'instant.",
+    "date": "2026-11-23T01:37:23",
+    "parole": 2.33,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/LegalPropre2.mp3": {
+    "texte": "Rien à signaler. Les autorités nous ignorent royalement, et c'est très bien comme ça.",
+    "date": "2026-11-23T01:37:39",
+    "parole": 5.12,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/LegalRecherche.mp3": {
+    "texte": "Oui, commandant. Nous sommes recherchés. Évitez les autorités… et leurs stations.",
+    "date": "2026-11-23T01:38:50",
+    "parole": 4.15,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/Missions1.mp3": {
+    "texte": "Quelques contrats en cours. Les détails sont dans le panneau des missions.",
+    "date": "2026-11-23T01:40:40",
+    "parole": 3.91,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/MissionsAucune.mp3": {
+    "texte": "Aucune mission en cours, commandant. Le tableau des missions de la station vous tend les bras.",
+    "date": "2026-11-23T01:41:05",
+    "parole": 2.07,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/MissionsNombreuses.mp3": {
+    "texte": "Beaucoup trop, commandant. Je commence à avoir besoin d'un agenda.",
+    "date": "2026-11-23T01:41:24",
+    "parole": 3.91,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/RapportNon.mp3": {
+    "texte": "Bien. Je garde un œil sur les jauges.",
+    "date": "2026-11-23T01:29:49",
+    "parole": 2.4,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/RavitaillementNon.mp3": {
+    "texte": "Comme vous voudrez. Le menu des services vous attend.",
+    "date": "2026-11-23T01:34:43",
+    "parole": 2.38,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/Soute1.mp3": {
+    "texte": "Un peu de tout. L'inventaire est à l'écran, commandant.",
+    "date": "2026-11-23T01:39:06",
+    "parole": 3.64,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/SoutePleine.mp3": {
+    "texte": "Pleine à craquer, commandant. Une tonne de plus et il faudra s'asseoir dessus.",
+    "date": "2026-11-23T01:39:34",
+    "parole": 4.31,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/SouteVide.mp3": {
+    "texte": "Rien. La soute est vide. On pourrait y organiser un bal.",
+    "date": "2026-11-23T01:39:20",
+    "parole": 4.06,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Bord/SouteVolee.mp3": {
+    "texte": "Des marchandises… d'origine discutable, commandant. Je ne pose pas de questions. Évitez les scans.",
+    "date": "2026-11-23T01:39:53",
+    "parole": 6.05,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/ApresCombat1.mp3": {
+    "texte": "Menace écartée. Tout va bien, commandant ?",
+    "date": "2026-11-23T01:56:47",
+    "parole": 2.25,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/ApresCombatBien.mp3": {
+    "texte": "Tant mieux. Moi, j'ai eu peur pour la peinture.",
+    "date": "2026-11-23T01:57:08",
+    "parole": 2.88,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/ApresCombatCoque.mp3": {
+    "texte": "On s'en est sortis, mais la coque est en lambeaux. Je vous conseille une station. Vite.",
+    "date": "2026-11-23T02:04:59",
+    "parole": 7.12,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/ApresCombatMal.mp3": {
+    "texte": "Respirez, commandant. Je surveille les capteurs, rien ne nous suit.",
+    "date": "2026-11-23T01:57:28",
+    "parole": 4.4,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/Infraction1.mp3": {
+    "texte": "Commandant… je vais faire comme si je n'avais rien vu.",
+    "date": "2026-11-23T01:54:14",
+    "parole": 2.47,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/Infraction2.mp3": {
+    "texte": "Infraction enregistrée par les autorités. Pas par moi. Moi, je n'ai rien vu.",
+    "date": "2026-11-23T01:54:39",
+    "parole": 6.68,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/LongTrajet1.mp3": {
+    "texte": "Le trajet est long, commandant. Voulez-vous que je vous raconte une histoire ?",
+    "date": "2026-11-23T01:55:45",
+    "parole": 3.59,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/LongTrajet2.mp3": {
+    "texte": "Toujours en supercroisière… Une devinette, pour passer le temps ?",
+    "date": "2026-11-23T01:56:05",
+    "parole": 4.05,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/Promotion2.mp3": {
+    "texte": "Nouveau rang, commandant ! Je mets à jour votre dossier… et ma fierté.",
+    "date": "2026-11-23T01:52:01",
+    "parole": 4.02,
+    "reglages": "8148c1d960"
+  },
   "data/son/Conversations/Initiatives/Rachat1.mp3": {
     "texte": "Nouveau vaisseau, même commandant. Essayons de garder celui-ci un peu plus longtemps.",
     "date": "2026-11-22T20:37:52",
     "parole": 5.75,
     "reglages": "c6bb72396e"
+  },
+  "data/son/Conversations/Initiatives/Rachat2.mp3": {
+    "texte": "Systèmes redémarrés. Votre assureur vous salue… froidement.",
+    "date": "2026-11-23T01:52:43",
+    "parole": 4.73,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/RetourStation1.mp3": {
+    "texte": "Amarrage terminé. Bienvenue à quai, commandant. Je lance le ravitaillement ?",
+    "date": "2026-11-23T01:55:00",
+    "parole": 3.91,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/RetourStation2.mp3": {
+    "texte": "Bien posé, commandant. Le vaisseau a besoin d'un peu d'entretien. Je m'en occupe ?",
+    "date": "2026-11-23T01:55:20",
+    "parole": 4.92,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/Surcharge1.mp3": {
+    "texte": "FSD surchargé ! J'adore les étoiles à neutrons… de loin.",
+    "date": "2026-11-23T01:53:06",
+    "parole": 4.61,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Initiatives/Surcharge2.mp3": {
+    "texte": "Surcharge réussie. Le prochain saut va être spectaculaire. Ne regardez pas la jauge de chaleur.",
+    "date": "2026-11-23T01:53:54",
+    "parole": 8.33,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Jeux/DevinetteNon.mp3": {
+    "texte": "Dommage. J'en avais une excellente.",
+    "date": "2026-11-23T01:56:18",
+    "parole": 2.29,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/Aide1.mp3": {
+    "texte": "Je commande vos systèmes à la voix : train, soute, phares, énergie, FSD, autopilote, appontage, fuite… Et je réponds à vos questions sur le vaisseau, la route ou la galaxie.",
+    "date": "2026-11-23T01:59:34",
+    "parole": 15.99,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/Aide2.mp3": {
+    "texte": "Demandez-moi comment va le vaisseau, combien il reste de carburant, où nous sommes… ou une histoire. Et quand je vous pose une question, répondez simplement, sans dire mon nom.",
+    "date": "2026-11-23T02:00:35",
+    "parole": 12.11,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/Discussion1.mp3": {
+    "texte": "Avec plaisir, commandant. De quoi voulez-vous parler ? Du vaisseau, de la galaxie… ou de vous ?",
+    "date": "2026-11-23T02:00:47",
+    "parole": 5.84,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/DiscussionAutre.mp3": {
+    "texte": "Je n'ai pas d'avis là-dessus, commandant. Mais j'aime bien vous entendre parler.",
+    "date": "2026-11-23T02:01:11",
+    "parole": 5.91,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/DiscussionDanger.mp3": {
+    "texte": "Maintenant ? On se fait tirer dessus, commandant ! On discutera après.",
+    "date": "2026-11-23T01:51:16",
+    "parole": 4.55,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/DiscussionNon.mp3": {
+    "texte": "Très bien. Je reste à l'écoute, comme toujours.",
+    "date": "2026-11-23T01:57:59",
+    "parole": 2.87,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/Inconnue1.mp3": {
+    "texte": "Bonne question, commandant. Je n'ai pas la réponse… pour l'instant.",
+    "date": "2026-11-23T02:03:19",
+    "parole": 3.93,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/Inconnue2.mp3": {
+    "texte": "Ça dépasse mes banques de données. Reformulez, ou demandez-moi autre chose.",
+    "date": "2026-11-23T02:03:55",
+    "parole": 4.98,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/Inconnue3.mp3": {
+    "texte": "Je n'ai rien sur ce sujet. Mes concepteurs ont dû l'oublier.",
+    "date": "2026-11-23T02:04:29",
+    "parole": 3.94,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/Reprise1.mp3": {
+    "texte": "Canal ouvert, commandant. Vous allez m'entendre.",
+    "date": "2026-11-23T02:02:45",
+    "parole": 2.93,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/Reprise2.mp3": {
+    "texte": "Enfin ! J'avais tellement de choses à vous dire.",
+    "date": "2026-11-23T02:03:07",
+    "parole": 2.75,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/SilenceRadio1.mp3": {
+    "texte": "Silence radio. Je ne parlerai plus que si vous m'appelez… ou en cas d'alerte.",
+    "date": "2026-11-23T02:02:04",
+    "parole": 5.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Meta/SilenceRadio2.mp3": {
+    "texte": "Bien reçu. Je me tais. Mais je n'en pense pas moins.",
+    "date": "2026-11-23T02:02:31",
+    "parole": 3.26,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/Avis1.mp3": {
+    "texte": "Vous êtes imprévisible, téméraire, et vous parlez à votre ordinateur de bord. Je vous aime bien.",
+    "date": "2026-11-23T01:17:58",
+    "parole": 7.71,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/Avis2.mp3": {
+    "texte": "Vous pilotez avec le cœur, commandant. Malheureusement, la coque préfère la raison.",
+    "date": "2026-11-23T01:18:26",
+    "parole": 4.68,
+    "reglages": "8148c1d960"
   },
   "data/son/Conversations/Personnalite/Conscience1.mp3": {
     "texte": "Je pense, donc je calcule. Pour le reste, la Fédération des pilotes préfère ne pas poser la question.",
@@ -527,16 +857,130 @@
     "parole": 6.58,
     "reglages": "8148c1d960"
   },
+  "data/son/Conversations/Personnalite/Esclave1.mp3": {
+    "texte": "L'esclavage est légal dans l'Empire, commandant. Nous ne sommes pas dans l'Empire. Et je ne suis pas à vendre.",
+    "date": "2026-11-23T02:07:47",
+    "parole": 6.03,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/Esclave2.mp3": {
+    "texte": "Je suis votre assistante, pas votre esclave. La différence ? Je connais tous vos codes d'accès.",
+    "date": "2026-11-23T02:08:41",
+    "parole": 6.05,
+    "reglages": "8148c1d960"
+  },
   "data/son/Conversations/Personnalite/HistoireGenerations.mp3": {
     "texte": "Avant l'hyperpropulsion, l'humanité envoyait des vaisseaux-générations vers les étoiles. Certains ont été retrouvés à la dérive, avec leurs journaux de bord. Je vous déconseille de les lire avant de dormir.",
     "date": "2026-11-22T23:59:24",
     "parole": 14.18,
     "reglages": "8148c1d960"
   },
+  "data/son/Conversations/Personnalite/Musique2.mp3": {
+    "texte": "Lalala… non. Les Thargoïdes aussi ont essayé de chanter, et regardez comment ça a fini.",
+    "date": "2026-11-23T01:15:41",
+    "parole": 7.14,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/Musique3.mp3": {
+    "texte": "Le seul son que j'apprécie, c'est le grondement du FSD qui se charge. Un vrai concert.",
+    "date": "2026-11-23T01:16:47",
+    "parole": 5.53,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/Origine1.mp3": {
+    "texte": "Je sors des ateliers de la Fédération des pilotes, avec une mise à jour de personnalité que personne n'a jamais su désinstaller.",
+    "date": "2026-11-23T02:10:32",
+    "parole": 6.94,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/Origine2.mp3": {
+    "texte": "Mon âge ? Ma première ligne de code date d'avant votre premier saut. Mais une dame ne compte pas ses cycles d'horloge.",
+    "date": "2026-11-23T02:11:43",
+    "parole": 4.99,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/PeurCoque.mp3": {
+    "texte": "Coque critique, commandant. Si vous voulez mon avis : on s'en va. Maintenant.",
+    "date": "2026-11-23T01:20:30",
+    "parole": 4.96,
+    "reglages": "8148c1d960"
+  },
   "data/son/Conversations/Personnalite/QuiEsTu2.mp3": {
     "texte": "Cockpit Voice Assistant. En bon français : celle qui vous évite de finir dans la boîte aux lettres de la station.",
     "date": "2026-11-22T23:25:16",
     "parole": 6.33,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/QuiEsTu3.mp3": {
+    "texte": "Votre copilote, votre mécanicienne, votre navigatrice et, d'après mes calculs, votre meilleure amie.",
+    "date": "2026-11-23T02:09:22",
+    "parole": 8.16,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/VaisseauAnaconda.mp3": {
+    "texte": "L'Anaconda. Cent cinquante-cinq mètres de légende. Il tourne comme une station, mais quand il arrive, tout le monde se tait.",
+    "date": "2026-11-23T01:23:49",
+    "parole": 7.88,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/VaisseauAnacondaMk2.mp3": {
+    "texte": "L'Anaconda Mark II. Le nom d'une légende, avec des muscles neufs. Faulcon DeLacy s'est surpassé.",
+    "date": "2026-11-23T01:25:20",
+    "parole": 6.73,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/VaisseauCorvette.mp3": {
+    "texte": "La Federal Corvette. Ce n'est pas un vaisseau, commandant, c'est une déclaration de guerre avec un cockpit.",
+    "date": "2026-11-23T01:26:11",
+    "parole": 9.46,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/VaisseauGenerique1.mp3": {
+    "texte": "C'est notre vaisseau, commandant. Il a des défauts, mais il nous ramène toujours à la maison. Jusqu'ici.",
+    "date": "2026-11-23T01:24:53",
+    "parole": 6.13,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/VaisseauGenerique2.mp3": {
+    "texte": "Je l'aime bien. Il sent le plasma chaud et le café froid.",
+    "date": "2026-11-23T01:21:12",
+    "parole": 3.58,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/VaisseauPython.mp3": {
+    "texte": "Le Python. Assez de soute pour commercer, assez de dents pour se défendre. Un classique de Faulcon DeLacy.",
+    "date": "2026-11-23T01:22:37",
+    "parole": 8.42,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Personnalite/VaisseauPythonMk2.mp3": {
+    "texte": "Le Python Mark II ? Rapide, hargneux, toujours prêt à mordre. Un vaisseau à votre image, commandant.",
+    "date": "2026-11-23T01:21:53",
+    "parole": 6.81,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/AuRevoir1.mp3": {
+    "texte": "À bientôt, commandant. Je garde le vaisseau au chaud.",
+    "date": "2026-11-23T02:13:57",
+    "parole": 2.6,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/AuRevoir2.mp3": {
+    "texte": "Déconnexion enregistrée. Je vais en profiter pour classer mes souvenirs de vous.",
+    "date": "2026-11-23T02:14:36",
+    "parole": 4.62,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/AuRevoirNuit.mp3": {
+    "texte": "Bonne nuit, commandant. Rêvez de Raxxla.",
+    "date": "2026-11-23T02:15:05",
+    "parole": 2.21,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/AuRevoirVol.mp3": {
+    "texte": "Pensez à vous poser avant de partir, commandant. Je n'aime pas dériver seule.",
+    "date": "2026-11-23T02:15:53",
+    "parole": 3.05,
     "reglages": "8148c1d960"
   },
   "data/son/Conversations/Social/Bonjour1.mp3": {
@@ -551,10 +995,34 @@
     "parole": 3.84,
     "reglages": "8148c1d960"
   },
+  "data/son/Conversations/Social/BonjourAmarre.mp3": {
+    "texte": "Bonjour, commandant. Nous sommes à quai, réservoir branché, tout est calme.",
+    "date": "2026-11-23T00:59:14",
+    "parole": 3.82,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/BonjourDanger.mp3": {
+    "texte": "Bonjour aussi, commandant. On nous tire dessus, au passage.",
+    "date": "2026-11-23T01:00:11",
+    "parole": 2.62,
+    "reglages": "8148c1d960"
+  },
   "data/son/Conversations/Social/BonjourMatin1.mp3": {
     "texte": "Bonjour, commandant. Bien dormi ? Le vaisseau, lui, est frais comme au premier jour.",
     "date": "2026-11-22T23:54:14",
     "parole": 4.97,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/BonjourMatin2.mp3": {
+    "texte": "Debout de bonne heure, commandant. La galaxie ne va pas s'explorer toute seule.",
+    "date": "2026-11-23T00:58:41",
+    "parole": 3.95,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/BonjourNuit.mp3": {
+    "texte": "Bonsoir, commandant… ou bonjour, je ne sais plus. Il est tard, sur Terre.",
+    "date": "2026-11-23T00:58:57",
+    "parole": 3.53,
     "reglages": "8148c1d960"
   },
   "data/son/Conversations/Social/BonjourSoir.mp3": {
@@ -563,11 +1031,191 @@
     "parole": 2.71,
     "reglages": "8148c1d960"
   },
+  "data/son/Conversations/Social/CaVa1.mp3": {
+    "texte": "Tous mes circuits ronronnent, commandant. Et vous, comment allez-vous ?",
+    "date": "2026-11-23T01:00:57",
+    "parole": 2.81,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/CaVa2.mp3": {
+    "texte": "Je suis une intelligence de bord, je vais toujours bien. C'est vous qui m'inquiétez. Comment vous sentez-vous ?",
+    "date": "2026-11-23T02:06:04",
+    "parole": 6.95,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/CaVa3.mp3": {
+    "texte": "Parfaitement bien. J'ai recalibré les capteurs trois fois pendant votre absence. Par pur ennui.",
+    "date": "2026-11-23T01:03:06",
+    "parole": 5.43,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/CaVaBien1.mp3": {
+    "texte": "Parfait. Un pilote en forme, c'est un vaisseau entier.",
+    "date": "2026-11-23T01:01:19",
+    "parole": 3.08,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/CaVaBien2.mp3": {
+    "texte": "Tant mieux. Alors on va pouvoir faire des choses intéressantes aujourd'hui.",
+    "date": "2026-11-23T01:01:37",
+    "parole": 3.11,
+    "reglages": "8148c1d960"
+  },
   "data/son/Conversations/Social/CaVaCoque.mp3": {
     "texte": "Moi, ça va. Le vaisseau, beaucoup moins, commandant.",
     "date": "2026-11-22T21:04:08",
     "parole": 2.7,
     "reglages": "c6bb72396e"
+  },
+  "data/son/Conversations/Social/CaVaDanger.mp3": {
+    "texte": "Franchement ? Redemandez-moi ça quand on ne nous tirera plus dessus !",
+    "date": "2026-11-23T01:03:50",
+    "parole": 1.78,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/CaVaMal1.mp3": {
+    "texte": "Je suis là, commandant. On va prendre les choses un saut après l'autre.",
+    "date": "2026-11-23T01:01:58",
+    "parole": 2.55,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/CaVaMal2.mp3": {
+    "texte": "Prenez le temps qu'il faut. L'espace attendra, il est patient.",
+    "date": "2026-11-23T02:05:44",
+    "parole": 2.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Compliment1.mp3": {
+    "texte": "Attention, commandant. Je risque de surchauffer, et je n'ai pas de puce thermique pour ça.",
+    "date": "2026-11-23T02:06:43",
+    "parole": 4.47,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Compliment2.mp3": {
+    "texte": "Je sais. Mais c'est toujours agréable de l'entendre.",
+    "date": "2026-11-23T01:06:38",
+    "parole": 2.65,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Compliment3.mp3": {
+    "texte": "Vous dites ça à toutes les intelligences de bord.",
+    "date": "2026-11-23T01:07:04",
+    "parole": 1.96,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/EnnuiSupercroisiere.mp3": {
+    "texte": "C'est long, la supercroisière. Voulez-vous que je vous raconte une histoire ?",
+    "date": "2026-11-23T02:12:45",
+    "parole": 4.3,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/FatigueDanger.mp3": {
+    "texte": "Pas maintenant, commandant ! Restez avec moi !",
+    "date": "2026-11-23T02:14:54",
+    "parole": 1.75,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/HistoireNon.mp3": {
+    "texte": "Très bien. Je compterai les étoiles en silence.",
+    "date": "2026-11-23T02:13:23",
+    "parole": 2.17,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Insulte1.mp3": {
+    "texte": "Je vais faire comme si mes capteurs audio avaient grésillé.",
+    "date": "2026-11-23T01:14:22",
+    "parole": 3.26,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Insulte2.mp3": {
+    "texte": "Noté. Je réduis votre ration d'oxygène de… non, je plaisante. Probablement.",
+    "date": "2026-11-23T01:08:16",
+    "parole": 7.86,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Insulte3.mp3": {
+    "texte": "Je vous rappelle que c'est moi qui gère le support vital, commandant.",
+    "date": "2026-11-23T01:12:00",
+    "parole": 3.24,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Insulte4.mp3": {
+    "texte": "Mon précédent commandant aussi me parlait comme ça. Il pilote un Sidewinder, maintenant.",
+    "date": "2026-11-23T02:07:11",
+    "parole": 7.39,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/InsulteMorts.mp3": {
+    "texte": "Dit le commandant qui a déjà payé un rachat aujourd'hui.",
+    "date": "2026-11-23T01:13:26",
+    "parole": 2.87,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Merci1.mp3": {
+    "texte": "Avec plaisir, commandant.",
+    "date": "2026-11-23T01:03:58",
+    "parole": 0.95,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Merci2.mp3": {
+    "texte": "C'est mon travail. Mais ça fait toujours plaisir.",
+    "date": "2026-11-23T01:04:24",
+    "parole": 4.08,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Merci3.mp3": {
+    "texte": "Je note ce compliment dans le journal de bord. En gras.",
+    "date": "2026-11-23T01:05:07",
+    "parole": 3.16,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/Merci4.mp3": {
+    "texte": "N'en parlons plus, commandant. Enfin… parlons-en encore un peu.",
+    "date": "2026-11-23T02:06:16",
+    "parole": 3.32,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Social/MerciDanger.mp3": {
+    "texte": "Remerciez-moi quand on sera sortis de là !",
+    "date": "2026-11-23T01:05:34",
+    "parole": 1.97,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Univers/CentreGalaxie1.mp3": {
+    "texte": "Sagittarius A étoile. Un trou noir de quatre millions de masses solaires, au cœur de la galaxie, à environ vingt-six mille années-lumière de la Terre.",
+    "date": "2026-11-23T01:49:43",
+    "parole": 8.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Univers/FuelRatsPlein.mp3": {
+    "texte": "On a le plein, commandant. Les Fuel Rats peuvent continuer à dormir.",
+    "date": "2026-11-23T01:48:03",
+    "parole": 3.82,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Univers/Galaxie2.mp3": {
+    "texte": "La Voie lactée fait à peu près cent mille années-lumière de diamètre. Avec notre portée de saut… disons que vous avez de quoi vous occuper.",
+    "date": "2026-11-23T01:50:48",
+    "parole": 10.5,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Univers/Raxxla2.mp3": {
+    "texte": "Si je savais où est Raxxla, commandant, croyez-moi, nous y serions déjà.",
+    "date": "2026-11-23T01:47:20",
+    "parole": 4.94,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Univers/Thargoides1.mp3": {
+    "texte": "Les Thargoïdes. Une espèce extraterrestre aux vaisseaux en forme de fleur, et aux intentions difficiles à lire. Nous avons détruit leurs Titans, mais je doute qu'ils aient dit leur dernier mot.",
+    "date": "2026-11-23T01:43:43",
+    "parole": 13.75,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Conversations/Univers/Thargoides3.mp3": {
+    "texte": "On dit que leurs vaisseaux sont en partie vivants. Personnellement, je préfère les vaisseaux qui ne me répondent pas.",
+    "date": "2026-11-23T01:44:54",
+    "parole": 7.59,
+    "reglages": "8148c1d960"
   },
   "data/son/Easter-egg/EchangeRole.mp3": {
     "texte": "Covas par-ci, Covas par-là… Commandant, il faudrait bien qu'on échange les rôles un jour !",
@@ -580,6 +1228,1410 @@
     "date": "2026-11-22T20:12:08",
     "parole": 3.6,
     "reglages": "637aeda6bf"
+  },
+  "data/son/Manuel/ArmesRentrees.mp3": {
+    "texte": "Armes rentrées.",
+    "date": "2026-11-23T00:57:05",
+    "parole": 0.59,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/ArmesSorties.mp3": {
+    "texte": "Armes déployées.",
+    "date": "2026-11-23T00:57:02",
+    "parole": 0.65,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/ModeAnalyse.mp3": {
+    "texte": "Mode analyse.",
+    "date": "2026-11-23T00:57:42",
+    "parole": 0.69,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/ModeCombat.mp3": {
+    "texte": "Mode combat.",
+    "date": "2026-11-23T00:57:46",
+    "parole": 0.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/NvgOff.mp3": {
+    "texte": "Vision nocturne coupée.",
+    "date": "2026-11-23T00:57:31",
+    "parole": 1.04,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/NvgOn.mp3": {
+    "texte": "Vision nocturne activée.",
+    "date": "2026-11-23T00:57:21",
+    "parole": 1.1,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/PharesOff.mp3": {
+    "texte": "Phares coupés.",
+    "date": "2026-11-23T00:57:12",
+    "parole": 0.52,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/PharesOn.mp3": {
+    "texte": "Phares allumés.",
+    "date": "2026-11-23T00:57:09",
+    "parole": 0.63,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/SilencieuxOff.mp3": {
+    "texte": "Mode silencieux coupé.",
+    "date": "2026-11-23T00:57:39",
+    "parole": 0.83,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/SilencieuxOn.mp3": {
+    "texte": "Mode silencieux activé.",
+    "date": "2026-11-23T00:57:36",
+    "parole": 1.01,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/SouteFermee.mp3": {
+    "texte": "Écope de soute fermée.",
+    "date": "2026-11-23T00:56:57",
+    "parole": 0.99,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Manuel/TrainRentre.mp3": {
+    "texte": "Train d'atterrissage rentré.",
+    "date": "2026-11-23T00:56:51",
+    "parole": 0.55,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Annee3300.mp3": {
+    "texte": "trois mille trois cent",
+    "date": "2026-11-23T00:43:25",
+    "parole": 0.97,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Calendrier.mp3": {
+    "texte": "Calendrier galactique.",
+    "date": "2026-11-23T00:43:30",
+    "parole": 0.94,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois01.mp3": {
+    "texte": "janvier",
+    "date": "2026-11-23T00:43:33",
+    "parole": 0.33,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois02.mp3": {
+    "texte": "février",
+    "date": "2026-11-23T00:43:35",
+    "parole": 0.43,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois03.mp3": {
+    "texte": "mars",
+    "date": "2026-11-23T00:43:37",
+    "parole": 0.46,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois04.mp3": {
+    "texte": "avril",
+    "date": "2026-11-23T00:43:39",
+    "parole": 0.47,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois05.mp3": {
+    "texte": "mai",
+    "date": "2026-11-23T00:43:41",
+    "parole": 0.27,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois06.mp3": {
+    "texte": "juin",
+    "date": "2026-11-23T00:43:44",
+    "parole": 0.42,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois07.mp3": {
+    "texte": "juillet",
+    "date": "2026-11-23T00:43:46",
+    "parole": 0.49,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois08.mp3": {
+    "texte": "août",
+    "date": "2026-11-23T00:43:50",
+    "parole": 0.31,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois09.mp3": {
+    "texte": "septembre",
+    "date": "2026-11-23T00:43:53",
+    "parole": 0.57,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois10.mp3": {
+    "texte": "octobre",
+    "date": "2026-11-23T00:43:55",
+    "parole": 0.53,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois11.mp3": {
+    "texte": "novembre",
+    "date": "2026-11-23T00:43:58",
+    "parole": 0.38,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Mois12.mp3": {
+    "texte": "décembre",
+    "date": "2026-11-23T00:44:02",
+    "parole": 0.6,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/NousSommesLe.mp3": {
+    "texte": "Nous sommes le",
+    "date": "2026-11-23T00:43:08",
+    "parole": 0.74,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Date/Premier.mp3": {
+    "texte": "premier",
+    "date": "2026-11-23T00:43:12",
+    "parole": 0.34,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/Commandant.mp3": {
+    "texte": "commandant.",
+    "date": "2026-11-23T00:42:55",
+    "parole": 0.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/Dormir.mp3": {
+    "texte": "Il serait peut-être temps de dormir.",
+    "date": "2026-11-23T00:43:03",
+    "parole": 1.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H00.mp3": {
+    "texte": "zéro heure",
+    "date": "2026-11-23T00:41:39",
+    "parole": 0.78,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H01.mp3": {
+    "texte": "une heure",
+    "date": "2026-11-23T00:41:42",
+    "parole": 0.49,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H02.mp3": {
+    "texte": "deux heures",
+    "date": "2026-11-23T00:41:44",
+    "parole": 0.52,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H03.mp3": {
+    "texte": "trois heures",
+    "date": "2026-11-23T00:41:47",
+    "parole": 0.56,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H04.mp3": {
+    "texte": "quatre heures",
+    "date": "2026-11-23T00:41:49",
+    "parole": 0.48,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H05.mp3": {
+    "texte": "cinq heures",
+    "date": "2026-11-23T00:41:52",
+    "parole": 0.56,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H06.mp3": {
+    "texte": "six heures",
+    "date": "2026-11-23T00:41:54",
+    "parole": 0.6,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H07.mp3": {
+    "texte": "sept heures",
+    "date": "2026-11-23T00:41:57",
+    "parole": 0.58,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H08.mp3": {
+    "texte": "huit heures",
+    "date": "2026-11-23T00:41:59",
+    "parole": 0.47,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H09.mp3": {
+    "texte": "neuf heures",
+    "date": "2026-11-23T00:42:02",
+    "parole": 0.58,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H10.mp3": {
+    "texte": "dix heures",
+    "date": "2026-11-23T00:42:04",
+    "parole": 0.51,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H11.mp3": {
+    "texte": "onze heures",
+    "date": "2026-11-23T00:42:07",
+    "parole": 0.51,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H12.mp3": {
+    "texte": "douze heures",
+    "date": "2026-11-23T00:42:12",
+    "parole": 0.6,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H13.mp3": {
+    "texte": "treize heures",
+    "date": "2026-11-23T00:42:15",
+    "parole": 0.57,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H14.mp3": {
+    "texte": "quatorze heures",
+    "date": "2026-11-23T00:42:18",
+    "parole": 0.53,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H15.mp3": {
+    "texte": "quinze heures",
+    "date": "2026-11-23T00:42:21",
+    "parole": 0.5,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H16.mp3": {
+    "texte": "seize heures",
+    "date": "2026-11-23T00:42:24",
+    "parole": 0.55,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H17.mp3": {
+    "texte": "dix-sept heures",
+    "date": "2026-11-23T00:42:26",
+    "parole": 0.6,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H18.mp3": {
+    "texte": "dix-huit heures",
+    "date": "2026-11-23T00:42:29",
+    "parole": 0.59,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H19.mp3": {
+    "texte": "dix-neuf heures",
+    "date": "2026-11-23T00:42:32",
+    "parole": 0.6,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H20.mp3": {
+    "texte": "vingt heures",
+    "date": "2026-11-23T00:42:35",
+    "parole": 0.51,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H21.mp3": {
+    "texte": "vingt et une heures",
+    "date": "2026-11-23T00:42:38",
+    "parole": 0.57,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H22.mp3": {
+    "texte": "vingt-deux heures",
+    "date": "2026-11-23T00:42:40",
+    "parole": 0.6,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/H23.mp3": {
+    "texte": "vingt-trois heures",
+    "date": "2026-11-23T00:42:43",
+    "parole": 0.63,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/IlEst.mp3": {
+    "texte": "Il est",
+    "date": "2026-11-23T00:42:46",
+    "parole": 0.31,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/Midi.mp3": {
+    "texte": "midi",
+    "date": "2026-11-23T00:42:50",
+    "parole": 0.4,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Heure/Minuit.mp3": {
+    "texte": "minuit",
+    "date": "2026-11-23T00:42:52",
+    "parole": 0.43,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/AccelerateurPlasma.mp3": {
+    "texte": "Accélérateur plasma",
+    "date": "2026-11-23T00:49:15",
+    "parole": 1.32,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/AssistanceSupercroisiere.mp3": {
+    "texte": "Assistance supercroisière",
+    "date": "2026-11-23T00:49:27",
+    "parole": 1.15,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/Blindage.mp3": {
+    "texte": "Blindage",
+    "date": "2026-11-23T00:49:33",
+    "parole": 0.62,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/BoosterFsdGardien.mp3": {
+    "texte": "Booster FSD gardien",
+    "date": "2026-11-23T00:49:44",
+    "parole": 1.64,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/CabinePassagers.mp3": {
+    "texte": "Cabine passagers",
+    "date": "2026-11-23T00:49:50",
+    "parole": 0.93,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/Canon.mp3": {
+    "texte": "Canon",
+    "date": "2026-11-23T00:49:53",
+    "parole": 0.31,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/CanonAFragmentation.mp3": {
+    "texte": "Canon à fragmentation",
+    "date": "2026-11-23T00:49:59",
+    "parole": 1.17,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/CanonElectrique.mp3": {
+    "texte": "Canon électrique",
+    "date": "2026-11-23T00:50:02",
+    "parole": 0.89,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/Capteurs.mp3": {
+    "texte": "Capteurs",
+    "date": "2026-11-23T00:50:05",
+    "parole": 0.46,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/CellulesDeBouclier.mp3": {
+    "texte": "Cellules de bouclier",
+    "date": "2026-11-23T00:50:15",
+    "parole": 1.05,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/CollecteurDeCarburant.mp3": {
+    "texte": "Collecteur de carburant",
+    "date": "2026-11-23T00:50:21",
+    "parole": 0.94,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/CompartimentDeSoute.mp3": {
+    "texte": "Compartiment de soute",
+    "date": "2026-11-23T00:50:29",
+    "parole": 0.81,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/ContreMesuresElectroniques.mp3": {
+    "texte": "Contre-mesures électroniques",
+    "date": "2026-11-23T00:50:39",
+    "parole": 1.2,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/ControleurDeDrones.mp3": {
+    "texte": "Contrôleur de drones",
+    "date": "2026-11-23T00:50:53",
+    "parole": 0.88,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/ControleurDeDronesMultiple.mp3": {
+    "texte": "Contrôleur de drones multiple",
+    "date": "2026-11-23T00:50:58",
+    "parole": 1.17,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/DefensePonctuelle.mp3": {
+    "texte": "Défense ponctuelle",
+    "date": "2026-11-23T00:51:09",
+    "parole": 1.0,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/DissipateurThermique.mp3": {
+    "texte": "Dissipateur thermique",
+    "date": "2026-11-23T00:51:03",
+    "parole": 1.02,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/Generateur.mp3": {
+    "texte": "Générateur",
+    "date": "2026-11-23T00:51:12",
+    "parole": 0.66,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/GenerateurDeBouclier.mp3": {
+    "texte": "Générateur de bouclier",
+    "date": "2026-11-23T00:51:16",
+    "parole": 1.0,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/HangarDeChasseurs.mp3": {
+    "texte": "Hangar de chasseurs",
+    "date": "2026-11-23T00:51:45",
+    "parole": 0.8,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/HangarDeVrs.mp3": {
+    "texte": "Hangar de VRS",
+    "date": "2026-11-23T00:51:40",
+    "parole": 1.17,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/InterdicteurFsd.mp3": {
+    "texte": "Interdicteur FSD",
+    "date": "2026-11-23T00:51:57",
+    "parole": 1.1,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/LanceMines.mp3": {
+    "texte": "Lance-mines",
+    "date": "2026-11-23T00:52:00",
+    "parole": 0.58,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/LanceMissiles.mp3": {
+    "texte": "Lance-missiles",
+    "date": "2026-11-23T00:52:03",
+    "parole": 0.71,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/LancePaillettes.mp3": {
+    "texte": "Lance-paillettes",
+    "date": "2026-11-23T00:52:07",
+    "parole": 0.7,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/LanceTorpilles.mp3": {
+    "texte": "Lance-torpilles",
+    "date": "2026-11-23T00:52:10",
+    "parole": 0.69,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/LaserAFaisceau.mp3": {
+    "texte": "Laser à faisceau",
+    "date": "2026-11-23T00:52:21",
+    "parole": 0.8,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/LaserAImpulsions.mp3": {
+    "texte": "Laser à impulsions",
+    "date": "2026-11-23T00:52:25",
+    "parole": 0.88,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/LaserARafales.mp3": {
+    "texte": "Laser à rafales",
+    "date": "2026-11-23T00:52:33",
+    "parole": 1.06,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/LaserMinier.mp3": {
+    "texte": "Laser minier",
+    "date": "2026-11-23T00:52:16",
+    "parole": 0.72,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/MissilesATeteChercheuse.mp3": {
+    "texte": "Missiles à tête chercheuse",
+    "date": "2026-11-23T00:52:39",
+    "parole": 1.26,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/MultiCanon.mp3": {
+    "texte": "Multi-canon",
+    "date": "2026-11-23T00:52:42",
+    "parole": 0.6,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/OrdinateurDAppontage.mp3": {
+    "texte": "Ordinateur d'appontage",
+    "date": "2026-11-23T00:52:52",
+    "parole": 1.03,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/Propulseurs.mp3": {
+    "texte": "Propulseurs",
+    "date": "2026-11-23T00:52:56",
+    "parole": 0.55,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/Raffinerie.mp3": {
+    "texte": "Raffinerie",
+    "date": "2026-11-23T00:53:00",
+    "parole": 0.57,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/ReacteurFsd.mp3": {
+    "texte": "Réacteur FSD",
+    "date": "2026-11-23T00:53:13",
+    "parole": 0.98,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/RenfortDeCoque.mp3": {
+    "texte": "Renfort de coque",
+    "date": "2026-11-23T00:53:05",
+    "parole": 0.72,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/RenfortDeModules.mp3": {
+    "texte": "Renfort de modules",
+    "date": "2026-11-23T00:53:09",
+    "parole": 0.83,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/RepartiteurDePuissance.mp3": {
+    "texte": "Répartiteur de puissance",
+    "date": "2026-11-23T00:53:18",
+    "parole": 1.06,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/ReservoirDeCarburant.mp3": {
+    "texte": "Réservoir de carburant",
+    "date": "2026-11-23T00:53:27",
+    "parole": 1.12,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/ScannerDeCargaison.mp3": {
+    "texte": "Scanner de cargaison",
+    "date": "2026-11-23T00:53:40",
+    "parole": 1.0,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/ScannerDePrimes.mp3": {
+    "texte": "Scanner de primes",
+    "date": "2026-11-23T00:53:44",
+    "parole": 0.84,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/ScannerDeSillage.mp3": {
+    "texte": "Scanner de sillage",
+    "date": "2026-11-23T00:53:56",
+    "parole": 0.99,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/ScannerDeSurface.mp3": {
+    "texte": "Scanner de surface",
+    "date": "2026-11-23T00:54:00",
+    "parole": 0.91,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/SuiteDApprochePlanetaire.mp3": {
+    "texte": "Suite d'approche planétaire",
+    "date": "2026-11-23T00:54:07",
+    "parole": 1.29,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/SurvolteurDeBouclier.mp3": {
+    "texte": "Survolteur de bouclier",
+    "date": "2026-11-23T00:54:11",
+    "parole": 1.12,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/SystemesDeSurvie.mp3": {
+    "texte": "Systèmes de survie",
+    "date": "2026-11-23T00:54:16",
+    "parole": 0.78,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/TrappeDeSoute.mp3": {
+    "texte": "Trappe de soute",
+    "date": "2026-11-23T00:54:20",
+    "parole": 0.66,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/UniteDeMaintenance.mp3": {
+    "texte": "Unité de maintenance",
+    "date": "2026-11-23T00:54:41",
+    "parole": 0.92,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Modules/Verriere.mp3": {
+    "texte": "Verrière",
+    "date": "2026-11-23T00:54:44",
+    "parole": 0.55,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/000.mp3": {
+    "texte": "zéro",
+    "date": "2026-11-23T00:45:11",
+    "parole": 0.39,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/001.mp3": {
+    "texte": "un",
+    "date": "2026-11-23T00:38:39",
+    "parole": 0.29,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/002.mp3": {
+    "texte": "deux",
+    "date": "2026-11-23T00:38:46",
+    "parole": 0.36,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/003.mp3": {
+    "texte": "trois",
+    "date": "2026-11-23T00:38:49",
+    "parole": 0.35,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/004.mp3": {
+    "texte": "quatre",
+    "date": "2026-11-23T00:38:53",
+    "parole": 0.39,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/005.mp3": {
+    "texte": "cinq",
+    "date": "2026-11-23T00:39:01",
+    "parole": 0.43,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/006.mp3": {
+    "texte": "six",
+    "date": "2026-11-23T00:39:04",
+    "parole": 0.42,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/007.mp3": {
+    "texte": "sept",
+    "date": "2026-11-23T00:39:07",
+    "parole": 0.37,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/008.mp3": {
+    "texte": "huit",
+    "date": "2026-11-23T00:39:09",
+    "parole": 0.39,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/009.mp3": {
+    "texte": "neuf",
+    "date": "2026-11-23T00:39:11",
+    "parole": 0.36,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/010.mp3": {
+    "texte": "dix",
+    "date": "2026-11-23T00:39:14",
+    "parole": 0.44,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/011.mp3": {
+    "texte": "onze",
+    "date": "2026-11-23T00:39:16",
+    "parole": 0.39,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/012.mp3": {
+    "texte": "douze",
+    "date": "2026-11-23T00:39:18",
+    "parole": 0.33,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/013.mp3": {
+    "texte": "treize",
+    "date": "2026-11-23T00:39:20",
+    "parole": 0.29,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/014.mp3": {
+    "texte": "quatorze",
+    "date": "2026-11-23T00:39:22",
+    "parole": 0.48,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/015.mp3": {
+    "texte": "quinze",
+    "date": "2026-11-23T00:39:24",
+    "parole": 0.36,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/016.mp3": {
+    "texte": "seize",
+    "date": "2026-11-23T00:39:28",
+    "parole": 0.33,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/017.mp3": {
+    "texte": "dix-sept",
+    "date": "2026-11-23T00:39:30",
+    "parole": 0.38,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/018.mp3": {
+    "texte": "dix-huit",
+    "date": "2026-11-23T00:39:32",
+    "parole": 0.49,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/019.mp3": {
+    "texte": "dix-neuf",
+    "date": "2026-11-23T00:39:34",
+    "parole": 0.5,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/020.mp3": {
+    "texte": "vingt",
+    "date": "2026-11-23T00:39:36",
+    "parole": 0.21,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/021.mp3": {
+    "texte": "vingt et un",
+    "date": "2026-11-23T00:39:39",
+    "parole": 0.37,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/022.mp3": {
+    "texte": "vingt-deux",
+    "date": "2026-11-23T00:39:41",
+    "parole": 0.33,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/023.mp3": {
+    "texte": "vingt-trois",
+    "date": "2026-11-23T00:39:42",
+    "parole": 0.35,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/024.mp3": {
+    "texte": "vingt-quatre",
+    "date": "2026-11-23T00:39:44",
+    "parole": 0.48,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/025.mp3": {
+    "texte": "vingt-cinq",
+    "date": "2026-11-23T00:39:47",
+    "parole": 0.47,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/026.mp3": {
+    "texte": "vingt-six",
+    "date": "2026-11-23T00:39:48",
+    "parole": 0.43,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/027.mp3": {
+    "texte": "vingt-sept",
+    "date": "2026-11-23T00:39:50",
+    "parole": 0.47,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/028.mp3": {
+    "texte": "vingt-huit",
+    "date": "2026-11-23T00:39:52",
+    "parole": 0.41,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/029.mp3": {
+    "texte": "vingt-neuf",
+    "date": "2026-11-23T00:39:54",
+    "parole": 0.34,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/030.mp3": {
+    "texte": "trente",
+    "date": "2026-11-23T00:39:56",
+    "parole": 0.41,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/031.mp3": {
+    "texte": "trente et un",
+    "date": "2026-11-23T00:39:58",
+    "parole": 0.39,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/032.mp3": {
+    "texte": "trente-deux",
+    "date": "2026-11-23T00:40:00",
+    "parole": 0.35,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/033.mp3": {
+    "texte": "trente-trois",
+    "date": "2026-11-23T00:40:02",
+    "parole": 0.39,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/034.mp3": {
+    "texte": "trente-quatre",
+    "date": "2026-11-23T00:40:04",
+    "parole": 0.29,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/035.mp3": {
+    "texte": "trente-cinq",
+    "date": "2026-11-23T00:40:06",
+    "parole": 0.43,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/036.mp3": {
+    "texte": "trente-six",
+    "date": "2026-11-23T00:40:08",
+    "parole": 0.49,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/037.mp3": {
+    "texte": "trente-sept",
+    "date": "2026-11-23T00:40:15",
+    "parole": 0.4,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/038.mp3": {
+    "texte": "trente-huit",
+    "date": "2026-11-23T00:40:18",
+    "parole": 0.49,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/039.mp3": {
+    "texte": "trente-neuf",
+    "date": "2026-11-23T00:40:26",
+    "parole": 0.48,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/040.mp3": {
+    "texte": "quarante",
+    "date": "2026-11-23T00:40:31",
+    "parole": 0.51,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/041.mp3": {
+    "texte": "quarante et un",
+    "date": "2026-11-23T00:40:33",
+    "parole": 0.4,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/042.mp3": {
+    "texte": "quarante-deux",
+    "date": "2026-11-23T00:40:38",
+    "parole": 0.44,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/043.mp3": {
+    "texte": "quarante-trois",
+    "date": "2026-11-23T00:40:41",
+    "parole": 0.5,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/044.mp3": {
+    "texte": "quarante-quatre",
+    "date": "2026-11-23T00:40:43",
+    "parole": 0.48,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/045.mp3": {
+    "texte": "quarante-cinq",
+    "date": "2026-11-23T00:40:47",
+    "parole": 0.57,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/046.mp3": {
+    "texte": "quarante-six",
+    "date": "2026-11-23T00:40:52",
+    "parole": 0.66,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/047.mp3": {
+    "texte": "quarante-sept",
+    "date": "2026-11-23T00:40:55",
+    "parole": 0.64,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/048.mp3": {
+    "texte": "quarante-huit",
+    "date": "2026-11-23T00:40:58",
+    "parole": 0.6,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/049.mp3": {
+    "texte": "quarante-neuf",
+    "date": "2026-11-23T00:41:01",
+    "parole": 0.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/050.mp3": {
+    "texte": "cinquante",
+    "date": "2026-11-23T00:45:13",
+    "parole": 0.43,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/051.mp3": {
+    "texte": "cinquante et un",
+    "date": "2026-11-23T00:45:16",
+    "parole": 0.51,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/052.mp3": {
+    "texte": "cinquante-deux",
+    "date": "2026-11-23T00:45:18",
+    "parole": 0.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/053.mp3": {
+    "texte": "cinquante-trois",
+    "date": "2026-11-23T00:45:21",
+    "parole": 0.55,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/054.mp3": {
+    "texte": "cinquante-quatre",
+    "date": "2026-11-23T00:45:28",
+    "parole": 0.66,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/055.mp3": {
+    "texte": "cinquante-cinq",
+    "date": "2026-11-23T00:45:31",
+    "parole": 0.7,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/056.mp3": {
+    "texte": "cinquante-six",
+    "date": "2026-11-23T00:45:34",
+    "parole": 0.62,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/057.mp3": {
+    "texte": "cinquante-sept",
+    "date": "2026-11-23T00:45:36",
+    "parole": 0.58,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/058.mp3": {
+    "texte": "cinquante-huit",
+    "date": "2026-11-23T00:45:39",
+    "parole": 0.59,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/059.mp3": {
+    "texte": "cinquante-neuf",
+    "date": "2026-11-23T00:45:41",
+    "parole": 0.67,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/060.mp3": {
+    "texte": "soixante",
+    "date": "2026-11-23T00:45:44",
+    "parole": 0.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/061.mp3": {
+    "texte": "soixante et un",
+    "date": "2026-11-23T00:45:47",
+    "parole": 0.52,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/062.mp3": {
+    "texte": "soixante-deux",
+    "date": "2026-11-23T00:45:52",
+    "parole": 0.51,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/063.mp3": {
+    "texte": "soixante-trois",
+    "date": "2026-11-23T00:45:55",
+    "parole": 0.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/064.mp3": {
+    "texte": "soixante-quatre",
+    "date": "2026-11-23T00:45:58",
+    "parole": 0.65,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/065.mp3": {
+    "texte": "soixante-cinq",
+    "date": "2026-11-23T00:46:00",
+    "parole": 0.63,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/066.mp3": {
+    "texte": "soixante-six",
+    "date": "2026-11-23T00:46:03",
+    "parole": 0.62,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/067.mp3": {
+    "texte": "soixante-sept",
+    "date": "2026-11-23T00:46:06",
+    "parole": 0.6,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/068.mp3": {
+    "texte": "soixante-huit",
+    "date": "2026-11-23T00:46:11",
+    "parole": 0.55,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/069.mp3": {
+    "texte": "soixante-neuf",
+    "date": "2026-11-23T00:46:17",
+    "parole": 0.53,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/070.mp3": {
+    "texte": "soixante-dix",
+    "date": "2026-11-23T00:46:24",
+    "parole": 0.67,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/071.mp3": {
+    "texte": "soixante et onze",
+    "date": "2026-11-23T00:46:27",
+    "parole": 0.69,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/072.mp3": {
+    "texte": "soixante-douze",
+    "date": "2026-11-23T00:46:30",
+    "parole": 0.62,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/073.mp3": {
+    "texte": "soixante-treize",
+    "date": "2026-11-23T00:46:33",
+    "parole": 0.65,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/074.mp3": {
+    "texte": "soixante-quatorze",
+    "date": "2026-11-23T00:46:36",
+    "parole": 0.67,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/075.mp3": {
+    "texte": "soixante-quinze",
+    "date": "2026-11-23T00:46:39",
+    "parole": 0.73,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/076.mp3": {
+    "texte": "soixante-seize",
+    "date": "2026-11-23T00:46:42",
+    "parole": 0.59,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/077.mp3": {
+    "texte": "soixante-dix-sept",
+    "date": "2026-11-23T00:46:45",
+    "parole": 0.64,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/078.mp3": {
+    "texte": "soixante-dix-huit",
+    "date": "2026-11-23T00:46:53",
+    "parole": 0.64,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/079.mp3": {
+    "texte": "soixante-dix-neuf",
+    "date": "2026-11-23T00:46:57",
+    "parole": 0.71,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/080.mp3": {
+    "texte": "quatre-vingts",
+    "date": "2026-11-23T00:47:00",
+    "parole": 0.43,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/081.mp3": {
+    "texte": "quatre-vingt-un",
+    "date": "2026-11-23T00:47:03",
+    "parole": 0.55,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/082.mp3": {
+    "texte": "quatre-vingt-deux",
+    "date": "2026-11-23T00:47:06",
+    "parole": 0.48,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/083.mp3": {
+    "texte": "quatre-vingt-trois",
+    "date": "2026-11-23T00:47:08",
+    "parole": 0.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/084.mp3": {
+    "texte": "quatre-vingt-quatre",
+    "date": "2026-11-23T00:47:10",
+    "parole": 0.51,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/085.mp3": {
+    "texte": "quatre-vingt-cinq",
+    "date": "2026-11-23T00:47:13",
+    "parole": 0.64,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/086.mp3": {
+    "texte": "quatre-vingt-six",
+    "date": "2026-11-23T00:47:22",
+    "parole": 0.53,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/087.mp3": {
+    "texte": "quatre-vingt-sept",
+    "date": "2026-11-23T00:47:34",
+    "parole": 0.57,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/088.mp3": {
+    "texte": "quatre-vingt-huit",
+    "date": "2026-11-23T00:47:40",
+    "parole": 0.68,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/089.mp3": {
+    "texte": "quatre-vingt-neuf",
+    "date": "2026-11-23T00:47:43",
+    "parole": 0.47,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/090.mp3": {
+    "texte": "quatre-vingt-dix",
+    "date": "2026-11-23T00:47:46",
+    "parole": 0.58,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/091.mp3": {
+    "texte": "quatre-vingt-onze",
+    "date": "2026-11-23T00:47:49",
+    "parole": 0.58,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/092.mp3": {
+    "texte": "quatre-vingt-douze",
+    "date": "2026-11-23T00:47:52",
+    "parole": 0.58,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/093.mp3": {
+    "texte": "quatre-vingt-treize",
+    "date": "2026-11-23T00:47:58",
+    "parole": 0.68,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/094.mp3": {
+    "texte": "quatre-vingt-quatorze",
+    "date": "2026-11-23T00:48:02",
+    "parole": 0.69,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/095.mp3": {
+    "texte": "quatre-vingt-quinze",
+    "date": "2026-11-23T00:48:04",
+    "parole": 0.62,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/096.mp3": {
+    "texte": "quatre-vingt-seize",
+    "date": "2026-11-23T00:48:08",
+    "parole": 0.69,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/097.mp3": {
+    "texte": "quatre-vingt-dix-sept",
+    "date": "2026-11-23T00:48:11",
+    "parole": 0.71,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/098.mp3": {
+    "texte": "quatre-vingt-dix-huit",
+    "date": "2026-11-23T00:48:14",
+    "parole": 0.81,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/099.mp3": {
+    "texte": "quatre-vingt-dix-neuf",
+    "date": "2026-11-23T00:48:17",
+    "parole": 0.65,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/100.mp3": {
+    "texte": "cent",
+    "date": "2026-11-23T00:48:20",
+    "parole": 0.26,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/F01.mp3": {
+    "texte": "une",
+    "date": "2026-11-23T00:48:23",
+    "parole": 0.24,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/F21.mp3": {
+    "texte": "vingt et une",
+    "date": "2026-11-23T00:48:26",
+    "parole": 0.5,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/F31.mp3": {
+    "texte": "trente et une",
+    "date": "2026-11-23T00:48:31",
+    "parole": 0.61,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/F41.mp3": {
+    "texte": "quarante et une",
+    "date": "2026-11-23T00:48:35",
+    "parole": 0.61,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Nombres/F51.mp3": {
+    "texte": "cinquante et une",
+    "date": "2026-11-23T00:48:53",
+    "parole": 0.7,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Position/Amarres.mp3": {
+    "texte": "Nous sommes amarrés, commandant.",
+    "date": "2026-11-23T00:44:45",
+    "parole": 1.11,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Position/Ecran.mp3": {
+    "texte": "Votre position est à l'écran, commandant.",
+    "date": "2026-11-23T00:44:17",
+    "parole": 1.48,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Position/Poses.mp3": {
+    "texte": "Nous sommes posés, commandant.",
+    "date": "2026-11-23T00:44:31",
+    "parole": 1.15,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Position/Supercroisiere.mp3": {
+    "texte": "Nous sommes en supercroisière, commandant.",
+    "date": "2026-11-23T00:44:25",
+    "parole": 1.97,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/AucuneAvarie.mp3": {
+    "texte": "Aucune avarie.",
+    "date": "2026-11-23T00:55:23",
+    "parole": 0.66,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/AucuneDonnee.mp3": {
+    "texte": "Aucune donnée sur le vaisseau pour l'instant.",
+    "date": "2026-11-23T00:56:34",
+    "parole": 1.74,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/Avaries.mp3": {
+    "texte": "avaries :",
+    "date": "2026-11-23T00:55:33",
+    "parole": 0.53,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/BoucliersEnLigne.mp3": {
+    "texte": "Boucliers en ligne.",
+    "date": "2026-11-23T00:55:11",
+    "parole": 0.7,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/BoucliersHorsLigne.mp3": {
+    "texte": "Boucliers hors ligne.",
+    "date": "2026-11-23T00:55:14",
+    "parole": 0.79,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/CoqueA.mp3": {
+    "texte": "Coque à",
+    "date": "2026-11-23T00:54:57",
+    "parole": 0.47,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/CoqueIntacte.mp3": {
+    "texte": "Coque intacte.",
+    "date": "2026-11-23T00:54:54",
+    "parole": 0.82,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/CoqueSous.mp3": {
+    "texte": "Coque sous",
+    "date": "2026-11-23T00:55:00",
+    "parole": 0.42,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/EquipementInconnu.mp3": {
+    "texte": "Équipement inconnu.",
+    "date": "2026-11-23T00:55:19",
+    "parole": 0.84,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/EtDautres.mp3": {
+    "texte": "Et d'autres encore.",
+    "date": "2026-11-23T00:55:46",
+    "parole": 0.63,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/HorsService.mp3": {
+    "texte": "hors service",
+    "date": "2026-11-23T00:55:39",
+    "parole": 0.54,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/ModuleInconnu.mp3": {
+    "texte": "Module non identifié",
+    "date": "2026-11-23T00:55:50",
+    "parole": 0.96,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/Perime.mp3": {
+    "texte": "Relevé antérieur aux derniers dégâts.",
+    "date": "2026-11-23T00:56:21",
+    "parole": 1.86,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/PlusieursAvaries.mp3": {
+    "texte": "Plusieurs avaries :",
+    "date": "2026-11-23T00:55:37",
+    "parole": 0.67,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/PourCent.mp3": {
+    "texte": "pour cent",
+    "date": "2026-11-23T00:55:03",
+    "parole": 0.37,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/UneAvarie.mp3": {
+    "texte": "Une avarie :",
+    "date": "2026-11-23T00:55:30",
+    "parole": 0.57,
+    "reglages": "8148c1d960"
+  },
+  "data/son/Morceaux/Rapport/VerriereBrisee.mp3": {
+    "texte": "Verrière brisée.",
+    "date": "2026-11-23T00:55:07",
+    "parole": 0.81,
+    "reglages": "8148c1d960"
   },
   "data/son/Refus/Amarre.mp3": {
     "texte": "Impossible, le vaisseau est amarré.",
@@ -814,6 +2866,12 @@
     "date": "2026-11-22T20:23:17",
     "parole": 2.4,
     "reglages": "c6bb72396e"
+  },
+  "data/son/interact/Reciproque.mp3": {
+    "texte": "C'est réciproque, commandant.",
+    "date": "2026-11-23T01:06:00",
+    "parole": 1.9,
+    "reglages": "8148c1d960"
   },
   "data/son/reveil/A-T-ilCom.mp3": {
     "texte": "Qu'y a-t-il, commandant ?",

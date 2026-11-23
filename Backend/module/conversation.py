@@ -1069,7 +1069,7 @@ def ecrire_script(chemin=CHEMIN_SCRIPT):
         "- Tu peux changer une phrase : modifie `texte` dans le JSON (le fichier garde son nom).",
     ]
     if sans_voix:
-        corps.extend(["", "## Répliques affichées sans voix (rien à enregistrer)", "",
+        corps.extend(["", "## Répliques à texte variable (à enregistrer en morceaux dans le studio vocal)", "",
                       "Leur texte change à chaque fois (heure, système...).", "",
                       "| Contexte | Phrase |", "|---|---|"])
         corps.extend(f"| {contexte} | {texte} |" for contexte, texte in sans_voix)
