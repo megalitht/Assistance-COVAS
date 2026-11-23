@@ -559,6 +559,26 @@ window.ATELIER = (() => {
         };
     }
 
+    // Dans les réglages de l'application, le plan s'installe directement (la fenêtre ne télécharge pas)
+    const bord = (() => {
+        try { return window.parent !== window ? window.parent.COVAS_REGLAGES : null; } catch { return null; }
+    })();
+    const installable = !!bord?.peutInstallerPlan?.();
+    $('installer').hidden = $('note-installer').hidden = !installable;
+    $('telecharger').hidden = $('note-telecharger').hidden = installable;
+    let confirmation = 0;
+
+    function desarmerInstallation() {
+        clearTimeout(confirmation);
+        confirmation = 0;
+        $('installer').textContent = 'Installer dans le COVAS';
+    }
+
+    function exportPossible(actif) {
+        $('telecharger').disabled = $('installer').disabled = !actif;
+        desarmerInstallation();
+    }
+
     function dessinerSource() {
         const r = etat.resultat;
         const canvas = $('vue-source');
@@ -599,10 +619,10 @@ window.ATELIER = (() => {
             dessinerSource();
             const qualite = rep.qualite != null ? ` · symétrie ${(rep.qualite * 100).toFixed(0)} %` : ' · axe cliqué';
             $('etat').textContent = `${plan.nom} : ${plan.largeur.toFixed(0)} × 1000 (largeur/longueur ${(plan.largeur / 1000).toFixed(3)})${qualite}`;
-            $('telecharger').disabled = false;
+            exportPossible(true);
         } catch (erreur) {
             $('etat').textContent = 'Échec : ' + erreur.message;
-            $('telecharger').disabled = true;
+            exportPossible(false);
         }
     }
 
@@ -656,6 +676,24 @@ window.ATELIER = (() => {
         }
         etat.clics.push([x, y]);
         if (etat.clics.length === 2) { etat.mode = null; recalculer(); } else dessinerSource();
+    };
+
+    $('installer').onclick = async () => {
+        const plan = etat.resultat?.plan;
+        if (!plan) return;
+        if (!confirmation) {                         // deux clics : l'ancien plan va être remplacé
+            $('installer').textContent = `Remplacer le plan de ${plan.nom} ?`;
+            confirmation = setTimeout(desarmerInstallation, 4000);
+            return;
+        }
+        desarmerInstallation();
+        $('installer').disabled = true;
+        $('etat').textContent = 'Installation…';
+        const r = await bord.installerPlan(plan.id, A.fichier(plan, etat.nom), plan).catch(e => ({ erreur: e.message || String(e) }));
+        $('installer').disabled = false;
+        $('etat').textContent = r?.ok
+            ? `Plan de ${plan.nom} installé` + (r.sauvegarde ? ` (ancien plan : ${r.sauvegarde}).` : '.')
+            : `Installation impossible : ${r?.erreur || 'erreur inconnue'}`;
     };
 
     $('telecharger').onclick = () => {

@@ -3,7 +3,7 @@ import sys
 
 # Le terminal est habillé AVANT les autres imports : certains modules affichent
 # déjà des messages au chargement.
-from module import terminal as t
+from module.interface import terminal as t
 t.activer()
 t.banniere("COVAS // ASSISTANCE DE BORD")
 t.ligne("SYSTEM", "Initialisation du noyau COVAS...")
@@ -26,18 +26,20 @@ import winsound
 
 
 # Importation de nos modules personnalisés situés dans le sous-dossier 'module'
-from module.actions import executer_commande, surveiller_reactions, programme_en_cours
-from module.cerveau import obtenir_chemin_audio
-from module import touches
-from module import lecteur_logs as logs
-from module.lecteur_logs import DOSSIER_ED, surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
-from module.voix import generer_et_jouer_voix
-from module import synthese
-from module import sons
-from module import conversation
-from module import serveur_ws
-from module.serveur_ws import demarrer_serveur_web
-from module.comprehension import trouver_action, contient_reveil, est_reveil_seul, vocabulaire_pour_whisper
+from module.pilotage.actions import executer_commande, surveiller_reactions, programme_en_cours
+from module.dialogue.cerveau import obtenir_chemin_audio
+from module.son import audio
+from module.pilotage import touches
+from module.jeu import lecteur_logs as logs
+from module.jeu.lecteur_logs import DOSSIER_ED, surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
+from module.son.voix import generer_et_jouer_voix
+from module.son import sons
+from module.dialogue import conversation
+from module.son import ecoute as pause_ecoute
+from module.interface import reglages
+from module.interface import serveur_ws
+from module.interface.serveur_ws import demarrer_serveur_web
+from module.dialogue.comprehension import trouver_action, contient_reveil, est_reveil_seul, vocabulaire_pour_whisper
 t.ok("Modules de bord chargés.", t.CYAN)
 
 # Dossier Backend/ : les chemins ne dépendent plus de la lettre du disque
@@ -81,96 +83,145 @@ def separer_politesse(texte):
 
 
 def detecter_action(texte_entendu):
-    """Trouve l'action demandée (correspondance exacte, puis approchée) : voir module/comprehension.py."""
+    """Trouve l'action demandée (correspondance exacte, puis approchée) : voir module/dialogue/comprehension.py."""
     return trouver_action(texte_entendu, barks, CLES_IGNOREES)
 
-# --- CHARGEMENT DES RÉPLIQUES ET PARAMÈTRES (BARKS) ---
-chemin_barks = os.path.join(DOSSIER_BACKEND, "data", "barks.json")
-with open(chemin_barks, "r", encoding="utf-8") as fichier:
-    barks = json.load(fichier)
-t.ok(f"Répliques indexées ({len(barks)} entrées).")
+TITRE = "COVAS — Assistance de bord"      # titre de la fenêtre (voir macros.TITRE_INTERFACE)
 
-# Conversations RP (data/conversations.json) : vérifiées au démarrage
-try:
-    _erreurs_conversation = conversation.charger(actions=barks)
-    for _erreur in _erreurs_conversation:
-        t.erreur("CONVERSATION", _erreur)
-    _enregistrees = sum(1 for r in conversation._contenu["repliques"]
-                        if conversation.chemin_enregistrement(r))
-    t.ok(f"Conversations chargées ({len(conversation._contenu['sujets'])} sujets, "
-         f"{_enregistrees}/{len(conversation._contenu['repliques'])} répliques enregistrées).")
-except (OSError, ValueError) as _erreur:
-    t.erreur("CONVERSATION", f"conversations.json illisible : {_erreur}")
-
-# Extraire les mots de réveil depuis le JSON
-MOTS_REVEIL = barks["mots_reveil"]["mots_cles"]
-
-# --- INITIALISATION IA (WHISPER) ---
-# large-v3-turbo comprend bien mieux le français que l'ancien modèle « small » ;
-# l'ancien reste utilisé en secours si le dossier du nouveau est absent.
-chemin_vers_fichiers = os.path.join(DOSSIER_BACKEND, "module", "modele_vocal_turbo")
-if not os.path.exists(os.path.join(chemin_vers_fichiers, "model.bin")):
-    chemin_vers_fichiers = os.path.join(DOSSIER_BACKEND, "module", "modele_vocal_fr")
-t.vide()
-t.ligne("IA", f"Chargement du modèle vocal : {os.path.basename(chemin_vers_fichiers)}")
-t.ligne("IA", "Transfert vers le GPU (cuda / float16)...")
-with t.Chargement():
-    modele_vocal = WhisperModel(chemin_vers_fichiers, device="cuda", compute_type="float16")
-t.ok("Modèle de reconnaissance vocale opérationnel.")
+# Remplis par initialiser() : rien de lourd (modèle vocal, micro) n'est chargé à l'import,
+# pour que l'application (app.py) s'ouvre tout de suite et n'active le COVAS qu'au clic.
+barks = {}
+MOTS_REVEIL = []
+PROMPT_WHISPER = ""
+modele_vocal = None
+reconnaisseur = None
+micro_calibre = None            # micro sur lequel le seuil d'écoute a été calibré
 
 
-PROMPT_WHISPER = vocabulaire_pour_whisper(barks)
+def _signaler(progression, texte, etat="etape"):
+    """Transmet une étape du démarrage à l'écran d'accueil de l'application (s'il y en a un)."""
+    if progression:
+        try:
+            progression(texte, etat)
+        except Exception:
+            pass
 
-# Le micro est calibré UNE fois au démarrage (puis le seuil s'adapte tout seul) :
-# recalibrer avant chaque phrase mangeait le début de la commande.
-reconnaisseur = sr.Recognizer()
-reconnaisseur.dynamic_energy_threshold = True
-reconnaisseur.pause_threshold = 0.7         # silence (s) qui marque la fin de la phrase
-reconnaisseur.non_speaking_duration = 0.4
-with sr.Microphone() as _source:
-    t.ligne("MICRO", "Calibrage du micro (silence, s'il vous plaît)...")
-    reconnaisseur.adjust_for_ambient_noise(_source, duration=1.0)
-t.ok(f"Micro calibré (seuil {reconnaisseur.energy_threshold:.0f}).")
+
+def initialiser(progression=None):
+    """Charge les répliques, le modèle vocal (GPU) et calibre le micro.
+    `progression(texte, etat)` : rappel facultatif pour l'écran d'accueil."""
+    global barks, MOTS_REVEIL, PROMPT_WHISPER, modele_vocal, reconnaisseur, micro_calibre
+
+    # --- CHARGEMENT DES RÉPLIQUES ET PARAMÈTRES (BARKS) ---
+    _signaler(progression, "Indexation des répliques")
+    chemin_barks = os.path.join(DOSSIER_BACKEND, "data", "barks.json")
+    with open(chemin_barks, "r", encoding="utf-8") as fichier:
+        barks = json.load(fichier)
+    reglages.lier_commandes(barks)      # modes d'énergie créés dans l'interface
+    t.ok(f"Répliques indexées ({len(barks)} entrées).")
+
+    # Conversations RP (data/conversations.json) : vérifiées au démarrage
+    _signaler(progression, "Chargement des conversations")
+    try:
+        erreurs_conversation = conversation.charger(actions=barks)
+        for erreur in erreurs_conversation:
+            t.erreur("CONVERSATION", erreur)
+        enregistrees = sum(1 for r in conversation._contenu["repliques"]
+                           if conversation.chemin_enregistrement(r))
+        t.ok(f"Conversations chargées ({len(conversation._contenu['sujets'])} sujets, "
+             f"{enregistrees}/{len(conversation._contenu['repliques'])} répliques enregistrées).")
+    except (OSError, ValueError) as erreur:
+        t.erreur("CONVERSATION", f"conversations.json illisible : {erreur}")
+
+    # Extraire les mots de réveil depuis le JSON
+    MOTS_REVEIL = barks["mots_reveil"]["mots_cles"]
+
+    # --- INITIALISATION IA (WHISPER) ---
+    # large-v3-turbo comprend bien mieux le français que l'ancien modèle « small » ;
+    # l'ancien reste utilisé en secours si le dossier du nouveau est absent.
+    chemin_vers_fichiers = os.path.join(DOSSIER_BACKEND, "module", "modele_vocal_turbo")
+    if not os.path.exists(os.path.join(chemin_vers_fichiers, "model.bin")):
+        chemin_vers_fichiers = os.path.join(DOSSIER_BACKEND, "module", "modele_vocal_fr")
+    t.vide()
+    t.ligne("IA", f"Chargement du modèle vocal : {os.path.basename(chemin_vers_fichiers)}")
+    t.ligne("IA", "Transfert vers le GPU (cuda / float16)...")
+    _signaler(progression, "Transfert du modèle vocal vers le GPU")
+    with t.Chargement():
+        modele_vocal = WhisperModel(chemin_vers_fichiers, device="cuda", compute_type="float16")
+    t.ok("Modèle de reconnaissance vocale opérationnel.")
+
+    PROMPT_WHISPER = vocabulaire_pour_whisper(barks)
+
+    # Le micro est calibré UNE fois au démarrage (puis le seuil s'adapte tout seul) :
+    # recalibrer avant chaque phrase mangeait le début de la commande.
+    _signaler(progression, "Calibrage du micro — silence, s'il vous plaît")
+    reconnaisseur = sr.Recognizer()
+    reconnaisseur.dynamic_energy_threshold = True
+    reconnaisseur.pause_threshold = 0.7         # silence (s) qui marque la fin de la phrase
+    reconnaisseur.non_speaking_duration = 0.4
+    micro_calibre = audio.entree()
+    with sr.Microphone(device_index=audio.index_micro()) as source:
+        t.ligne("MICRO", "Calibrage du micro (silence, s'il vous plaît)...")
+        reconnaisseur.adjust_for_ambient_noise(source, duration=1.0)
+    t.ok(f"Micro calibré (seuil {reconnaisseur.energy_threshold:.0f}).")
 
 
 def ecouter(silencieux=False):
-    """Capte le son du micro et le transcrit localement avec Whisper"""
-    with sr.Microphone() as source:
-        if not silencieux:
-            t.etat("ÉCOUTE", "ACTIVE — parlez maintenant", t.CYAN)
-        try:
-            audio = reconnaisseur.listen(source, timeout=3, phrase_time_limit=7)
-            # Directement en mémoire, au format attendu par Whisper (16 kHz, mono, float32)
-            brut = audio.get_raw_data(convert_rate=16000, convert_width=2)
-            echantillons = np.frombuffer(brut, dtype=np.int16).astype(np.float32) / 32768.0
+    """Écoute le micro choisi dans Réglages > Son. S'il ne s'ouvre pas, celui de Windows prend
+    le relais quelques secondes : un micro débranché ne doit pas arrêter le COVAS."""
+    global micro_calibre
+    choisi = audio.entree()
+    try:
+        with sr.Microphone(device_index=audio.index_micro()) as source:
+            if choisi != micro_calibre:             # autre micro : autre niveau de bruit de fond
+                reconnaisseur.adjust_for_ambient_noise(source, duration=0.6)
+                micro_calibre = choisi
+            return transcrire(source, silencieux)
+    except (OSError, AssertionError, AttributeError) as erreur:
+        t.erreur("MICRO", f"Micro inaccessible : {erreur}")
+        audio.micro_en_echec()
+        time.sleep(1)
+        return ""
 
-            segments, info = modele_vocal.transcribe(
-                echantillons,
-                language="fr",
-                beam_size=5,
-                temperature=0.0,
-                initial_prompt=PROMPT_WHISPER,
-                condition_on_previous_text=False,
-                without_timestamps=True,
-                no_speech_threshold=0.6,
-                # Ne transcrit que les passages où quelqu'un parle vraiment : évite que
-                # Whisper « invente » une phrase (voire une commande) sur un bruit.
-                vad_filter=True,
-                vad_parameters={"min_silence_duration_ms": 500, "speech_pad_ms": 300},
-            )
-            texte = "".join(s.text for s in segments if s.no_speech_prob < 0.6).strip()
-            if texte and not silencieux:
-                t.ligne("WHISPER", f"« {texte} »", t.CYAN)
-            return texte
-        except sr.WaitTimeoutError:
-            pass
-        except Exception as e:
-            t.erreur("MICRO", f"Erreur lors de la capture : {e}")
+
+def transcrire(source, silencieux=False):
+    """Capte une phrase et la transcrit localement avec Whisper"""
+    if not silencieux:
+        t.etat("ÉCOUTE", "ACTIVE — parlez maintenant", t.CYAN)
+    try:
+        prise = reconnaisseur.listen(source, timeout=3, phrase_time_limit=7)
+        # Directement en mémoire, au format attendu par Whisper (16 kHz, mono, float32)
+        brut = prise.get_raw_data(convert_rate=16000, convert_width=2)
+        echantillons = np.frombuffer(brut, dtype=np.int16).astype(np.float32) / 32768.0
+
+        segments, info = modele_vocal.transcribe(
+            echantillons,
+            language="fr",
+            beam_size=5,
+            temperature=0.0,
+            initial_prompt=PROMPT_WHISPER,
+            condition_on_previous_text=False,
+            without_timestamps=True,
+            no_speech_threshold=0.6,
+            # Ne transcrit que les passages où quelqu'un parle vraiment : évite que
+            # Whisper « invente » une phrase (voire une commande) sur un bruit.
+            vad_filter=True,
+            vad_parameters={"min_silence_duration_ms": 500, "speech_pad_ms": 300},
+        )
+        texte = "".join(s.text for s in segments if s.no_speech_prob < 0.6).strip()
+        if texte and not silencieux:
+            t.ligne("WHISPER", f"« {texte} »", t.CYAN)
+        return texte
+    except sr.WaitTimeoutError:
+        pass
+    except Exception as e:
+        t.erreur("MICRO", f"Erreur lors de la capture : {e}")
     return ""
 
 
 class CovasBackend:
-    def __init__(self):
+    def __init__(self, progression=None):
+        self.progression = progression    # écran d'accueil de l'application (app.py)
         self.tts_queue = asyncio.Queue()
         self.action_queue = asyncio.Queue()
         # Le COVAS parle-t-il ? (sa voix peut revenir dans le micro par les haut-parleurs)
@@ -201,7 +252,8 @@ class CovasBackend:
 
     def occupe(self):
         """Le COVAS ne lance pas de conversation pendant qu'on lui parle ou qu'il parle."""
-        return (self.phrases_en_cours > 0 or self.parole["en_cours"] or not self.tts_queue.empty()
+        return (pause_ecoute.PAUSE.is_set()      # studio vocal ouvert : on ne parle pas sur une prise
+                or self.phrases_en_cours > 0 or self.parole["en_cours"] or not self.tts_queue.empty()
                 or not self.action_queue.empty())
 
     # --- Conversations -------------------------------------------------------
@@ -330,8 +382,11 @@ class CovasBackend:
             print("[Démarrage] Systèmes dégradés :")
             for probleme in problemes:
                 print(f"   - {probleme}")
+                _signaler(self.progression, probleme, "attention")
+            _signaler(self.progression, "Systèmes dégradés — COVAS en ligne", "pret")
             return
         print("[Démarrage] Tous les systèmes sont opérationnels.")
+        _signaler(self.progression, "Système COVAS opérationnel", "pret")
         await self.dire("système_vocal_opérationnel")
         await self.tts_queue.join()
 
@@ -339,6 +394,7 @@ class CovasBackend:
         self.taches = set()
         t.vide()
         t.ligne("SYSTEM", "Lancement des sous-systèmes...")
+        _signaler(self.progression, "Lancement des sous-systèmes")
         # Le serveur de l'interface d'abord, pour que l'écran se connecte au plus vite
         serveur_web = self.lancer_tache(demarrer_serveur_web(self.action_queue), "serveur web")
         self.lancer_tache(self.tache_lecture_audio(), "lecture audio")
@@ -348,8 +404,6 @@ class CovasBackend:
         self.lancer_tache(surveiller_status_json(), "Status.json")
         self.lancer_tache(surveiller_fichiers_auxiliaires(), "fichiers auxiliaires")
         self.lancer_tache(surveiller_reactions(self.dire), "réactions automatiques")
-        # Voix de synthèse (rapport d'avarie) chargée d'avance : le premier rapport part sans attendre
-        self.lancer_tache(asyncio.to_thread(synthese.charger), "synthèse vocale")
         # Conversations : phrases tapées dans l'interface, et le COVAS qui prend la parole
         serveur_ws.definir_questions(self.question_ecrite)
         conversation.configurer(programme_en_cours=programme_en_cours)
@@ -370,8 +424,13 @@ class CovasBackend:
         t.vide()
 
         while True:
+            if pause_ecoute.PAUSE.is_set():      # studio vocal ouvert : ses répliques ne sont pas des ordres
+                await asyncio.sleep(0.2)
+                continue
             debut_ecoute = time.monotonic()
             text = await asyncio.to_thread(ecouter, silencieux=True)
+            if pause_ecoute.PAUSE.is_set():
+                continue
 
             if text:
                 text_min = text.lower()
@@ -396,17 +455,24 @@ class CovasBackend:
 
                     debut_ecoute = time.monotonic()
                     text = await asyncio.to_thread(ecouter, silencieux=False)
+                    if pause_ecoute.PAUSE.is_set():
+                        continue
                     if not text:
                         t.ligne("SIGNAL", "Délai d'attente dépassé.", t.ROUGE)
                         t.etat("ÉCOUTE", "VEILLE", t.CYAN)
                         continue
 
-                # Commande ou conversation (voir module/conversation.py). La politesse est
+                # Commande ou conversation (voir module/dialogue/conversation.py). La politesse est
                 # notée puis retirée : la commande est toujours exécutée.
                 await self.traiter_phrase(text, debut_ecoute=debut_ecoute)
                 t.etat("ÉCOUTE", "VEILLE", t.CYAN)
 
 
+def demarrer(progression=None):
+    """Active le COVAS : chargements, puis boucle d'écoute (ne rend la main qu'à l'arrêt)."""
+    initialiser(progression)
+    asyncio.run(CovasBackend(progression).boucle_principale())
+
+
 if __name__ == "__main__":
-    backend = CovasBackend()
-    asyncio.run(backend.boucle_principale())
+    demarrer()

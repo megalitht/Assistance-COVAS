@@ -1,10 +1,10 @@
 """
-Tests des conversations du COVAS (module/conversation.py + data/conversations.json).
+Tests des conversations du COVAS (module/dialogue/conversation.py + data/conversations.json).
 
 Lancer depuis Backend/ :
     ..\\.venv\\Scripts\\python.exe -m unittest discover -s tests -v
 
-Aucun micro, aucune touche, aucun accès au jeu : module/macros.py et module/actions.py ne
+Aucun micro, aucune touche, aucun accès au jeu : module/pilotage/macros.py et module/pilotage/actions.py ne
 sont JAMAIS importés (leur import peut réécrire le fichier de touches d'Elite).
 """
 import asyncio
@@ -19,7 +19,7 @@ from unittest import mock
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DOSSIER_BACKEND)
 
-from module import comprehension, conversation  # noqa: E402
+from module.dialogue import comprehension, conversation  # noqa: E402
 
 with open(os.path.join(DOSSIER_BACKEND, "data", "barks.json"), encoding="utf-8") as _f:
     BARKS = json.load(_f)
@@ -145,9 +145,15 @@ class Contextes(Base):
         self.assertIsNone(conversation.texte_de(d.replique, etat())[1])
 
     def test_danger_prioritaire(self):
+        conversation.observer_evenement({"event": "UnderAttack", "Target": "You"})
         e = etat(flags=VAISSEAU | DANGER, vaisseau={"coque": 0.3})
         d = decider("Covas comment va le vaisseau", e)
         self.assertEqual(d.replique["id"], "EtatDanger")
+
+    def test_hostiles_proches_sans_tir_pas_de_combat(self):
+        e = etat(flags=VAISSEAU | BOUCLIERS | DANGER, vaisseau={"coque": 0.3})
+        d = decider("Covas comment va le vaisseau", e)
+        self.assertNotEqual(d.replique["id"], "EtatDanger")
 
     def test_vaisseau_du_commandant(self):
         e = etat(vaisseau={"type": "python_nx"})
@@ -179,11 +185,8 @@ class Suites(Base):
         async def commander(c):
             commandes.append(c)
 
-        async def synthetiser(texte):
-            return None
-
         asyncio.run(conversation.jouer(replique, e or etat(), dire=dire, afficher=afficher,
-                                       commander=commander, synthetiser=synthetiser))
+                                       commander=commander))
         return dits, commandes
 
     def test_oui_lance_le_rapport(self):

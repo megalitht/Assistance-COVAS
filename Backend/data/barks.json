@@ -531,6 +531,9 @@
             "vitesse 0",
             "arrêt des moteurs",
             "coupe les gaz",
+            "coupe les moteurs",
+            "coupe le moteur",
+            "arrête les moteurs",
             "arrêt complet",
             "immobilise"
         ],
@@ -989,5 +992,213 @@
         "reponses": [
             "data/son/Refus/Incomprise.mp3"
         ]
+    },
+    "manuel_fsd": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Macros/Deploiment/FSD/FSD1.mp3",
+            "data/son/Macros/Deploiment/FSD/FSD3.mp3"
+        ]
+    },
+    "manuel_train_sorti": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Macros/Deploiment/train/TrainDéployé.mp3",
+            "data/son/Macros/Deploiment/train/TrainDéployé2.mp3"
+        ]
+    },
+    "manuel_soute_ouverte": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Macros/Deploiment/soute/SouteDéployé.mp3"
+        ]
+    },
+    "manuel_train_rentre": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/TrainRentre.mp3"
+        ]
+    },
+    "manuel_soute_fermee": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/SouteFermee.mp3"
+        ]
+    },
+    "manuel_armes_sorties": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/ArmesSorties.mp3"
+        ]
+    },
+    "manuel_armes_rentrees": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/ArmesRentrees.mp3"
+        ]
+    },
+    "manuel_phares_on": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/PharesOn.mp3"
+        ]
+    },
+    "manuel_phares_off": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/PharesOff.mp3"
+        ]
+    },
+    "manuel_nvg_on": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/NvgOn.mp3"
+        ]
+    },
+    "manuel_nvg_off": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/NvgOff.mp3"
+        ]
+    },
+    "manuel_silencieux_on": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/SilencieuxOn.mp3"
+        ]
+    },
+    "manuel_silencieux_off": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/SilencieuxOff.mp3"
+        ]
+    },
+    "manuel_analyse": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/ModeAnalyse.mp3"
+        ]
+    },
+    "manuel_combat": {
+        "mots_cles": [],
+        "reponses": [
+            "data/son/Manuel/ModeCombat.mp3"
+        ]
+    },
+    "assistance_vol": {
+        "mots_cles": ["assistance de vol", "assistance au vol", "assistance du vol", "assistance vol", "aide au vol", "aide de vol", "flight assist", "assistance off", "assistance on", "fa off", "fa on"],
+        "reponses": []
+    },
+    "vrs_frein": {
+        "mots_cles": ["frein à main", "frein", "handbrake"],
+        "reponses": []
+    },
+    "vrs_assistance": {
+        "mots_cles": ["assistance de conduite", "aide à la conduite", "assistance conduite"],
+        "reponses": []
+    },
+    "vrs_tourelle": {
+        "mots_cles": ["tourelle", "vue tourelle"],
+        "reponses": []
+    },
+    "vrs_vaisseau": {
+        "mots_cles": ["rappelle le vaisseau", "rappel du vaisseau", "rappeler le vaisseau", "fais revenir le vaisseau", "renvoie le vaisseau", "renvoyer le vaisseau", "congédie le vaisseau"],
+        "reponses": []
+    },
+    "pied_lampe": {
+        "mots_cles": ["lampe", "lampe torche"],
+        "reponses": []
+    },
+    "pied_recharger": {
+        "mots_cles": ["recharge l'arme", "recharge mon arme", "recharger l'arme", "change de chargeur"],
+        "reponses": []
+    },
+    "pied_grenade": {
+        "mots_cles": ["grenade suivante", "change de grenade"],
+        "reponses": []
+    },
+    "pied_soin": {
+        "mots_cles": ["trousse de soin", "trousse de soins", "kit de soin", "medkit", "soigne-moi"],
+        "reponses": []
+    },
+    "pied_cellule": {
+        "mots_cles": ["cellule d'énergie", "cellule énergie", "batterie de combinaison"],
+        "reponses": []
+    },
+    "pied_echantillonneur": {
+        "mots_cles": ["échantillonneur", "échantillonneur génétique", "outil de combinaison", "sampler"],
+        "reponses": []
+    },
+    "pied_analyseur": {
+        "mots_cles": ["analyseur de profil", "scanner de profil"],
+        "reponses": []
+    },
+    "chasse": {
+        "mots_cles": ["chasseur de primes", "chasse aux primes", "chasse à la prime", "mode chasse"],
+        "reponses": []
+    },
+    "chasse_active": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/ChasseActive1.mp3", "data/son/Chasse/ChasseActive2.mp3"]
+    },
+    "chasse_coupee": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/ChasseCoupee.mp3"]
+    },
+    "chasse_fin": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/ChasseFin.mp3"]
+    },
+    "chasse_recherchee": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/Recherchee1.mp3", "data/son/Chasse/Recherchee2.mp3", "data/son/Chasse/Recherchee3.mp3"]
+    },
+    "chasse_clean": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/Clean1.mp3", "data/son/Chasse/Clean2.mp3"]
+    },
+    "chasse_autorite": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/Autorites.mp3"]
+    },
+    "chasse_sans_loi": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/SansJuridiction.mp3"]
+    },
+    "chasse_joueur": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/Joueur.mp3"]
+    },
+    "chasse_gros_gibier": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/GrosGibier.mp3"]
+    },
+    "chasse_dangereux": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/Dangereux.mp3"]
+    },
+    "chasse_tir_clean": {
+        "mots_cles": [],
+        "reponses": ["data/son/Chasse/TirClean.mp3"]
+    },
+    "scan_valeur": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/ScanValeur.mp3"]
+    },
+    "scan_premiere": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/ScanPremiere.mp3"]
+    },
+    "scan_bio": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/ScanBio.mp3"]
+    },
+    "exo_analyse": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/ExoAnalyse.mp3"]
+    },
+    "exo_distance_ok": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/ExoDistance.mp3"]
     }
 }

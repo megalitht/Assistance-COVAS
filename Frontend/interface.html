@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="interface.css">
 </head>
 <body data-mode="nav" data-liaison="hors-ligne">
+    <!-- Application Python (Backend/app.py, interface.html?app) : l'écran d'accueil s'affiche
+         dès le premier rendu, le panneau n'apparaît qu'une fois le COVAS activé. -->
+    <script>if (new URLSearchParams(location.search).has('app')) { document.body.dataset.app = ''; document.body.dataset.liaison = 'veille'; }</script>
+
+    <svg class="lecteur-seul" aria-hidden="true"><symbol id="icone-reglages" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></symbol><symbol id="icone-quitter" viewBox="0 0 24 24"><path d="M12 3v8"></path><path d="M6.4 6.6a8 8 0 1 0 11.2 0"></path></symbol></svg>
 
     <!-- ================= BANDEAU ================= -->
     <header class="bandeau">
@@ -25,16 +30,24 @@
 
         <div class="bandeau-droite">
             <div class="horloge"><b data-v="heure">--:--</b><small data-v="date"></small></div>
-            <button type="button" class="selecteur-mode" data-action="stop" title="Annule le programme en cours (décollage, apontage, fuite, autopilote...)">Stop</button>
+            <button type="button" class="selecteur-mode" id="bouton-stop" data-action="stop" hidden title="Annule le programme en cours (décollage, apontage, fuite, autopilote...)">Stop</button>
             <button type="button" class="selecteur-mode" id="selecteur-mode" title="Changer de vue : automatique, combat forcé, navigation forcée">
                 Vue <b data-v="mode-choisi">auto</b>
+            </button>
+            <button type="button" class="selecteur-mode bouton-reglages" id="bouton-reglages" title="Réglages" aria-label="Réglages" aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-reglages"></use></svg>
+            </button>
+            <!-- Visible seulement dans l'application ; deux clics pour quitter (interface.js) -->
+            <button type="button" class="selecteur-mode bouton-reglages bouton-quitter" data-quitter hidden title="Quitter le COVAS" aria-label="Quitter le COVAS">
+                <span>Quitter ?</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-quitter"></use></svg>
             </button>
         </div>
     </header>
 
     <!-- Bandeau d'alerte, visible uniquement en vue combat -->
     <div class="alerte-combat" role="status">
-        <strong>Alerte combat</strong>
+        <strong data-v="alerte-titre">Alerte combat</strong>
         <span data-v="alerte-cause">Contact hostile</span>
         <span class="alerte-retour" data-v="alerte-retour"></span>
     </div>
@@ -60,11 +73,6 @@
                     <h3>Station <span data-v="station-nom"></span></h3>
                     <p class="sous-titre" data-v="station-detail"></p>
                     <ul class="pastilles" id="pastilles-services"></ul>
-                    <div class="actions">
-                        <button type="button" data-action="ravitaillement" class="large">Ravitailler, réparer, réarmer</button>
-                        <button type="button" data-action="services">Services de la station</button>
-                        <button type="button" data-action="decollage">Décollage</button>
-                    </div>
                 </div>
             </section>
 
@@ -73,6 +81,7 @@
                 <div class="onglets" role="tablist">
                     <button type="button" role="tab" data-onglet="tracee" aria-selected="true">Route tracée</button>
                     <button type="button" role="tab" data-onglet="proches" aria-selected="false">À portée de saut</button>
+                    <button type="button" role="tab" data-onglet="exploration" aria-selected="false">Exploration</button>
                 </div>
                 <div data-contenu="tracee" class="contenu-onglet">
                     <dl class="chiffres">
@@ -86,6 +95,15 @@
                     <p class="sous-titre" data-v="proches-resume">—</p>
                     <ul class="liste defile etapes" id="liste-proches"></ul>
                 </div>
+                <div data-contenu="exploration" class="contenu-onglet" hidden>
+                    <dl class="chiffres">
+                        <div><dt>Système</dt><dd data-v="explo-total">—</dd></div>
+                        <div><dt>Vie</dt><dd data-v="explo-vie">—</dd></div>
+                        <div><dt>À vendre</dt><dd data-v="explo-vendre">—</dd></div>
+                    </dl>
+                    <p class="sous-titre" data-v="explo-resume"></p>
+                    <ul class="liste defile corps-liste" id="liste-corps"></ul>
+                </div>
             </section>
 
             <section class="panneau">
@@ -97,6 +115,17 @@
         </div>
 
         <div class="colonne centre">
+            <!-- Dernier corps scanné : posé sur l'hologramme, qui n'a ainsi jamais à se redessiner -->
+            <section class="carte-scan" id="carte-scan" aria-live="polite" hidden>
+                <p class="carte-scan-titre"><span>Scan</span> <b data-v="scan-nom"></b></p>
+                <p class="sous-titre" data-v="scan-classe"></p>
+                <dl class="chiffres">
+                    <div><dt>Valeur</dt><dd data-v="scan-valeur"></dd></div>
+                    <div><dt>Cartographié</dt><dd data-v="scan-carto"></dd></div>
+                    <div><dt>Vie</dt><dd data-v="scan-vie"></dd></div>
+                </dl>
+                <ul class="pastilles" id="scan-pastilles"></ul>
+            </section>
             <section class="hologramme" data-hologramme></section>
             <section class="jauges">
                 <div class="jauge-bloc"><span>Coque</span><b data-v="coque">—</b><div class="jauge" data-j="coque"><i></i></div></div>
@@ -113,34 +142,87 @@
 
         <div class="colonne">
             <section class="panneau">
-                <h2>Commandes</h2>
-                <h3>Cockpit</h3>
-                <div class="actions">
-                    <button type="button" data-action="train_atterrissage">Train</button>
-                    <button type="button" data-action="soute">Écope de soute</button>
-                    <button type="button" data-action="phares">Phares</button>
-                    <button type="button" data-action="nvg">Vision nocturne</button>
-                    <button type="button" data-action="armement">Points d'emport</button>
-                    <button type="button" data-action="hud">Cockpit combat / analyse</button>
-                    <button type="button" data-action="silencieux">Mode silencieux</button>
-                    <button type="button" data-action="mode_croisiere">Pips croisière</button>
+                <h2>Commandes <small data-v="commandes-contexte">en vol</small></h2>
+                <!-- Un jeu de commandes par situation (voir contexteCommandes dans interface.js) -->
+                <div class="commandes" data-commandes="vol">
+                    <h3>Cockpit</h3>
+                    <div class="actions">
+                        <button type="button" data-action="train_atterrissage">Train</button>
+                        <button type="button" data-action="soute">Écope de soute</button>
+                        <button type="button" data-action="phares">Phares</button>
+                        <button type="button" data-action="nvg">Vision nocturne</button>
+                        <button type="button" data-action="armement">Points d'emport</button>
+                        <button type="button" data-action="hud">Cockpit combat / analyse</button>
+                        <button type="button" data-action="silencieux">Mode silencieux</button>
+                        <button type="button" data-action="mode_croisiere">Pips croisière</button>
+                    </div>
+                    <h3>Vol</h3>
+                    <div class="actions">
+                        <button type="button" data-action="vitesse_zero">Vitesse zéro</button>
+                        <button type="button" data-action="plein_gaz">Plein gaz</button>
+                        <button type="button" data-action="carte_galaxie">Carte de la galaxie</button>
+                        <button type="button" data-action="carte_systeme">Carte du système</button>
+                        <button type="button" data-action="apontage">Demander l'apontage</button>
+                        <button type="button" data-action="autopilote_station">Autopilote station</button>
+                        <button type="button" data-action="autopilote_route" class="large" title="Enchaîne les sauts de la route tracée en évitant l'étoile à chaque arrivée">Voyage (route)</button>
+                    </div>
+                    <h3>Minage et automatismes</h3>
+                    <div class="actions">
+                        <button type="button" data-action="drone|prospection">Drone de prospection</button>
+                        <button type="button" data-action="drone|collecte">Drone de collecte</button>
+                        <button type="button" data-action="reactions|active">Réactions auto : activer</button>
+                        <button type="button" data-action="reactions|coupe">Réactions auto : couper</button>
+                    </div>
                 </div>
-                <h3>Vol</h3>
-                <div class="actions">
-                    <button type="button" data-action="vitesse_zero">Vitesse zéro</button>
-                    <button type="button" data-action="plein_gaz">Plein gaz</button>
-                    <button type="button" data-action="carte_galaxie">Carte de la galaxie</button>
-                    <button type="button" data-action="carte_systeme">Carte du système</button>
-                    <button type="button" data-action="apontage">Demander l'apontage</button>
-                    <button type="button" data-action="autopilote_station">Autopilote station</button>
-                    <button type="button" data-action="autopilote_route" class="large" title="Enchaîne les sauts de la route tracée en évitant l'étoile à chaque arrivée">Voyage (route)</button>
+
+                <div class="commandes" data-commandes="station" hidden>
+                    <h3>Station</h3>
+                    <div class="actions">
+                        <button type="button" data-action="decollage" class="large">Décollage</button>
+                        <button type="button" data-action="ravitaillement" class="large">Ravitailler, réparer, réarmer</button>
+                        <button type="button" data-action="services">Services de la station</button>
+                        <button type="button" data-action="rapport_avarie" title="Coque, boucliers et modules endommagés (aucune touche envoyée au jeu)">Rapport d'avarie</button>
+                    </div>
+                    <h3>Préparer le départ</h3>
+                    <div class="actions">
+                        <button type="button" data-action="carte_galaxie">Carte de la galaxie</button>
+                        <button type="button" data-action="carte_systeme">Carte du système</button>
+                    </div>
+                    <h3>À bord</h3>
+                    <div class="actions">
+                        <button type="button" data-action="phares">Phares</button>
+                        <button type="button" data-action="nvg">Vision nocturne</button>
+                        <button type="button" data-action="hud" class="large">Cockpit combat / analyse</button>
+                    </div>
+                    <h3>Automatismes</h3>
+                    <div class="actions">
+                        <button type="button" data-action="reactions|active">Réactions auto : activer</button>
+                        <button type="button" data-action="reactions|coupe">Réactions auto : couper</button>
+                    </div>
                 </div>
-                <h3>Minage et automatismes</h3>
-                <div class="actions">
-                    <button type="button" data-action="drone|prospection">Drone de prospection</button>
-                    <button type="button" data-action="drone|collecte">Drone de collecte</button>
-                    <button type="button" data-action="reactions|active">Réactions auto : activer</button>
-                    <button type="button" data-action="reactions|coupe">Réactions auto : couper</button>
+
+                <div class="commandes" data-commandes="sol" hidden>
+                    <h3>Au sol</h3>
+                    <div class="actions">
+                        <button type="button" data-action="decollage" class="large">Décollage</button>
+                        <button type="button" data-action="carte_galaxie">Carte de la galaxie</button>
+                        <button type="button" data-action="carte_systeme">Carte du système</button>
+                        <button type="button" data-action="rapport_avarie" class="large" title="Coque, boucliers et modules endommagés (aucune touche envoyée au jeu)">Rapport d'avarie</button>
+                    </div>
+                    <h3>Cockpit</h3>
+                    <div class="actions">
+                        <button type="button" data-action="phares">Phares</button>
+                        <button type="button" data-action="nvg">Vision nocturne</button>
+                        <button type="button" data-action="soute">Écope de soute</button>
+                        <button type="button" data-action="armement">Points d'emport</button>
+                        <button type="button" data-action="hud">Cockpit combat / analyse</button>
+                        <button type="button" data-action="silencieux">Mode silencieux</button>
+                    </div>
+                    <h3>Automatismes</h3>
+                    <div class="actions">
+                        <button type="button" data-action="reactions|active">Réactions auto : activer</button>
+                        <button type="button" data-action="reactions|coupe">Réactions auto : couper</button>
+                    </div>
                 </div>
             </section>
             <section class="panneau grandit">
@@ -190,8 +272,9 @@
         <div class="colonne">
             <section class="panneau">
                 <h2>Cible</h2>
-                <div id="cible-vide" class="vide">Aucune cible verrouillée</div>
-                <div id="cible-fiche" hidden>
+                <div id="cible-vide" class="vide" data-cible-vide>Aucune cible verrouillée</div>
+                <div id="cible-fiche" data-cible-fiche hidden>
+                    <div class="verdict" data-verdict hidden><b data-v="cible-verdict"></b><span data-v="cible-conseil"></span></div>
                     <p class="titre-systeme" data-v="cible-vaisseau">—</p>
                     <p class="sous-titre" data-v="cible-pilote"></p>
                     <div class="jauge-bloc bouclier"><span>Boucliers</span><b data-v="cible-boucliers">—</b><div class="jauge" data-j="cible-boucliers"><i></i></div></div>
@@ -207,6 +290,20 @@
             <section class="panneau grandit">
                 <h2>Menaces</h2>
                 <ol class="liste defile journal" id="liste-menaces"></ol>
+            </section>
+            <section class="panneau">
+                <h2>Chasse aux primes <small data-v="chasse-etat">en veille</small></h2>
+                <dl class="chiffres">
+                    <div><dt>Éliminations</dt><dd data-v="chasse-eliminations">0</dd></div>
+                    <div><dt>Gains</dt><dd data-v="chasse-gains">0 cr</dd></div>
+                    <div><dt>Par heure</dt><dd data-v="chasse-taux">—</dd></div>
+                </dl>
+                <dl class="fiche">
+                    <div><dt>Meilleure prime</dt><dd data-v="chasse-meilleure">—</dd></div>
+                    <div><dt>À encaisser</dt><dd data-v="chasse-encaisser">0 cr</dd></div>
+                </dl>
+                <ul class="liste defile primes" data-liste-primes></ul>
+                <div class="actions"><button type="button" class="large" data-bouton-chasse data-action="chasse|active" title="Aucune touche envoyée au jeu : change seulement ce que le COVAS annonce">Activer le mode chasse</button></div>
             </section>
             <section class="panneau">
                 <h2>Bilan de la session</h2>
@@ -236,6 +333,8 @@
                     <button type="button" data-action="energie_arm">Armes</button>
                     <button type="button" data-action="reset">Équilibrer</button>
                 </div>
+                <h3>Modes</h3>
+                <div class="modes-rapides" id="modes-rapides"></div>
             </section>
             <section class="panneau grandit">
                 <h2>Tactique</h2>
@@ -285,6 +384,320 @@
         </div>
     </main>
 
+    <!-- ================= VUE CHASSEUR (violet) : le commandant pilote le chasseur embarqué =================
+         Cible et tableau de chasse | viseur et constantes | énergie et tactique | menaces -->
+    <main class="vue vue-chasseur" aria-label="Chasseur">
+        <div class="colonne">
+            <section class="panneau">
+                <h2>Cible</h2>
+                <div class="vide" data-cible-vide>Aucune cible verrouillée</div>
+                <div class="fiche-cible" data-cible-fiche hidden>
+                    <p class="titre-systeme" data-v="cible-vaisseau">—</p>
+                    <p class="sous-titre" data-v="cible-pilote"></p>
+                    <div class="jauge-bloc bouclier"><span>Boucliers</span><b data-v="cible-boucliers">—</b><div class="jauge" data-j="cible-boucliers"><i></i></div></div>
+                    <div class="jauge-bloc"><span>Coque</span><b data-v="cible-coque">—</b><div class="jauge" data-j="cible-coque"><i></i></div></div>
+                    <dl class="fiche">
+                        <div><dt>Statut</dt><dd data-v="cible-statut">—</dd></div>
+                        <div><dt>Prime</dt><dd data-v="cible-prime">—</dd></div>
+                        <div><dt>Faction</dt><dd data-v="cible-faction">—</dd></div>
+                        <div><dt>Sous-système visé</dt><dd data-v="cible-sous-systeme">—</dd></div>
+                    </dl>
+                </div>
+            </section>
+            <section class="panneau grandit">
+                <h2>Chasse aux primes <small data-v="chasse-etat">en veille</small></h2>
+                <dl class="chiffres">
+                    <div><dt>Éliminations</dt><dd data-v="chasse-eliminations">0</dd></div>
+                    <div><dt>Gains</dt><dd data-v="chasse-gains">0 cr</dd></div>
+                    <div><dt>Par heure</dt><dd data-v="chasse-taux">—</dd></div>
+                </dl>
+                <dl class="fiche">
+                    <div><dt>Meilleure prime</dt><dd data-v="chasse-meilleure">—</dd></div>
+                    <div><dt>À encaisser</dt><dd data-v="chasse-encaisser">0 cr</dd></div>
+                </dl>
+                <ul class="liste defile primes" data-liste-primes></ul>
+                <div class="actions"><button type="button" class="large" data-bouton-chasse data-action="chasse|active" title="Aucune touche envoyée au jeu : change seulement ce que le COVAS annonce">Activer le mode chasse</button></div>
+            </section>
+        </div>
+
+        <div class="colonne centre">
+            <section class="viseur-zone" data-teinte-verdict="aucun">
+                <svg class="viseur" viewBox="0 0 400 400" aria-hidden="true">
+                    <circle class="viseur-anneau" cx="200" cy="200" r="188"></circle>
+                    <circle class="viseur-anneau fin" cx="200" cy="200" r="132"></circle>
+                    <path class="viseur-repere" d="M200 2 V44 M200 356 V398 M2 200 H44 M356 200 H398"></path>
+                    <path class="viseur-coin" d="M112 142 V112 H142 M258 112 H288 V142 M288 258 V288 H258 M142 288 H112 V258"></path>
+                </svg>
+                <div class="viseur-centre">
+                    <b data-v="viseur-verdict">Aucune cible</b>
+                    <strong data-v="viseur-prime"></strong>
+                    <span data-v="viseur-conseil"></span>
+                </div>
+            </section>
+            <section class="vitaux">
+                <div class="vital" data-libre><span>Coque <small data-v="pilotage-modele"></small></span><b data-v="pilotage-coque">—</b><div class="jauge" data-j="pilotage-coque"><i></i></div></div>
+                <div class="vital bouclier"><span>Boucliers</span><b data-v="boucliers">—</b><div class="jauge" data-j="boucliers"><i></i></div></div>
+            </section>
+            <section class="panneau">
+                <h2>État</h2>
+                <ul class="voyants" data-voyants="combat"></ul>
+            </section>
+        </div>
+
+        <div class="colonne">
+            <section class="panneau">
+                <h2>Énergie</h2>
+                <div class="pips grands" data-pips></div>
+                <div class="actions">
+                    <button type="button" data-action="energie_sys">Systèmes</button>
+                    <button type="button" data-action="energie_mtr">Moteurs</button>
+                    <button type="button" data-action="energie_arm">Armes</button>
+                    <button type="button" data-action="reset">Équilibrer</button>
+                </div>
+            </section>
+            <section class="panneau grandit">
+                <h2>Tactique</h2>
+                <div class="actions remplit">
+                    <button type="button" data-action="lock">Verrouiller la cible</button>
+                    <button type="button" data-action="boost">Boost</button>
+                    <button type="button" data-action="cible_menace">Cibler la menace</button>
+                    <button type="button" data-action="cible_hostile">Hostile suivant</button>
+                    <button type="button" data-action="sous_systeme|generateur">Viser le générateur</button>
+                    <button type="button" data-action="sous_systeme|moteur">Viser les moteurs</button>
+                </div>
+            </section>
+        </div>
+
+        <div class="colonne">
+            <section class="panneau grandit">
+                <h2>Menaces</h2>
+                <ol class="liste defile journal" id="liste-menaces-chasseur"></ol>
+            </section>
+            <section class="panneau">
+                <h2>Communications</h2>
+                <ol class="liste defile journal courte" id="liste-comms-chasseur"></ol>
+                <form class="parler" autocomplete="off">
+                    <label class="lecteur-seul" for="champ-question-chasseur">Écrire au COVAS</label>
+                    <input id="champ-question-chasseur" type="text" maxlength="300" placeholder="Écrire au COVAS…">
+                    <button type="submit">Envoyer</button>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <!-- ================= VUE SURFACE : VRS (sable), PIED À TERRE (lichen), NOMAD (turquoise) =================
+         Terrain et vaisseau | boussole et constantes | commandes | journal.
+         data-seul="vrs", "pied" ou "nomade" : bloc affiché dans cette situation seulement.
+         data-sauf="nomade" : bloc caché en Nomad. -->
+    <main class="vue vue-surface" aria-label="Surface">
+
+        <div class="colonne">
+            <section class="panneau">
+                <h2>Terrain <small data-v="surface-situation"></small></h2>
+                <p class="titre-systeme" data-v="surface-corps">—</p>
+                <p class="sous-titre" data-v="systeme"></p>
+                <dl class="fiche deux-colonnes">
+                    <div><dt>Latitude</dt><dd data-v="surface-lat">—</dd></div>
+                    <div><dt>Longitude</dt><dd data-v="surface-lon">—</dd></div>
+                    <div><dt>Altitude</dt><dd data-v="surface-alt">—</dd></div>
+                    <div><dt>Cap</dt><dd data-v="surface-cap">—</dd></div>
+                    <div data-seul="pied"><dt>Gravité</dt><dd data-v="surface-gravite">—</dd></div>
+                    <div data-seul="pied"><dt>Atmosphère</dt><dd data-v="surface-air">—</dd></div>
+                </dl>
+            </section>
+            <section class="panneau" data-sauf="nomade">
+                <h2><span data-v="retour-titre">Vaisseau</span> <small data-v="retour-nom"></small></h2>
+                <dl class="fiche">
+                    <div><dt>État</dt><dd data-v="retour-etat">—</dd></div>
+                    <div><dt>Distance</dt><dd data-v="retour-distance">—</dd></div>
+                    <div><dt>Direction</dt><dd data-v="retour-direction">—</dd></div>
+                </dl>
+            </section>
+            <section class="panneau grandit" data-seul="nomade">
+                <h2>Nomad <small data-v="nomade-etat"></small></h2>
+                <dl class="fiche">
+                    <div><dt>Exploration à vendre</dt><dd data-v="explo-vendre">—</dd></div>
+                    <div><dt>Exobiologie à vendre</dt><dd data-v="exo-vendre">—</dd></div>
+                </dl>
+                <h3>Corps les plus précieux</h3>
+                <ul class="liste defile corps-liste" id="liste-corps-nomade"></ul>
+            </section>
+            <section class="panneau grandit" data-seul="vrs">
+                <h2>Véhicule</h2>
+                <dl class="fiche">
+                    <div><dt>Modèle</dt><dd data-v="vrs-modele">—</dd></div>
+                    <div><dt>Réservoir</dt><dd data-v="vrs-carburant">—</dd></div>
+                    <div><dt>Groupe de tir</dt><dd data-v="groupe-tir">—</dd></div>
+                </dl>
+            </section>
+            <section class="panneau grandit" data-seul="pied">
+                <h2>Combinaison</h2>
+                <dl class="fiche">
+                    <div><dt>Modèle</dt><dd data-v="pied-combinaison">—</dd></div>
+                    <div><dt>Équipement</dt><dd data-v="pied-chargement">—</dd></div>
+                    <div><dt>En main</dt><dd data-v="pied-arme">—</dd></div>
+                </dl>
+                <ul class="liste defile" id="liste-armes"></ul>
+            </section>
+        </div>
+
+        <div class="colonne centre">
+            <section class="boussole-zone">
+                <svg class="boussole" viewBox="0 0 400 400" role="img" aria-label="Boussole : direction du vaisseau">
+                    <circle class="boussole-anneau" cx="200" cy="200" r="190"></circle>
+                    <circle class="boussole-anneau fin" cx="200" cy="200" r="104"></circle>
+                    <g id="boussole-cadran"></g>
+                    <g id="boussole-cardinaux"></g>
+                    <g id="boussole-vaisseau" hidden>
+                        <path class="boussole-trait" d="M200 112 V62"></path>
+                        <path class="boussole-fleche" d="M200 22 L222 66 L200 54 L178 66 Z"></path>
+                    </g>
+                    <path class="boussole-index" d="M200 2 L190 18 H210 Z"></path>
+                </svg>
+                <div class="boussole-centre">
+                    <b data-v="boussole-distance">—</b>
+                    <span data-v="boussole-consigne"></span>
+                </div>
+            </section>
+            <section class="constantes" data-seul="pied">
+                <div class="jauge-bloc"><span>Oxygène</span><b data-v="pied-oxygene">—</b><div class="jauge" data-j="pied-oxygene"><i></i></div></div>
+                <div class="jauge-bloc"><span>Santé</span><b data-v="pied-sante">—</b><div class="jauge" data-j="pied-sante"><i></i></div></div>
+                <div class="jauge-bloc"><span>Température</span><b data-v="pied-temperature">—</b><div class="jauge" data-j="pied-temperature"><i></i></div></div>
+            </section>
+            <section class="constantes" data-seul="vrs">
+                <div class="jauge-bloc pips-bloc"><span>Énergie</span><div class="pips" data-pips></div></div>
+            </section>
+            <section class="panneau" data-seul="nomade">
+                <h2>Ce corps <small data-v="corps-nom"></small></h2>
+                <dl class="chiffres">
+                    <div><dt>Valeur</dt><dd data-v="corps-valeur">—</dd></div>
+                    <div><dt>Cartographié</dt><dd data-v="corps-carto">—</dd></div>
+                    <div><dt>Vie</dt><dd data-v="corps-vie">—</dd></div>
+                </dl>
+                <ul class="pastilles" id="corps-pastilles"></ul>
+            </section>
+            <section class="panneau">
+                <h2>État</h2>
+                <ul class="voyants" data-voyants="vrs" data-seul="vrs"></ul>
+                <ul class="voyants" data-voyants="pied" data-seul="pied"></ul>
+                <ul class="voyants" data-voyants="nomade" data-seul="nomade"></ul>
+            </section>
+        </div>
+
+        <div class="colonne">
+            <section class="panneau" data-seul="vrs">
+                <h2>Commandes <small>en VRS</small></h2>
+                <div class="commandes">
+                    <h3>Conduite</h3>
+                    <div class="actions">
+                        <button type="button" data-action="vrs_frein">Frein à main</button>
+                        <button type="button" data-action="vrs_assistance">Assistance de conduite</button>
+                        <button type="button" data-action="vrs_phares">Phares</button>
+                        <button type="button" data-action="vrs_tourelle">Vue tourelle</button>
+                        <button type="button" data-action="vrs_soute">Écope de soute</button>
+                        <button type="button" data-action="vrs_groupe">Groupe de tir suivant</button>
+                    </div>
+                    <h3>Énergie</h3>
+                    <div class="actions">
+                        <button type="button" data-action="vrs_pips_sys">Systèmes</button>
+                        <button type="button" data-action="vrs_pips_moteurs">Moteurs</button>
+                        <button type="button" data-action="vrs_pips_armes">Armes</button>
+                        <button type="button" data-action="vrs_pips_equilibre">Équilibrer</button>
+                    </div>
+                    <h3>Vaisseau et cartes</h3>
+                    <div class="actions">
+                        <button type="button" data-action="vrs_vaisseau" class="large" id="bouton-rappel">Rappeler le vaisseau</button>
+                        <button type="button" data-action="vrs_carte_galaxie">Carte de la galaxie</button>
+                        <button type="button" data-action="vrs_carte_systeme">Carte du système</button>
+                    </div>
+                </div>
+            </section>
+            <section class="panneau" data-seul="pied">
+                <h2>Commandes <small>à pied</small></h2>
+                <div class="commandes">
+                    <h3>Équipement</h3>
+                    <div class="actions">
+                        <button type="button" data-action="pied_lampe">Lampe</button>
+                        <button type="button" data-action="pied_vision">Vision nocturne</button>
+                        <button type="button" data-action="pied_bouclier">Bouclier</button>
+                        <button type="button" data-action="pied_arme">Ranger / sortir l'arme</button>
+                        <button type="button" data-action="pied_recharger">Recharger</button>
+                        <button type="button" data-action="pied_grenade">Grenade suivante</button>
+                    </div>
+                    <h3>Soins</h3>
+                    <div class="actions">
+                        <button type="button" data-action="pied_soin">Trousse de soin</button>
+                        <button type="button" data-action="pied_cellule">Cellule d'énergie</button>
+                    </div>
+                    <h3>Outils et cartes</h3>
+                    <div class="actions">
+                        <button type="button" data-action="pied_echantillonneur">Outil de combinaison</button>
+                        <button type="button" data-action="pied_analyseur">Analyseur de profil</button>
+                        <button type="button" data-action="pied_carte_galaxie">Carte de la galaxie</button>
+                        <button type="button" data-action="pied_carte_systeme">Carte du système</button>
+                    </div>
+                </div>
+            </section>
+            <section class="panneau" data-seul="nomade">
+                <h2>Commandes <small>en Nomad</small></h2>
+                <div class="commandes">
+                    <div class="actions">
+                        <button type="button" data-action="apontage" class="large" title="Séquence réglable dans Réglages > Commandes > Amarrage du Nomad">Demander l'amarrage au vaisseau</button>
+                        <button type="button" data-action="train_atterrissage">Train</button>
+                        <button type="button" data-action="phares">Phares</button>
+                        <button type="button" data-action="nvg">Vision nocturne</button>
+                        <button type="button" data-action="hud">Cockpit combat / analyse</button>
+                        <button type="button" data-action="vitesse_zero">Vitesse zéro</button>
+                        <button type="button" data-action="boost">Boost</button>
+                    </div>
+                    <h3>Énergie</h3>
+                    <div class="actions">
+                        <button type="button" data-action="energie_sys">Systèmes</button>
+                        <button type="button" data-action="energie_mtr">Moteurs</button>
+                        <button type="button" data-action="energie_arm">Armes</button>
+                        <button type="button" data-action="reset">Équilibrer</button>
+                    </div>
+                </div>
+            </section>
+            <section class="panneau grandit" data-seul="nomade">
+                <h2>Vie sur ce corps <small data-v="bio-resume"></small></h2>
+                <p class="vide" data-bio-vide>Aucun signal biologique sur ce corps.</p>
+                <ul class="liste defile bio-liste" data-bio-liste></ul>
+                <p class="bio-note">Les espèces possibles sont déduites de la planète. Le prix devient exact au premier prélèvement.</p>
+            </section>
+            <section class="panneau grandit" data-seul="pied">
+                <h2>Exobiologie <small data-v="exo-progres"></small></h2>
+                <p class="vide" id="exo-vide">Aucun prélèvement en cours</p>
+                <div class="exo-fiche" id="exo-fiche" hidden>
+                    <p class="exo-espece" data-v="exo-espece"></p>
+                    <p class="sous-titre" data-v="exo-variante"></p>
+                    <ol class="exo-points" id="exo-points" aria-hidden="true"><li></li><li></li><li></li></ol>
+                    <div class="jauge-bloc"><span>Distance au prélèvement</span><b data-v="exo-distance">—</b><div class="jauge" data-j="exo-distance"><i></i></div></div>
+                    <p class="exo-consigne" data-v="exo-consigne"></p>
+                    <p class="exo-valeur" data-v="exo-valeur"></p>
+                </div>
+                <h3>Sur ce corps <span data-v="bio-resume"></span></h3>
+                <ul class="liste defile bio-liste" data-bio-liste></ul>
+            </section>
+        </div>
+
+        <div class="colonne">
+            <section class="panneau grandit">
+                <h2>Journal de bord</h2>
+                <ol class="liste defile journal" id="liste-journal-surface"></ol>
+            </section>
+            <section class="panneau">
+                <h2>Communications</h2>
+                <ol class="liste defile journal courte" id="liste-comms-surface"></ol>
+                <form class="parler" autocomplete="off">
+                    <label class="lecteur-seul" for="champ-question-surface">Écrire au COVAS</label>
+                    <input id="champ-question-surface" type="text" maxlength="300" placeholder="Écrire au COVAS…">
+                    <button type="submit">Envoyer</button>
+                </form>
+            </section>
+        </div>
+    </main>
+
     <!-- ================= LIAISON PERDUE ================= -->
     <div class="voile" id="voile-liaison">
         <div class="voile-boite">
@@ -297,9 +710,149 @@
         </div>
     </div>
 
+    <!-- ================= ÉCRAN D'ACCUEIL (application) =================
+         COVAS en veille : un seul bouton au centre. Le clic appelle Backend/app.py (Api.activer),
+         la séquence de démarrage s'affiche, puis l'écran s'efface devant le panneau. -->
+    <div class="accueil" id="ecran-accueil" data-etat="veille">
+        <div class="accueil-coin">
+            <button type="button" class="selecteur-mode bouton-reglages" id="accueil-reglages" title="Réglages" aria-label="Réglages" aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-reglages"></use></svg>
+            </button>
+            <button type="button" class="selecteur-mode bouton-reglages bouton-quitter" data-quitter hidden title="Quitter le COVAS" aria-label="Quitter le COVAS">
+                <span>Quitter ?</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-quitter"></use></svg>
+            </button>
+        </div>
+        <div class="accueil-centre">
+            <p class="accueil-marque">COVAS</p>
+            <p class="accueil-sous-titre">Assistance de bord</p>
+            <button type="button" class="accueil-bouton" id="bouton-activer" aria-describedby="accueil-etat">
+                <svg class="accueil-anneaux" viewBox="0 0 200 200" aria-hidden="true">
+                    <circle class="anneau-fond" cx="100" cy="100" r="92"></circle>
+                    <circle class="anneau-tirets" cx="100" cy="100" r="92"></circle>
+                    <circle class="anneau-interieur" cx="100" cy="100" r="78"></circle>
+                </svg>
+                <svg class="accueil-icone" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3v8"></path>
+                    <path d="M6.4 6.6a8 8 0 1 0 11.2 0"></path>
+                </svg>
+                <span class="accueil-libelle" data-v="accueil-libelle">Activer</span>
+            </button>
+            <p class="accueil-etat" id="accueil-etat" data-v="accueil-etat">Système en veille</p>
+            <ol class="accueil-sequence" id="accueil-sequence" aria-live="polite"></ol>
+        </div>
+    </div>
+
+    <!-- ================= RÉGLAGES (icône d'engrenage) : voir reglages.js ================= -->
+    <dialog class="fenetre-reglages" id="fenetre-reglages" aria-labelledby="reglages-titre">
+        <header class="reglages-tete">
+            <h2 id="reglages-titre">Réglages</h2>
+            <div class="reglages-onglets" id="reglages-onglets" role="tablist" aria-label="Sections des réglages">
+                <button type="button" role="tab" data-reglage="energie" aria-selected="true">Énergie</button>
+                <button type="button" role="tab" data-reglage="commandes" aria-selected="false" tabindex="-1">Commandes</button>
+                <button type="button" role="tab" data-reglage="son" aria-selected="false" tabindex="-1">Son</button>
+                <button type="button" role="tab" data-reglage="studio" aria-selected="false" tabindex="-1">Studio vocal</button>
+                <button type="button" role="tab" data-reglage="hangar" aria-selected="false" tabindex="-1">Hangar</button>
+                <button type="button" role="tab" data-reglage="atelier" aria-selected="false" tabindex="-1">Atelier</button>
+            </div>
+            <span class="reglages-etat" id="reglages-etat" role="status"></span>
+            <button type="button" class="reglages-fermer" id="reglages-fermer" aria-label="Fermer les réglages">×</button>
+        </header>
+
+        <div class="reglages-panneau" data-panneau="energie" role="tabpanel">
+            <p class="vide reglages-attente" id="reglages-attente" hidden>En attente de la liaison avec le COVAS…</p>
+            <div class="reglages-corps" id="reglages-corps">
+                <nav class="reglages-vaisseaux" aria-label="Profils de vaisseaux">
+                    <h3>Vaisseaux</h3>
+                    <ul id="reglages-profils"></ul>
+                    <button type="button" class="reglages-ajout-actuel" id="reglages-ajouter-actuel" hidden></button>
+                    <form class="reglages-ajout" id="reglages-ajout">
+                        <label class="lecteur-seul" for="reglages-choix">Vaisseau à ajouter</label>
+                        <select id="reglages-choix"></select>
+                        <button type="submit">Ajouter</button>
+                    </form>
+                </nav>
+                <section class="reglages-modes">
+                    <div class="reglages-profil">
+                        <div>
+                            <h3 id="reglages-profil-nom"></h3>
+                            <p id="reglages-profil-note"></p>
+                        </div>
+                        <button type="button" id="reglages-retirer" hidden>Retirer ce vaisseau</button>
+                    </div>
+                    <div class="grille-modes" id="reglages-grille"></div>
+                </section>
+            </div>
+        </div>
+        <!-- Touches et séquences de menus : voir reglages_commandes.js -->
+        <div class="reglages-panneau" data-panneau="commandes" role="tabpanel" hidden>
+            <p class="vide reglages-attente" id="commandes-attente" hidden></p>
+            <div class="reglages-corps" id="commandes-corps">
+                <nav class="reglages-vaisseaux commandes-menu" id="commandes-menu" aria-label="Touches et séquences"></nav>
+                <section class="reglages-modes" id="commandes-contenu"></section>
+            </div>
+        </div>
+        <!-- Casque, haut-parleurs et micro : voir reglages_son.js -->
+        <div class="reglages-panneau" data-panneau="son" role="tabpanel" hidden>
+            <div class="son-corps">
+                <div class="reglages-profil">
+                    <div>
+                        <h3>Son</h3>
+                        <p>S'applique dès la prochaine réplique et la prochaine écoute du COVAS.</p>
+                    </div>
+                    <div class="son-liste">
+                        <span class="son-note" id="son-note-liste" role="status"></span>
+                        <button type="button" id="son-actualiser">Actualiser la liste</button>
+                    </div>
+                </div>
+                <div class="son-grille">
+                    <section class="carte-son" aria-labelledby="son-titre-sortie">
+                        <h4 id="son-titre-sortie">Sortie audio</h4>
+                        <p>La voix du COVAS : casque ou haut-parleurs.</p>
+                        <label class="son-champ">Périphérique
+                            <select id="son-sortie"></select>
+                        </label>
+                        <label class="son-champ">Volume du COVAS
+                            <span class="son-volume">
+                                <input type="range" id="son-volume" min="0" max="100" step="5">
+                                <b id="son-volume-valeur"></b>
+                            </span>
+                        </label>
+                        <div class="son-actions"><button type="button" id="son-tester-sortie">Écouter un essai</button></div>
+                        <p class="son-note" id="son-note-sortie" role="status"></p>
+                    </section>
+                    <section class="carte-son" aria-labelledby="son-titre-entree">
+                        <h4 id="son-titre-entree">Entrée audio</h4>
+                        <p>Le micro sur lequel le COVAS t'écoute.</p>
+                        <label class="son-champ">Périphérique
+                            <select id="son-entree"></select>
+                        </label>
+                        <div class="son-champ">Niveau du micro
+                            <div class="son-vumetre" id="son-vumetre" data-etat="faible" aria-hidden="true"><i></i></div>
+                        </div>
+                        <div class="son-actions"><button type="button" id="son-tester-micro" aria-pressed="false">Tester le micro</button></div>
+                        <p class="son-note" id="son-note-micro" role="status"></p>
+                    </section>
+                </div>
+            </div>
+        </div>
+        <!-- Pages existantes chargées à la première ouverture de leur onglet -->
+        <div class="reglages-panneau" data-panneau="studio" role="tabpanel" hidden>
+            <p class="vide reglages-attente" id="reglages-studio-note" hidden></p>
+        </div>
+        <div class="reglages-panneau" data-panneau="hangar" role="tabpanel" hidden></div>
+        <div class="reglages-panneau" data-panneau="atelier" role="tabpanel" hidden></div>
+    </dialog>
+
+    <!-- Grésillement d'un quart de seconde à chaque changement d'interface (interface.js) -->
+    <canvas class="gresillement" id="gresillement" aria-hidden="true" hidden></canvas>
+
     <!-- Hologramme : vue de dessus du vaisseau, plans dans vaisseaux/<type>.js -->
     <script src="hologramme.js"></script>
     <script src="demo.js"></script>
+    <script src="reglages_commandes.js"></script>
+    <script src="reglages_son.js"></script>
+    <script src="reglages.js"></script>
     <script src="interface.js"></script>
 </body>
 </html>

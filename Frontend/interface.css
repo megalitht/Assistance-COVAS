@@ -159,19 +159,176 @@ body[data-mode="combat"] .alerte-combat { display: flex; }
     display: grid;
     gap: 0.8rem;
     padding: 0.8rem 1.2rem 0.9rem;
-    transition: opacity 0.35s, transform 0.35s, visibility 0.35s;
 }
 /* Paysage : quatre colonnes pleine hauteur, l'hologramme prend toute la place restante au centre */
 .vue-nav    { grid-template-columns: 23rem minmax(0, 1fr) 26rem 25rem; grid-template-rows: minmax(0, 1fr); }
 .vue-combat { grid-template-columns: 24rem minmax(0, 1fr) 25rem 25rem; grid-template-rows: minmax(0, 1fr); }
 
-body[data-mode="nav"] .vue-combat,
-body[data-mode="combat"] .vue-nav {
+.vue-surface { grid-template-columns: 23rem minmax(0, 1fr) 26rem 25rem; grid-template-rows: minmax(0, 1fr); }
+.vue-chasseur { grid-template-columns: 24rem minmax(0, 1fr) 25rem 25rem; grid-template-rows: minmax(0, 1fr); }
+
+body:not([data-mode="nav"]) .vue-nav,
+body:not([data-mode="combat"]) .vue-combat,
+body:not([data-mode="chasseur"]) .vue-chasseur,
+body:not([data-mode="vrs"]):not([data-mode="pied"]):not([data-mode="nomade"]) .vue-surface {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transform: scale(1.03);
 }
+body:not([data-mode="vrs"]) [data-seul="vrs"],
+body:not([data-mode="pied"]) [data-seul="pied"],
+body:not([data-mode="nomade"]) [data-seul="nomade"],
+body[data-mode="nomade"] [data-sauf="nomade"] { display: none !important; }
+
+/* Hors du vaisseau, la teinte dit tout de suite où on est : sable en VRS, lichen à pied */
+body[data-mode="vrs"] {
+    --accent: #f0b429;
+    --accent-doux: rgba(240, 180, 41, 0.13);
+    --trait: rgba(240, 180, 41, 0.36);
+    --lueur: rgba(240, 180, 41, 0.5);
+    --marron-3: #a98a46;
+    background: radial-gradient(120% 80% at 50% 45%, #2e2208 0%, #151005 45%, var(--noir) 100%);
+}
+body[data-mode="pied"] {
+    --accent: #8fce6a;
+    --accent-doux: rgba(143, 206, 106, 0.12);
+    --trait: rgba(143, 206, 106, 0.34);
+    --lueur: rgba(143, 206, 106, 0.45);
+    --marron-3: #84996a;
+    background: radial-gradient(120% 80% at 50% 45%, #18280f 0%, #0c1408 45%, var(--noir) 100%);
+}
+/* Aux commandes d'un engin embarqué : turquoise pour le Nomad, violet pour le chasseur */
+body[data-mode="nomade"] {
+    --accent: #4fd8c4;
+    --accent-doux: rgba(79, 216, 196, 0.12);
+    --trait: rgba(79, 216, 196, 0.34);
+    --lueur: rgba(79, 216, 196, 0.45);
+    --marron-3: #6fa39a;
+    background: radial-gradient(120% 80% at 50% 45%, #0d2b29 0%, #081615 45%, var(--noir) 100%);
+}
+body[data-mode="chasseur"] {
+    --accent: #c79bff;
+    --accent-doux: rgba(199, 155, 255, 0.13);
+    --trait: rgba(199, 155, 255, 0.36);
+    --lueur: rgba(199, 155, 255, 0.5);
+    --marron-3: #9682b4;
+    background: radial-gradient(120% 80% at 50% 45%, #241538 0%, #120b1c 45%, var(--noir) 100%);
+}
+body[data-mode="nomade"] .panneau { background: linear-gradient(160deg, rgba(16, 58, 54, 0.44), rgba(6, 18, 17, 0.66)); }
+body[data-mode="chasseur"] .panneau { background: linear-gradient(160deg, rgba(48, 28, 76, 0.44), rgba(14, 9, 22, 0.66)); }
+.vue-chasseur .jauge:not([data-etat="attention"]):not([data-etat="critique"]) i { background: var(--accent); }
+.vue-chasseur .pips .pip.plein { background: var(--accent); }
+.vue-chasseur .pips .pip.demi { background: linear-gradient(90deg, var(--accent) 50%, var(--marron-2) 50%); }
+.vue-chasseur .voyants { grid-template-columns: repeat(5, 1fr); }
+.vue-chasseur .voyants li.allume[data-type="info"] { background: var(--accent); border-color: var(--accent); }
+.vue-chasseur .vital small { text-transform: none; letter-spacing: 0; }
+body[data-mode="vrs"] .panneau { background: linear-gradient(160deg, rgba(66, 48, 12, 0.42), rgba(20, 14, 5, 0.62)); }
+body[data-mode="pied"] .panneau { background: linear-gradient(160deg, rgba(36, 56, 22, 0.42), rgba(10, 16, 7, 0.64)); }
+body[data-alerte] .alerte-combat { display: flex; }
+
+.vue-surface .jauge:not([data-etat="attention"]):not([data-etat="critique"]) i { background: var(--accent); }
+.vue-surface .pips .pip.plein { background: var(--accent); }
+.vue-surface .pips .pip.demi { background: linear-gradient(90deg, var(--accent) 50%, var(--marron-2) 50%); }
+.vue-surface .voyants { grid-template-columns: repeat(5, 1fr); }
+.vue-surface .voyants li.allume[data-type="info"] { background: var(--accent); border-color: var(--accent); }
+.vue-surface .colonne.centre { min-height: 0; }
+
+/* Commande sans touche dans le jeu : le clic explique quoi régler, rien n'est envoyé */
+.actions button.sans-touche { border-style: dashed; background: none; color: var(--eteint); }
+.actions button.sans-touche::after { content: "à assigner"; display: block; font-size: 0.7rem; color: var(--marron-3); }
+.actions button.sans-touche:hover { background: var(--accent-doux); color: var(--creme); }
+
+/* Boussole : le haut est la direction du regard, la flèche montre le vaisseau */
+.boussole-zone { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; }
+.boussole { grid-area: 1 / 1; height: 100%; width: 100%; min-height: 0; overflow: visible; }
+.boussole-anneau { fill: rgba(0, 0, 0, 0.24); stroke: var(--trait); stroke-width: 1.5; }
+.boussole-anneau.fin { fill: rgba(0, 0, 0, 0.3); stroke-width: 1; }
+.boussole-graduation { stroke: var(--marron-3); stroke-width: 1; }
+.boussole-graduation.majeure { stroke: var(--accent); stroke-width: 2; }
+.boussole-lettre { fill: var(--ambre); font-size: 20px; text-anchor: middle; dominant-baseline: central; }
+.boussole-lettre.nord { fill: var(--accent); font-size: 26px; font-weight: 600; }
+.boussole-fleche { fill: var(--accent); stroke: var(--creme); stroke-width: 1.5; stroke-linejoin: round; filter: drop-shadow(0 0 5px var(--lueur)); }
+.boussole-trait { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 3 5; }
+.boussole-index { fill: var(--creme); }
+.boussole-centre { grid-area: 1 / 1; z-index: 1; display: grid; justify-items: center; gap: 0.15rem; text-align: center; max-width: 13rem; pointer-events: none; }
+.boussole-centre b { font-size: 2.5rem; font-weight: 400; line-height: 1; color: var(--creme); text-shadow: 0 0 1.2rem var(--lueur); white-space: nowrap; }
+.boussole-centre span { font-size: 0.92rem; line-height: 1.15; color: var(--ambre); }
+
+.constantes { flex: none; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 1.2rem; align-items: end; }
+.constantes .jauge-bloc b { font-size: 1.45rem; }
+.exo-fiche { display: flex; flex-direction: column; gap: 0.4rem; min-height: 0; }
+.exo-espece { font-size: 1.3rem; line-height: 1.1; color: var(--creme); }
+.exo-points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem; }
+.exo-points li { height: 0.55rem; background: var(--marron-2); }
+.exo-points li.fait { background: var(--accent); box-shadow: 0 0 0.45rem var(--lueur); }
+.exo-consigne { font-size: 0.9rem; line-height: 1.2; color: var(--jaune); }
+.exo-consigne[data-etat="ok"] { color: var(--accent); }
+.exo-valeur { font-size: 1rem; color: var(--creme); }
+
+/* Verdict sur la cible : la couleur se lit sans lire le mot */
+.verdict { display: flex; align-items: baseline; justify-content: space-between; gap: 0.8rem; padding: 0.3rem 0.6rem; margin-bottom: 0.35rem; border-left: 4px solid var(--eteint); background: rgba(110, 90, 73, 0.2); }
+.verdict b { font-size: 1.35rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--creme); }
+.verdict span { font-size: 0.86rem; text-align: right; color: var(--creme); }
+.verdict[data-code="recherche"], .verdict[data-code="mandat"], .verdict[data-code="ennemi"] { border-left-color: #ff3a1c; background: rgba(255, 58, 28, 0.26); }
+.verdict[data-code="clean"], .verdict[data-code="allie"] { border-left-color: #5fe08a; background: rgba(95, 224, 138, 0.17); }
+.verdict[data-code="autorite"] { border-left-color: var(--glace); background: rgba(159, 220, 255, 0.17); }
+.verdict[data-code="sans_loi"] { border-left-color: var(--jaune); background: rgba(255, 210, 63, 0.14); }
+
+/* Viseur de la vue chasseur : même code couleur que le verdict */
+.viseur-zone { --teinte: var(--accent); position: relative; flex: 1; min-height: 0; display: grid; place-items: center; }
+.viseur-zone[data-teinte-verdict="recherche"], .viseur-zone[data-teinte-verdict="mandat"], .viseur-zone[data-teinte-verdict="ennemi"] { --teinte: #ff3a1c; }
+.viseur-zone[data-teinte-verdict="clean"], .viseur-zone[data-teinte-verdict="allie"] { --teinte: #5fe08a; }
+.viseur-zone[data-teinte-verdict="autorite"] { --teinte: var(--glace); }
+.viseur-zone[data-teinte-verdict="sans_loi"] { --teinte: var(--jaune); }
+.viseur { grid-area: 1 / 1; width: 100%; height: 100%; min-height: 0; overflow: visible; }
+.viseur-anneau { fill: rgba(0, 0, 0, 0.24); stroke: var(--teinte); stroke-width: 1.5; }
+.viseur-anneau.fin { fill: none; stroke-width: 1; stroke-dasharray: 3 7; }
+.viseur-repere { fill: none; stroke: var(--teinte); stroke-width: 2; }
+.viseur-coin { fill: none; stroke: var(--teinte); stroke-width: 4; filter: drop-shadow(0 0 5px var(--teinte)); }
+.viseur-centre { grid-area: 1 / 1; z-index: 1; display: grid; justify-items: center; gap: 0.2rem; max-width: 17rem; text-align: center; pointer-events: none; }
+.viseur-centre b { font-size: 2.3rem; line-height: 1; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--creme); text-shadow: 0 0 1.1rem var(--teinte); }
+.viseur-centre strong { font-size: 1.35rem; font-weight: 400; color: var(--creme); min-height: 1.2em; }
+.viseur-centre span { font-size: 0.95rem; line-height: 1.15; color: var(--ambre); }
+.fiche-cible { display: flex; flex-direction: column; gap: 0.3rem; }
+
+/* Mode chasse sans menace immédiate : le bandeau informe, il n'alarme pas */
+body[data-chasse-calme] .alerte-combat { background: rgba(255, 58, 28, 0.13); }
+body[data-chasse-calme] .alerte-combat strong { animation: none; }
+.liste.primes { flex: none; max-height: 4.4rem; }
+
+/* Exploration : corps du système et dernier scan */
+.vue-nav .colonne.centre { position: relative; }
+.carte-scan { position: absolute; z-index: 3; top: 0; left: 0; width: min(29rem, 100%); display: flex; flex-direction: column; gap: 0.35rem; padding: 0.6rem 0.85rem 0.7rem; background: #120a05; border: 1px solid var(--trait); border-left: 3px solid var(--accent); }
+.carte-scan-titre { display: flex; align-items: baseline; gap: 0.6rem; min-width: 0; }
+.carte-scan-titre span { font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.carte-scan-titre b { font-size: 1.3rem; font-weight: 500; color: var(--creme); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.carte-scan .chiffres dd, .vue-surface .chiffres dd { font-size: 1.15rem; }
+.pastilles li[data-t="or"] { color: var(--noir); background: var(--jaune); border-color: var(--jaune); font-weight: 600; }
+.pastilles li[data-t="vie"] { color: var(--noir); background: #8fce6a; border-color: #8fce6a; font-weight: 600; }
+.corps-liste .marque { flex: none; font-size: 0.72rem; padding: 0 0.3rem; color: var(--noir); background: var(--jaune); }
+.corps-liste .marque[data-t="vie"] { background: #8fce6a; }
+.corps-liste li.ici { background: var(--accent-doux); box-shadow: inset 2px 0 var(--accent); padding-left: 0.4rem; }
+.bio-liste > li { flex-wrap: wrap; gap: 0 0.6rem; }
+.bio-liste .detail-bio { flex-basis: 100%; font-size: 0.8rem; color: var(--marron-3); }
+.bio-liste li[data-etat="analyse"] .nom { color: var(--accent); }
+.bio-note { flex: none; font-size: 0.78rem; line-height: 1.2; color: var(--marron-3); }
+
+/* Parasites entre deux versions de l'interface : sous la trame, sans jamais capter la souris */
+.gresillement {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    width: 100%;
+    height: 100%;
+    margin: 0;                   /* mode « popover », au-dessus de la fenêtre des réglages */
+    padding: 0;
+    border: 0;
+    background: transparent;
+    pointer-events: none;
+    image-rendering: pixelated;
+}
+
+.commandes { display: flex; flex-direction: column; gap: 0.5rem; }
 
 .colonne { display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; min-width: 0; }
 /* Les panneaux gardent leur taille naturelle ; seuls les panneaux « grandit » absorbent l'espace restant */
@@ -345,6 +502,9 @@ body[data-mode="combat"] .hologramme { --holo-trait: #ffab96; --holo-arete: #ffd
 .holo-calque * { vector-effect: non-scaling-stroke; }
 /* Le plan détaillé a son propre calque composité : il n'est repeint qu'au changement de vaisseau */
 .holo-plan { filter: drop-shadow(0 0 0.3rem var(--lueur)); will-change: transform; }
+/* Bandeau de LED du bouclier : sa lumière s'ajoute à celle du plan */
+.holo-led { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: screen; }
+.holo-led[hidden] { display: none; }
 
 /* Fond : grille métrique et lumière du projecteur */
 .holo-grille path { fill: none; stroke: var(--accent); stroke-width: 1px; shape-rendering: crispEdges; }
@@ -354,9 +514,10 @@ body[data-mode="combat"] .hologramme { --holo-trait: #ffab96; --holo-arete: #ffd
 .holo-stop-vide { stop-color: var(--accent); stop-opacity: 0; }
 
 /* Bouclier */
-.bouclier-anneau { fill: none; stroke: var(--glace); stroke-width: 1.3px; stroke-dasharray: 3 7; opacity: 0.7; animation: bouclier-ondule 18s linear infinite; transition: opacity 0.4s, stroke 0.4s; }
-.bouclier-voile { fill: rgba(159, 220, 255, 0.035); stroke: rgba(159, 220, 255, 0.12); stroke-width: 9px; transition: opacity 0.4s; }
-.hologramme[data-boucliers="non"] .bouclier-anneau { opacity: 0.3; stroke: var(--rouge); stroke-dasharray: 1 12; animation: none; }
+/* Le rail sur lequel sont posées les LED (dessinées dans .holo-led), et la bulle d'énergie */
+.bouclier-anneau { fill: none; stroke: rgba(159, 220, 255, 0.2); stroke-width: 3px; stroke-linejoin: round; transition: opacity 0.4s, stroke 0.4s; }
+.bouclier-voile { fill: rgba(159, 220, 255, 0.03); stroke: rgba(159, 220, 255, 0.07); stroke-width: 12px; stroke-linejoin: round; transition: opacity 0.4s; }
+.hologramme[data-boucliers="non"] .bouclier-anneau { opacity: 0.45; stroke: rgba(255, 58, 28, 0.3); }
 .hologramme[data-boucliers="non"] .bouclier-voile { opacity: 0; }
 
 /* Plan du vaisseau */
@@ -423,15 +584,14 @@ body[data-mode="combat"] .holo-legende span { color: #9c4a36; }
 .zone.voyant text { fill: var(--rouge); font-weight: 600; }
 .zone-lueur.voyant { animation: voyant-lueur 0.4s linear infinite; }
 .alerte-coque.voyant { animation: voyant-coque 0.4s linear infinite; }
-/* Bouclier : la bulle s'illumine quand elle encaisse, vire au rouge quand elle tombe */
-.bouclier-voile.eclat { animation: eclat-bouclier 0.7s ease-out; }
+/* Bouclier : la bulle vire au rouge quand il tombe (les coups encaissés sont sur le bandeau de LED) */
 .bouclier-voile.effondrement { animation: effondrement-voile 1.3s ease-out; }
 .hologramme .bouclier-anneau.effondrement { animation: effondrement-anneau 1.3s ease-out; }
 
-/* Impacts : ondes (bleu glacé sur le bouclier, crème sur la coque). Le contour du plan ne change
+/* Impacts : ondes (rouge sur le bouclier, crème sur la coque). Le contour du plan ne change
    plus de couleur : il est dans le calque statique, le repeindre à chaque coup coûterait cher. */
 .impact circle { fill: none; stroke: var(--creme); stroke-width: 2px; opacity: 0; transform-box: fill-box; transform-origin: center; }
-.impact[data-sur="bouclier"] circle { stroke: var(--glace); }
+.impact[data-sur="bouclier"] circle { stroke: #ff5a3c; }
 .hologramme.touche .impact circle { animation: onde 0.9s ease-out; }
 .hologramme.touche .impact circle + circle { animation-delay: 0.18s; }
 .hologramme.touche-forte .holo { animation: holo-flotte 8s ease-in-out infinite alternate, holo-parasite 0.5s steps(3) 2; }
@@ -486,9 +646,157 @@ body[data-mode="combat"] .pips .pip.demi { background: linear-gradient(90deg, va
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
 .actions button { font-size: 0.86rem; line-height: 1.15; padding: 0.38rem 0.5rem; color: var(--creme); }
 .actions button.large { grid-column: 1 / -1; }
-#bloc-station .actions { margin-top: 0.3rem; }
 /* Bloc d'actions qui remplit son panneau : boutons plus hauts, plus faciles à viser en combat */
 .actions.remplit { flex: 1; min-height: 0; grid-auto-rows: 1fr; }
+
+/* ================= RÉGLAGES (icône d'engrenage, reglages.js) ================= */
+.bouton-reglages { display: grid; place-items: center; padding: 0.42rem; }
+.bouton-reglages svg { width: 1.45rem; height: 1.45rem; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Raccourcis des modes, panneau Énergie de la vue combat */
+.modes-rapides { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.modes-rapides button { cursor: pointer; flex: 1 1 auto; min-width: 0; border: 1px solid var(--trait); background: var(--accent-doux); color: var(--creme); font-size: 0.82rem; line-height: 1.15; padding: 0.32rem 0.5rem; }
+.modes-rapides button:hover { background: var(--accent); color: var(--noir); }
+.modes-rapides button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--noir); font-weight: 600; }
+
+.fenetre-reglages { width: min(116rem, 97vw); height: 94vh; max-width: none; max-height: none; padding: 0; color: var(--ambre); background: var(--fond); border: 1px solid var(--trait); border-left: 3px solid var(--accent); font-family: var(--police); overflow: hidden; }
+.fenetre-reglages[open] { display: flex; flex-direction: column; }
+.fenetre-reglages::backdrop { background: rgba(7, 4, 3, 0.78); }
+.fenetre-reglages button, .fenetre-reglages select, .fenetre-reglages input { font: inherit; }
+.fenetre-reglages button { cursor: pointer; color: var(--creme); background: var(--accent-doux); border: 1px solid var(--trait); transition: background 0.15s, color 0.15s; }
+.fenetre-reglages button:hover:not(:disabled) { background: var(--accent); color: var(--noir); }
+.fenetre-reglages button:disabled { cursor: default; color: var(--eteint); border-color: rgba(122, 76, 34, 0.45); background: none; }
+.fenetre-reglages button.arme { background: var(--rouge); border-color: var(--rouge); color: var(--creme); }
+.fenetre-reglages :is(input, select):focus-visible { outline: 2px solid var(--creme); outline-offset: 1px; }
+
+.reglages-tete { flex: none; display: flex; align-items: center; gap: 1.2rem; padding: 0.8rem 1.2rem; border-bottom: 1px solid var(--trait); background: rgba(0, 0, 0, 0.3); }
+.reglages-tete h2 { font-size: 1.2rem; }
+.reglages-onglets { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.fenetre-reglages .reglages-onglets button { padding: 0.4rem 1rem; font-size: 0.92rem; }
+.fenetre-reglages .reglages-onglets button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--noir); font-weight: 600; }
+.reglages-panneau { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.cadre-reglages { display: block; flex: 1; width: 100%; min-height: 0; border: 0; background: var(--noir); }
+.accueil-coin { position: absolute; top: 1.2rem; right: 1.2rem; display: flex; gap: 0.5rem; }
+
+/* Quitter : juste à droite de l'engrenage. Passe au-dessus du voile « liaison perdue » */
+.bandeau-droite .bouton-quitter { margin-left: -0.9rem; }
+.bouton-quitter { position: relative; z-index: 41; display: flex; align-items: center; gap: 0.4rem; }
+.bouton-quitter span { display: none; font-size: 0.9rem; font-weight: 600; white-space: nowrap; }
+.bouton-quitter:hover { background: var(--rouge); border-color: var(--rouge); color: var(--creme); }
+.bouton-quitter.arme { padding-left: 0.7rem; background: var(--rouge); border-color: var(--rouge); color: var(--creme); }
+.bouton-quitter.arme span { display: inline; }
+.reglages-etat { margin-left: auto; font-size: 0.85rem; color: var(--marron-3); }
+.reglages-etat[data-type="ok"] { color: var(--ambre); }
+.reglages-etat[data-type="attention"] { color: var(--jaune); }
+.reglages-etat[data-type="alerte"] { color: var(--rouge); }
+.fenetre-reglages .reglages-fermer { width: 2.2rem; height: 2.2rem; padding: 0; font-size: 1.4rem; line-height: 1; }
+.reglages-attente { padding: 1.4rem; }
+
+.reglages-corps { flex: 1; min-height: 0; display: grid; grid-template-columns: 19rem minmax(0, 1fr); }
+.reglages-vaisseaux { min-height: 0; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border-right: 1px solid var(--trait); background: rgba(0, 0, 0, 0.18); }
+.reglages-vaisseaux h3 { margin: 0; }
+#reglages-profils { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 0.25rem; scrollbar-width: thin; scrollbar-color: var(--marron-3) transparent; }
+.fenetre-reglages .profil { width: 100%; display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.65rem; text-align: left; background: none; border-color: transparent; }
+.fenetre-reglages .profil small { margin-left: auto; font-size: 0.74rem; padding: 0 0.4rem; border: 1px solid currentColor; }
+.fenetre-reglages .profil.en-vol::before { content: ""; flex: none; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0.4rem var(--lueur); }
+.fenetre-reglages .profil[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--noir); font-weight: 600; }
+.fenetre-reglages .profil[aria-pressed="true"].en-vol::before { background: var(--noir); box-shadow: none; }
+.fenetre-reglages .reglages-ajout-actuel { padding: 0.45rem 0.6rem; text-align: left; }
+.reglages-ajout { display: flex; gap: 0.3rem; }
+.reglages-ajout select { flex: 1; min-width: 0; color: var(--creme); background: var(--marron-1); border: 1px solid var(--trait); padding: 0.35rem 0.4rem; }
+.reglages-ajout button { padding: 0.35rem 0.6rem; }
+
+.reglages-modes { min-height: 0; min-width: 0; display: flex; flex-direction: column; gap: 0.8rem; padding: 0.9rem 1.1rem 1rem; }
+.reglages-profil { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.reglages-profil h3 { margin: 0; font-size: 1.35rem; font-weight: 400; letter-spacing: 0.04em; text-transform: none; color: var(--creme); }
+.reglages-profil p { font-size: 0.86rem; color: var(--ambre); }
+.reglages-profil button { flex: none; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+
+.grille-modes { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); grid-auto-rows: max-content; gap: 0.7rem; align-content: start; padding-right: 0.3rem; scrollbar-width: thin; scrollbar-color: var(--marron-3) transparent; }
+.carte-mode { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.7rem 0.85rem 0.8rem; background: linear-gradient(160deg, rgba(60, 34, 14, 0.42), rgba(18, 10, 5, 0.6)); border: 1px solid rgba(122, 76, 34, 0.55); border-left: 3px solid var(--marron-3); }
+.carte-mode.en-cours { border-color: var(--trait); border-left-color: var(--accent); }
+.carte-tete { display: flex; align-items: center; gap: 0.5rem; min-height: 1.8rem; }
+.carte-tete h4 { margin: 0; font-size: 1.08rem; font-weight: 600; color: var(--creme); }
+.carte-nom { flex: 1; min-width: 0; color: var(--creme); font-size: 1.05rem !important; font-weight: 600; background: rgba(0, 0, 0, 0.35); border: 1px solid var(--trait); padding: 0.1rem 0.4rem; }
+.carte-nom.invalide { border-color: var(--rouge); color: var(--rouge); }
+.carte-origine { margin-left: auto; flex: none; font-size: 0.74rem; color: var(--eteint); }
+.carte-origine[data-propre="true"] { color: var(--accent); }
+.fenetre-reglages .carte-retour { flex: none; width: 1.6rem; height: 1.6rem; padding: 0; line-height: 1; }
+.carte-declencheur { font-size: 0.8rem; color: var(--marron-3); min-height: 1.1em; margin-bottom: 0.15rem; }
+.carte-ligne { display: grid; grid-template-columns: 4.8rem minmax(0, 1fr) 2rem; align-items: center; gap: 0.5rem; font-size: 0.88rem; color: var(--creme); }
+.carte-ligne b { font-weight: 400; text-align: right; font-size: 1rem; }
+.carte-pied { display: flex; gap: 0.35rem; margin-top: 0.3rem; }
+.carte-pied button { flex: 1; padding: 0.32rem 0.5rem; font-size: 0.84rem; }
+.fenetre-reglages .carte-nouvelle { min-height: 11rem; border-style: dashed; background: none; color: var(--ambre); font-size: 1rem; }
+
+/* Onglet Commandes : touches et séquences */
+.commandes-menu { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--marron-3) transparent; }
+.commandes-menu ul { display: flex; flex-direction: column; gap: 0.2rem; }
+.commandes-menu h3 + ul { margin-bottom: 0.6rem; }
+#commandes-contenu .reglages-profil p { max-width: 62rem; }
+.liste-touches, .liste-etapes { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 0.25rem; padding-right: 0.3rem; scrollbar-width: thin; scrollbar-color: var(--marron-3) transparent; }
+.ligne-touche, .ligne-etape { flex: none; display: grid; align-items: center; gap: 0.7rem; min-height: 2.5rem; padding: 0.25rem 0.7rem; background: rgba(60, 34, 14, 0.24); border: 1px solid rgba(122, 76, 34, 0.38); border-left: 3px solid var(--marron-3); }
+.ligne-touche { grid-template-columns: minmax(14rem, 1fr) 15rem minmax(14rem, 1fr) 1.7rem; }
+.ligne-etape { grid-template-columns: 1.8rem minmax(12rem, 1fr) 17rem 1.9rem 1.9rem 1.9rem; }
+.touche-nom { min-width: 0; color: var(--creme); }
+.fenetre-reglages .touche-valeur { min-height: 1.9rem; padding: 0.2rem 0.6rem; color: var(--creme); font-weight: 600; font-family: Consolas, "Cascadia Mono", monospace; font-size: 0.9rem; }
+.fenetre-reglages .touche-valeur.ecoute { background: var(--accent); border-color: var(--creme); color: var(--noir); font-family: var(--police); }
+.touche-etat { display: flex; flex-direction: column; min-width: 0; font-size: 0.82rem; color: var(--marron-3); }
+.touche-etat[data-type="attention"] { color: var(--jaune); }
+.touche-etat[data-type="alerte"] { color: var(--rouge); }
+.touche-etat small { font-size: 0.76rem; color: var(--ambre); }
+.ligne-touche .carte-retour { justify-self: end; }
+.etape-rang { color: var(--marron-3); text-align: right; }
+.etape-milieu { display: flex; align-items: center; justify-content: flex-end; gap: 0.35rem; min-width: 0; }
+.etape-touche { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0.12rem 0.45rem; text-align: center; color: var(--creme); background: rgba(0, 0, 0, 0.35); border: 1px solid var(--trait); font-family: Consolas, "Cascadia Mono", monospace; font-size: 0.86rem; }
+.etape-touche.manquante { color: var(--rouge); border-color: var(--rouge); }
+.etape-nombre { width: 2.4rem; text-align: center; font-weight: 400; color: var(--creme); }
+.fenetre-reglages .etape-bouton { width: 1.9rem; height: 1.9rem; padding: 0; line-height: 1; }
+.etape-duree { width: 5rem; padding: 0.2rem 0.4rem; color: var(--creme); background: var(--marron-1); border: 1px solid var(--trait); }
+.etape-unite { width: 1rem; color: var(--ambre); }
+.ajout-etape { flex: none; display: flex; gap: 0.35rem; padding-top: 0.2rem; }
+.ajout-etape select { flex: 1; min-width: 0; color: var(--creme); background: var(--marron-1); border: 1px solid var(--trait); padding: 0.4rem 0.45rem; }
+.ajout-etape button { flex: none; padding: 0.4rem 0.9rem; }
+
+/* Onglet Son : casque, haut-parleurs, micro */
+.son-corps { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding: 1.1rem 1.4rem; scrollbar-width: thin; scrollbar-color: var(--marron-3) transparent; }
+.son-liste { flex: none; display: flex; align-items: center; gap: 0.8rem; }
+.son-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 30rem), 1fr)); gap: 1rem; align-items: start; }
+.carte-son { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.15rem 1.1rem; background: linear-gradient(160deg, rgba(60, 34, 14, 0.42), rgba(18, 10, 5, 0.6)); border: 1px solid rgba(122, 76, 34, 0.55); border-left: 3px solid var(--accent); }
+.carte-son h4 { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--creme); }
+.carte-son > p:not(.son-note) { font-size: 0.88rem; color: var(--ambre); }
+.son-champ { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.84rem; color: var(--ambre); }
+.son-champ select { width: 100%; min-width: 0; padding: 0.5rem 0.55rem; font-size: 0.95rem; color: var(--creme); background: var(--marron-1); border: 1px solid var(--trait); }
+.son-champ select:disabled { color: var(--eteint); }
+.son-volume { display: grid; grid-template-columns: minmax(0, 1fr) 3.6rem; align-items: center; gap: 0.7rem; }
+.son-volume input { width: 100%; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.son-volume b { font-size: 1.05rem; font-weight: 400; color: var(--creme); text-align: right; }
+.son-vumetre { --niveau: 0; height: 0.8rem; overflow: hidden; background: repeating-linear-gradient(90deg, var(--marron-2) 0 0.45rem, transparent 0.45rem 0.6rem); }
+.son-vumetre i { display: block; width: 100%; height: 100%; transform-origin: left; transform: scaleX(var(--niveau)); background: repeating-linear-gradient(90deg, var(--eteint) 0 0.45rem, transparent 0.45rem 0.6rem); }
+.son-vumetre[data-etat="bon"] i { background: repeating-linear-gradient(90deg, var(--glace) 0 0.45rem, transparent 0.45rem 0.6rem); }
+.son-vumetre[data-etat="sature"] i { background: repeating-linear-gradient(90deg, var(--rouge) 0 0.45rem, transparent 0.45rem 0.6rem); }
+.son-actions { display: flex; gap: 0.4rem; }
+.fenetre-reglages .son-actions button, .fenetre-reglages .son-liste button { padding: 0.45rem 0.95rem; font-size: 0.9rem; }
+.fenetre-reglages .son-actions button[aria-pressed="true"] { background: var(--rouge); border-color: var(--rouge); color: var(--creme); }
+.son-note { min-height: 1.2em; font-size: 0.84rem; color: var(--marron-3); }
+.son-note[data-type="ok"] { color: var(--ambre); }
+.son-note[data-type="attention"] { color: var(--jaune); }
+.son-note[data-type="alerte"] { color: var(--rouge); }
+
+/* Curseur découpé en 4 pips ; chaque cran vaut un demi-pip */
+.pip-curseur {
+    --v: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 1.2rem;
+    margin: 0;
+    cursor: pointer;
+    background:
+        repeating-linear-gradient(90deg, transparent 0 calc(25% - 3px), var(--fond) calc(25% - 3px) 25%),
+        linear-gradient(90deg, var(--accent) calc(var(--v) * 100%), var(--marron-2) 0);
+}
+.pip-curseur::-webkit-slider-thumb { -webkit-appearance: none; width: 0.32rem; height: 1.6rem; background: var(--creme); box-shadow: 0 0 0.4rem var(--lueur); }
 
 /* ================= VOILE (liaison perdue) ================= */
 .voile {
@@ -503,6 +811,98 @@ body[data-liaison="hors-ligne"] .voile { display: grid; }
 .voile-boite { max-width: 34rem; padding: 1.6rem 1.8rem; border: 1px solid var(--trait); border-left: 3px solid var(--orange); background: var(--marron-1); display: grid; gap: 0.9rem; }
 .voile-boite p { color: var(--creme); line-height: 1.5; }
 .voile-boite .actions { grid-template-columns: auto; justify-content: start; }
+
+/* ================= ÉCRAN D'ACCUEIL (application Python, interface.html?app) ================= */
+.accueil {
+    position: fixed;
+    inset: 0;
+    z-index: 45;                 /* au-dessus du voile, sous la trame holographique */
+    display: none;
+    place-items: center;
+    background: radial-gradient(120% 80% at 50% 45%, #2a1608 0%, var(--fond) 45%, var(--noir) 100%);
+}
+body[data-app] .accueil { display: grid; }
+.accueil-centre { display: grid; justify-items: center; gap: 0.6rem; text-align: center; width: min(40rem, 90vw); }
+.accueil-marque {
+    font-size: 4.2rem;
+    line-height: 1;
+    letter-spacing: 0.42em;
+    margin-right: -0.42em;       /* l'espacement final ne décentre pas le mot */
+    color: var(--orange);
+    text-shadow: 0 0 1.6rem var(--lueur);
+}
+.accueil-sous-titre { font-size: 0.95rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--marron-3); margin-bottom: 2.4rem; }
+
+.accueil-bouton {
+    position: relative;
+    width: 15rem;
+    height: 15rem;
+    border: 0;
+    border-radius: 50%;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    color: var(--orange);
+    background: radial-gradient(circle at 50% 50%, rgba(255, 122, 20, 0.16) 0%, rgba(255, 122, 20, 0.05) 55%, transparent 70%);
+    transition: color 0.2s, background 0.3s, transform 0.2s;
+}
+.accueil-bouton:hover { color: var(--ambre); background: radial-gradient(circle at 50% 50%, rgba(255, 122, 20, 0.28) 0%, rgba(255, 122, 20, 0.08) 55%, transparent 70%); }
+.accueil-bouton:active { transform: scale(0.97); }
+.accueil-bouton:focus-visible { outline: 2px solid var(--ambre); outline-offset: 0.5rem; }
+.accueil-bouton:disabled { cursor: default; }
+.accueil-anneaux { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.accueil-anneaux circle { fill: none; }
+.anneau-fond { stroke: var(--trait); stroke-width: 1px; }
+.anneau-tirets { stroke: var(--orange); stroke-width: 3px; stroke-dasharray: 3 9; transform-origin: 100px 100px; filter: drop-shadow(0 0 4px var(--lueur)); animation: accueil-rotation 24s linear infinite; }
+.anneau-interieur { stroke: var(--orange); stroke-width: 1.5px; opacity: 0.55; transform-origin: 100px 100px; animation: accueil-pulsation 2.6s ease-in-out infinite; }
+.accueil-icone { width: 4.2rem; height: 4.2rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; filter: drop-shadow(0 0 0.5rem var(--lueur)); }
+.accueil-libelle { font-size: 1.1rem; letter-spacing: 0.32em; margin-right: -0.32em; text-transform: uppercase; color: var(--creme); }
+
+.accueil-etat { margin-top: 1.6rem; font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--eteint); }
+.accueil-sequence {
+    display: grid;
+    gap: 0.25rem;
+    min-height: 9rem;
+    width: min(30rem, 100%);
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 0.82rem;
+    text-align: left;
+    color: var(--ambre);
+}
+.accueil-sequence li { display: flex; gap: 0.7rem; animation: accueil-ligne 0.35s ease-out; }
+.accueil-sequence li::before { content: "▸"; color: var(--orange); }
+.accueil-sequence li.fait { color: var(--marron-3); }
+.accueil-sequence li.fait::before { content: "✓"; color: var(--marron-3); }
+.accueil-sequence li.attention, .accueil-sequence li.attention::before { color: var(--jaune); }
+.accueil-sequence li.attention::before { content: "!"; }
+.accueil-sequence li.erreur, .accueil-sequence li.erreur::before { color: var(--rouge); }
+.accueil-sequence li.erreur::before { content: "✕"; }
+.accueil-sequence li.pret { color: var(--creme); }
+
+/* Activation en cours : l'anneau tourne vite, le bouton ne répond plus */
+.accueil[data-etat="activation"] .anneau-tirets { animation-duration: 2.4s; }
+.accueil[data-etat="activation"] .accueil-etat { color: var(--ambre); animation: clignote 1.2s steps(2) infinite; }
+.accueil[data-etat="pret"] .accueil-bouton { color: var(--creme); background: radial-gradient(circle at 50% 50%, rgba(255, 177, 99, 0.35) 0%, rgba(255, 122, 20, 0.1) 55%, transparent 70%); }
+.accueil[data-etat="pret"] .accueil-etat { color: var(--creme); }
+.accueil[data-etat="erreur"] { --orange: var(--rouge); --trait: rgba(255, 58, 28, 0.42); --lueur: rgba(255, 58, 28, 0.6); }
+.accueil[data-etat="erreur"] .accueil-etat { color: var(--rouge); }
+
+/* Le panneau s'allume quand l'accueil s'efface */
+body.allumage .bandeau, body.allumage .vue { animation: allumage 1.1s ease-out; }
+
+@keyframes accueil-rotation { to { transform: rotate(360deg); } }
+@keyframes accueil-pulsation { 0%, 100% { transform: scale(1); opacity: 0.55; } 50% { transform: scale(1.04); opacity: 0.9; } }
+@keyframes accueil-ligne { from { opacity: 0; transform: translateX(-0.6rem); } }
+@keyframes allumage {
+    0% { opacity: 0; filter: brightness(2.2); }
+    12% { opacity: 0.7; }
+    18% { opacity: 0.25; }
+    30% { opacity: 1; }
+    100% { opacity: 1; filter: brightness(1); }
+}
 
 /* ================= ANIMATIONS ================= */
 @keyframes clignote { 50% { opacity: 0.35; } }
@@ -524,7 +924,6 @@ body[data-liaison="hors-ligne"] .voile { display: grid; }
     0% { transform: translateY(0); }
     55%, 100% { transform: translateY(1320px); }
 }
-@keyframes bouclier-ondule { to { stroke-dashoffset: -200; } }
 @keyframes onde { 0% { opacity: 0.9; transform: scale(0.4); } 100% { opacity: 0; transform: scale(6); } }
 /* Voyants d'avarie : moitié rouge, moitié noir, sans fondu (comme un voyant qui s'allume et s'éteint) */
 @keyframes voyant-repere {
@@ -539,38 +938,38 @@ body[data-liaison="hors-ligne"] .voile { display: grid; }
     0%, 50% { fill: var(--rouge); opacity: calc(0.34 * var(--avarie)); }
     50.01%, 100% { fill: #000; opacity: calc(0.5 * var(--avarie)); }
 }
-@keyframes eclat-bouclier {
-    0% { fill: rgba(159, 220, 255, 0.11); stroke: rgba(214, 241, 255, 0.85); }
-    100% { fill: rgba(159, 220, 255, 0.035); stroke: rgba(159, 220, 255, 0.12); }
-}
 @keyframes effondrement-voile {
     0%, 15% { opacity: 1; fill: rgba(255, 58, 28, 0.16); stroke: rgba(255, 58, 28, 0.75); }
     100% { opacity: 0; fill: rgba(255, 58, 28, 0); stroke: rgba(255, 58, 28, 0); }
 }
 @keyframes effondrement-anneau {
-    0%, 15% { opacity: 1; stroke: var(--rouge); stroke-width: 3px; }
-    100% { opacity: 0.3; stroke: var(--rouge); stroke-width: 1.3px; }
+    0%, 15% { opacity: 1; stroke: var(--rouge); stroke-width: 4px; }
+    100% { opacity: 0.45; stroke: rgba(255, 58, 28, 0.3); stroke-width: 3px; }
 }
 @keyframes secousse { 20% { transform: translate(-0.3rem, 0.15rem); } 50% { transform: translate(0.3rem, -0.15rem); } 80% { transform: translate(-0.15rem, 0); } }
 body.secoue .vue-combat { animation: secousse 0.3s; }
 
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
-    /* L'hologramme garde ses effets lumineux (scintillement, balayage, bouclier) : c'est son rendu même.
-       Pas de déplacement d'ensemble (le flottement reste coupé). Pour le figer aussi, supprimer ces trois lignes. */
+    /* L'hologramme garde ses effets lumineux (scintillement, balayage) : c'est son rendu même. Le bandeau
+       de LED est dessiné par hologramme.js. Pas de déplacement d'ensemble (le flottement reste coupé). */
     .holo { animation: holo-scintille 11s linear infinite !important; }
     .holo-balayage { animation: holo-balayage 9s cubic-bezier(0.45, 0, 0.55, 1) infinite !important; }
-    .bouclier-anneau { animation: bouclier-ondule 18s linear infinite !important; }
-    .hologramme[data-boucliers="non"] .bouclier-anneau { animation: none !important; }
     /* Avaries et impacts : ce sont des alertes, pas de la décoration. Ils jouent toujours. */
     .zone.voyant rect { animation: voyant-repere 0.4s linear infinite !important; }
     .zone-lueur.voyant { animation: voyant-lueur 0.4s linear infinite !important; }
     .alerte-coque.voyant { animation: voyant-coque 0.4s linear infinite !important; }
-    .bouclier-voile.eclat { animation: eclat-bouclier 0.7s ease-out !important; }
     .bouclier-voile.effondrement { animation: effondrement-voile 1.3s ease-out !important; }
     .hologramme .bouclier-anneau.effondrement { animation: effondrement-anneau 1.3s ease-out !important; }
     .hologramme.touche .impact circle { animation: onde 0.9s ease-out !important; }
     .hologramme.touche .impact circle + circle { animation-delay: 0.18s !important; }
+    /* Écran d'accueil de l'application : l'allumage du COVAS est le moment fort, il joue toujours */
+    .anneau-tirets { animation: accueil-rotation 24s linear infinite !important; }
+    .accueil[data-etat="activation"] .anneau-tirets { animation-duration: 2.4s !important; }
+    .anneau-interieur { animation: accueil-pulsation 2.6s ease-in-out infinite !important; }
+    .accueil[data-etat="activation"] .accueil-etat { animation: clignote 1.2s steps(2) infinite !important; }
+    .accueil-sequence li { animation: accueil-ligne 0.35s ease-out !important; }
+    body.allumage .bandeau, body.allumage .vue { animation: allumage 1.1s ease-out !important; }
 }
 
 /* Petits écrans (téléphone, fenêtre étroite) : tout passe en une colonne qui défile */
@@ -579,10 +978,25 @@ body.secoue .vue-combat { animation: secousse 0.3s; }
     body { height: auto; min-height: 100vh; overflow: auto; display: block; }
     .bandeau, .identite { flex-wrap: wrap; gap: 0.8rem 1.4rem; }
     .vue { display: flex; flex-direction: column; }
-    body[data-mode="nav"] .vue-combat, body[data-mode="combat"] .vue-nav { display: none; }
+    body:not([data-mode="nav"]) .vue-nav, body:not([data-mode="combat"]) .vue-combat,
+    body:not([data-mode="chasseur"]) .vue-chasseur,
+    body:not([data-mode="vrs"]):not([data-mode="pied"]):not([data-mode="nomade"]) .vue-surface { display: none; }
+    .viseur-zone { height: 22rem; flex: none; }
+    .vue-chasseur .voyants { grid-template-columns: repeat(3, 1fr); }
+    .carte-scan { position: static; width: 100%; }
+    .boussole-zone { height: 22rem; flex: none; }
+    .constantes { grid-auto-flow: row; }
+    .vue-surface .voyants { grid-template-columns: repeat(3, 1fr); }
     .hologramme { height: 22rem; flex: none; }
     .jauges { grid-template-columns: 1fr 1fr; }
     .voyants { grid-template-columns: repeat(3, 1fr); }
     .defile { max-height: 16rem; }
     .actions.remplit { grid-auto-rows: auto; }
+    .fenetre-reglages { width: 100vw; height: 100vh; }
+    .reglages-tete { flex-wrap: wrap; }
+    .reglages-corps { display: flex; flex-direction: column; overflow-y: auto; }
+    .reglages-vaisseaux { border-right: 0; border-bottom: 1px solid var(--trait); }
+    #reglages-profils { flex: none; max-height: 10rem; }
+    .reglages-modes { flex: none; }
+    .grille-modes { overflow: visible; grid-template-columns: minmax(0, 1fr); }
 }

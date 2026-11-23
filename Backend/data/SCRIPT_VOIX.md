@@ -1,14 +1,12 @@
 # Script des répliques du COVAS
 
-**121 répliques** au total.
+**153 répliques** au total.
 
-Chaque ligne = un fichier. Elles sont fabriquées par la voix de synthèse du COVAS (la même que le rapport d'avarie, réglée dans `module/synthese.py`) :
+Chaque ligne = un fichier.
 
-    python -m module.repliques            (depuis Backend/)
-
-- **Changer une phrase** : modifie-la ici puis relance la commande ; seules les répliques changées sont refaites.
-- **Enregistrer une réplique toi-même** : dépose ton fichier au chemin indiqué, en `.wav` ou en `.mp3` (un `.wav` passe devant le `.mp3` de synthèse). Un enregistrement fait à la main n'est jamais écrasé.
-- `python -m module.repliques --liste` montre ce qui serait refait, `--tout` refait toutes les répliques de synthèse (après un changement de voix, par exemple).
+- **Changer une phrase** : modifie-la ici, puis réenregistre-la.
+- **Enregistrer une réplique avec ta voix** : lance `STUDIO VOCAL.bat` (à la racine). Le studio liste toutes ces répliques, transforme ta voix en voix du COVAS et range le fichier au bon chemin.
+- **Déposer un fichier à la main** : au chemin indiqué, en `.wav` ou en `.mp3` (un `.wav` passe devant le `.mp3`).
 
 `barks.json` connaît déjà ces fichiers. Tant qu'un fichier n'existe pas, le COVAS l'ignore et répond par un « Bien, commandant » générique ou reste muet.
 
@@ -80,9 +78,9 @@ Chaque ligne = un fichier. Elles sont fabriquées par la voix de synthèse du CO
 | `refus_pas_de_module` | `data/son/Refus/PasDeModule.mp3` | Ce module n'est pas installé sur le vaisseau. |
 | `rapport_avarie` | `data/son/Combat/RapportAvarie.mp3` | Rapport d'avarie à l'écran, commandant. |
 
-Le rapport d'avarie lui-même (coque, boucliers, modules) est lu par la synthèse vocale
-(`module/synthese.py`) : son texte change à chaque fois. La réplique ci-dessus ne sert que si
-la synthèse est indisponible.
+Le rapport d'avarie lui-même (coque, boucliers, modules) change à chaque fois : le COVAS l'assemble
+avec les morceaux du studio vocal (filtre « Rapport, heure, date, position »). Tant qu'il en manque
+un, le rapport reste à l'écran et la réplique ci-dessus l'annonce.
 
 ## Station
 
@@ -166,3 +164,50 @@ la synthèse est indisponible.
 | `macro_echec` | `data/son/Refus/MacroEchec1.mp3` | La manœuvre a échoué, commandant. |
 | `macro_echec` | `data/son/Refus/MacroEchec2.mp3` | Le vaisseau n'a pas répondu. |
 | `commande_incomprise` | `data/son/Refus/Incomprise.mp3` | Je n'ai pas compris la commande, commandant. |
+
+## Actions faites à la main (touche, HOTAS)
+
+| Quand | Fichier | Phrase à dire |
+|---|---|---|
+| `manuel_train_rentre` | `data/son/Manuel/TrainRentre.mp3` | Train d'atterrissage rentré. |
+| `manuel_soute_fermee` | `data/son/Manuel/SouteFermee.mp3` | Écope de soute fermée. |
+| `manuel_armes_sorties` | `data/son/Manuel/ArmesSorties.mp3` | Armes déployées. |
+| `manuel_armes_rentrees` | `data/son/Manuel/ArmesRentrees.mp3` | Armes rentrées. |
+| `manuel_phares_on` | `data/son/Manuel/PharesOn.mp3` | Phares allumés. |
+| `manuel_phares_off` | `data/son/Manuel/PharesOff.mp3` | Phares coupés. |
+| `manuel_nvg_on` | `data/son/Manuel/NvgOn.mp3` | Vision nocturne activée. |
+| `manuel_nvg_off` | `data/son/Manuel/NvgOff.mp3` | Vision nocturne coupée. |
+| `manuel_silencieux_on` | `data/son/Manuel/SilencieuxOn.mp3` | Mode silencieux activé. |
+| `manuel_silencieux_off` | `data/son/Manuel/SilencieuxOff.mp3` | Mode silencieux coupé. |
+| `manuel_analyse` | `data/son/Manuel/ModeAnalyse.mp3` | Mode analyse. |
+| `manuel_combat` | `data/son/Manuel/ModeCombat.mp3` | Mode combat. |
+
+## Chasse aux primes
+
+| Quand | Fichier | Phrase à dire |
+|---|---|---|
+| `chasse_active` | `data/son/Chasse/ChasseActive1.mp3` | Zone de chasse. Mode chasseur de primes activé, commandant. |
+| `chasse_active` | `data/son/Chasse/ChasseActive2.mp3` | Bon terrain de chasse. Je vous signale chaque cible scannée. |
+| `chasse_coupee` | `data/son/Chasse/ChasseCoupee.mp3` | Mode chasseur de primes coupé. |
+| `chasse_fin` | `data/son/Chasse/ChasseFin.mp3` | Fin de la chasse. Le tableau est à l'écran, commandant. |
+| `chasse_recherchee` | `data/son/Chasse/Recherchee1.mp3` | Cible recherchée. |
+| `chasse_recherchee` | `data/son/Chasse/Recherchee2.mp3` | Celui-là est recherché, commandant. |
+| `chasse_recherchee` | `data/son/Chasse/Recherchee3.mp3` | Recherché. Vous pouvez ouvrir le feu. |
+| `chasse_clean` | `data/son/Chasse/Clean1.mp3` | Cible en règle. Ne tirez pas. |
+| `chasse_clean` | `data/son/Chasse/Clean2.mp3` | Il est clean, commandant. On le laisse tranquille. |
+| `chasse_autorite` | `data/son/Chasse/Autorites.mp3` | Vaisseau des autorités. Surtout, ne tirez pas. |
+| `chasse_sans_loi` | `data/son/Chasse/SansJuridiction.mp3` | Aucune juridiction ici. Pas de prime sur cette cible. |
+| `chasse_joueur` | `data/son/Chasse/Joueur.mp3` | Attention, c'est un autre commandant. |
+| `chasse_gros_gibier` | `data/son/Chasse/GrosGibier.mp3` | Gros gibier, commandant. La prime est belle. |
+| `chasse_dangereux` | `data/son/Chasse/Dangereux.mp3` | Pilote dangereux. Restez vigilant. |
+| `chasse_tir_clean` | `data/son/Chasse/TirClean.mp3` | Commandant, vous venez de toucher une cible en règle ! |
+
+## Exploration et exobiologie
+
+| Quand | Fichier | Phrase à dire |
+|---|---|---|
+| `scan_valeur` | `data/son/Exploration/ScanValeur.mp3` | Corps de grande valeur, commandant. Le détail est à l'écran. |
+| `scan_premiere` | `data/son/Exploration/ScanPremiere.mp3` | Corps de grande valeur, et personne ne l'a encore découvert. |
+| `scan_bio` | `data/son/Exploration/ScanBio.mp3` | Signaux biologiques détectés sur ce corps. |
+| `exo_analyse` | `data/son/Exploration/ExoAnalyse.mp3` | Analyse terminée, commandant. Échantillon enregistré. |
+| `exo_distance_ok` | `data/son/Exploration/ExoDistance.mp3` | Distance suffisante. Vous pouvez prélever. |

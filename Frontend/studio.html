@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>COVAS — Studio vocal</title>
+    <link rel="stylesheet" href="studio.css">
+</head>
+<body data-enregistre="non">
+    <script>if (new URLSearchParams(location.search).has('integre')) document.body.dataset.integre = '';</script>
+    <header class="bandeau">
+        <div class="marque">
+            <strong>COVAS</strong>
+            <span>Studio vocal</span>
+        </div>
+        <output id="message" aria-live="polite">Démarrage du studio…</output>
+        <div class="micro">
+            <label for="micro">Micro</label>
+            <select id="micro"></select>
+            <div class="vumetre" id="vumetre" title="Niveau du micro (la barre devient rouge quand ça sature)">
+                <i class="vu-niveau"></i><i class="vu-crete"></i>
+                <span class="vu-repere" style="left: 66.7%"></span>
+            </div>
+        </div>
+    </header>
+
+    <main class="studio">
+        <!-- ============ LISTE DES RÉPLIQUES ============ -->
+        <aside class="colonne liste" aria-label="Répliques">
+            <div class="filtres">
+                <input type="search" id="recherche" placeholder="Chercher une phrase…" aria-label="Chercher une phrase" autocomplete="off">
+                <div class="filtres-ligne">
+                    <select id="filtre-source" aria-label="Quelles répliques">
+                        <option value="">Toutes les répliques</option>
+                    </select>
+                    <select id="filtre-etat" aria-label="Quel état">
+                        <option value="">Tous les états</option>
+                        <option value="afaire">À faire</option>
+                        <option value="studio">Déjà ta voix</option>
+                        <option value="synthese">En synthèse</option>
+                        <option value="origine">D'origine</option>
+                        <option value="manquante">Sans fichier</option>
+                    </select>
+                </div>
+                <div class="avancement" id="avancement" title="Répliques dites avec ta voix">
+                    <i id="avancement-barre"></i><span id="avancement-texte">—</span>
+                </div>
+            </div>
+            <ol class="lignes" id="lignes"></ol>
+        </aside>
+
+        <!-- ============ CABINE ============ -->
+        <section class="colonne cabine" aria-label="Enregistrement">
+            <div class="replique">
+                <p class="chemin"><span id="groupe">Essai libre</span><span id="contexte"></span></p>
+                <p class="phrase" id="phrase">Dis ce que tu veux pour entendre ta voix de COVAS.</p>
+                <p class="note" id="note" hidden></p>
+                <p class="fichier"><span class="pastille" id="pastille"></span><span id="etat-texte"></span><code id="fichier"></code></p>
+            </div>
+
+            <div class="poste">
+                <button type="button" class="bouton-rec" id="enregistrer">
+                    <i></i><span id="enregistrer-texte">Enregistrer</span><kbd>Espace</kbd>
+                </button>
+                <span class="chrono" id="chrono">0,0 s</span>
+            </div>
+
+            <div class="pistes">
+                <figure class="piste" id="piste-brut">
+                    <figcaption>
+                        <b>Ta voix</b><small id="infos-brut">telle que le micro l'entend</small>
+                        <button type="button" data-ecouter="brut" disabled>▶ Écouter <kbd>B</kbd></button>
+                    </figcaption>
+                    <div class="onde"><canvas id="onde-brut"></canvas><i class="tete"></i></div>
+                </figure>
+                <figure class="piste covas" id="piste-covas">
+                    <figcaption>
+                        <b>Voix du COVAS</b><small id="infos-covas">après transformation</small>
+                        <button type="button" data-ecouter="covas" disabled>▶ Écouter <kbd>V</kbd></button>
+                    </figcaption>
+                    <div class="onde"><canvas id="onde-covas"></canvas><i class="tete"></i></div>
+                </figure>
+            </div>
+
+            <div class="bilan" id="bilan">
+                <ul class="mesures" id="mesures"></ul>
+                <p class="whisper" id="whisper" hidden></p>
+                <ul class="conseils" id="conseils"></ul>
+            </div>
+
+            <div class="actions">
+                <button type="button" id="actuelle" disabled>▶ Version actuelle <kbd>A</kbd></button>
+                <button type="button" class="principal" id="garder" disabled>✓ Garder <kbd>Entrée</kbd></button>
+                <button type="button" id="suivante">Suivante <kbd>↓</kbd></button>
+            </div>
+        </section>
+
+        <!-- ============ RÉGLAGES ============ -->
+        <aside class="colonne reglages" aria-label="Réglages de la voix">
+            <h2>Voix du COVAS</h2>
+            <label class="champ">Profil <select id="profil"></select></label>
+            <div id="curseurs"></div>
+            <button type="button" id="reinitialiser" class="discret">Revenir aux réglages d'origine</button>
+
+            <h2>Étalonnage sur ta voix</h2>
+            <p class="texte" id="etalonnage-texte">—</p>
+            <div class="jauge" id="etalonnage-jauge"><i></i></div>
+            <div class="boutons">
+                <button type="button" id="etalonner">Étalonner</button>
+                <button type="button" id="oublier" class="discret" hidden>Oublier</button>
+            </div>
+
+            <h2>Écoute</h2>
+            <label class="case"><input type="checkbox" id="ecoute_auto"> Jouer la voix du COVAS dès la fin de la prise</label>
+            <label class="case"><input type="checkbox" id="verifier"> Faire écouter chaque prise à Whisper</label>
+
+            <h2>Répliques gardées</h2>
+            <p class="texte" id="gardees">—</p>
+            <button type="button" id="appliquer">Refaire toutes avec ces réglages</button>
+            <p class="texte" id="travail" hidden></p>
+
+            <h2>Raccourcis</h2>
+            <dl class="raccourcis">
+                <dt><kbd>Espace</kbd></dt><dd>enregistrer / arrêter</dd>
+                <dt><kbd>Entrée</kbd></dt><dd>garder la prise, réplique suivante</dd>
+                <dt><kbd>V</kbd> <kbd>B</kbd> <kbd>A</kbd></dt><dd>écouter : COVAS, ta voix, version actuelle</dd>
+                <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>réplique précédente / suivante</dd>
+                <dt><kbd>Échap</kbd></dt><dd>couper le son, annuler la prise</dd>
+            </dl>
+        </aside>
+    </main>
+
+    <!-- Onglet Studio des réglages : les appels passent par l'application (module/studio/pont_studio.py) -->
+    <script>
+        if (document.body.hasAttribute('data-integre')) {
+            const appel = window.parent.COVAS_REGLAGES.appelStudio;
+            window.pywebview = { api: new Proxy({}, { get: (_, nom) => (...args) => appel(String(nom), args) }) };
+            window.addEventListener('load', () => window.dispatchEvent(new Event('pywebviewready')));
+        }
+    </script>
+    <script src="studio.js"></script>
+</body>
+</html>

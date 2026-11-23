@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "pips": {
+    "modes": [],
+    "defaut": {
+      "mode_combat": [
+        4,
+        0,
+        8
+      ],
+      "mode_esquive": [
+        6,
+        6,
+        0
+      ],
+      "mode_croisiere": [
+        4,
+        8,
+        0
+      ],
+      "mode_recuperation": [
+        8,
+        4,
+        0
+      ],
+      "pips_defense": [
+        8,
+        4,
+        0
+      ],
+      "fsd": [
+        4,
+        8,
+        0
+      ]
+    },
+    "vaisseaux": {
+      "python_nx": {
+        "mode_combat": [
+          8,
+          4,
+          0
+        ],
+        "mode_esquive": [
+          4,
+          8,
+          0
+        ],
+        "mode_recuperation": [
+          3,
+          1,
+          8
+        ],
+        "fsd": [
+          8,
+          4,
+          0
+        ]
+      },
+      "anacondamkii": {}
+    }
+  },
+  "commandes": {
+    "touches": {},
+    "sequences": {
+      "apontage": [
+        "ec_nav",
+        "ui_onglet_droite",
+        "ui_onglet_droite",
+        "ui_droite",
+        "ui_selection",
+        "ec_nav"
+      ],
+      "ravitaillement": [
+        "ui_haut",
+        "ui_selection",
+        "ui_droite",
+        "ui_selection",
+        "ui_droite",
+        "ui_selection"
+      ],
+      "energie_sys": [
+        "pips_equilibre",
+        "pips_sys",
+        "pips_sys"
+      ],
+      "energie_mtr": [
+        "pips_equilibre",
+        "pips_moteurs",
+        "pips_moteurs"
+      ],
+      "energie_arm": [
+        "pips_equilibre",
+        "pips_armes",
+        "pips_armes"
+      ]
+    }
+  }
+}
