@@ -2,7 +2,7 @@
 .venv/
 __pycache__/
 *.pyc
-.gitattribute
+.gitattributes
 
 
 # Modèles téléchargés (trop lourds pour git ; voir les commentaires de main.py et synthese.py)
