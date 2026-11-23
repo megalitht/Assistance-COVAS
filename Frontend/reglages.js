@@ -1,7 +1,7 @@
 /* =====================================================================
    COVAS — Réglages (icône d'engrenage du bandeau)
-   Onglets : énergie, commandes (reglages_commandes.js), studio vocal, hangar des hologrammes,
-   atelier des plans.
+   Onglets : énergie, commandes (reglages_commandes.js), son (reglages_son.js), studio vocal,
+   hangar des hologrammes, atelier des plans.
 
    Énergie : répartition de chaque mode, par défaut ou par vaisseau. Les valeurs sont en
    demi-pips, comme dans le jeu : [SYS, MOT, ARM], total 12. Chaque changement est enregistré
@@ -331,6 +331,7 @@ window.COVAS_REGLAGES = (() => {
         rendreTete();
         rendreGrille();
         window.COVAS_COMMANDES?.rendre();
+        window.COVAS_SON?.rendre();
     }
 
     // ----------------------------------------------------------------
@@ -379,6 +380,7 @@ window.COVAS_REGLAGES = (() => {
 
     function apresFermeture() {
         window.COVAS_COMMANDES?.annuler();
+        window.COVAS_SON?.quitter();
         if (!aNettoyer) return;
         aNettoyer = false;
         if (minuterie) envoyerMaintenant();
@@ -494,8 +496,10 @@ window.COVAS_REGLAGES = (() => {
         document.querySelectorAll('[data-panneau]').forEach(p => { p.hidden = p.dataset.panneau !== nom; });
         if (avant === 'studio' && nom !== 'studio') quitterStudio();
         if (avant === 'commandes' && nom !== 'commandes') window.COVAS_COMMANDES?.annuler();
+        if (avant === 'son' && nom !== 'son') window.COVAS_SON?.quitter();
         if (nom === 'studio') entrerStudio();
         else if (nom === 'commandes') window.COVAS_COMMANDES?.rendre();
+        else if (nom === 'son') window.COVAS_SON?.entrer();
         else if (nom !== 'energie') chargerCadre(nom);
     }
 
@@ -556,6 +560,7 @@ window.COVAS_REGLAGES = (() => {
     function installer(options) {
         ({ envoyer, action: lancerAction, noms, majPlan, gresiller } = options);
         window.COVAS_COMMANDES?.installer({ doc: () => doc, changer: planifierEnvoi, etat: etatEnvoi, bouton, aConfirmer });
+        window.COVAS_SON?.installer({ doc: () => doc, changer: planifierEnvoi });
         $('bouton-reglages').onclick = ouvrir;
         $('accueil-reglages').onclick = ouvrir;
         installerOnglets();

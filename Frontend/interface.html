@@ -11,7 +11,7 @@
          dès le premier rendu, le panneau n'apparaît qu'une fois le COVAS activé. -->
     <script>if (new URLSearchParams(location.search).has('app')) { document.body.dataset.app = ''; document.body.dataset.liaison = 'veille'; }</script>
 
-    <svg class="lecteur-seul" aria-hidden="true"><symbol id="icone-reglages" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></symbol></svg>
+    <svg class="lecteur-seul" aria-hidden="true"><symbol id="icone-reglages" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></symbol><symbol id="icone-quitter" viewBox="0 0 24 24"><path d="M12 3v8"></path><path d="M6.4 6.6a8 8 0 1 0 11.2 0"></path></symbol></svg>
 
     <!-- ================= BANDEAU ================= -->
     <header class="bandeau">
@@ -36,6 +36,11 @@
             </button>
             <button type="button" class="selecteur-mode bouton-reglages" id="bouton-reglages" title="Réglages" aria-label="Réglages" aria-haspopup="dialog">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-reglages"></use></svg>
+            </button>
+            <!-- Visible seulement dans l'application ; deux clics pour quitter (interface.js) -->
+            <button type="button" class="selecteur-mode bouton-reglages bouton-quitter" data-quitter hidden title="Quitter le COVAS" aria-label="Quitter le COVAS">
+                <span>Quitter ?</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-quitter"></use></svg>
             </button>
         </div>
     </header>
@@ -522,9 +527,15 @@
          COVAS en veille : un seul bouton au centre. Le clic appelle Backend/app.py (Api.activer),
          la séquence de démarrage s'affiche, puis l'écran s'efface devant le panneau. -->
     <div class="accueil" id="ecran-accueil" data-etat="veille">
-        <button type="button" class="selecteur-mode bouton-reglages accueil-reglages" id="accueil-reglages" title="Réglages" aria-label="Réglages" aria-haspopup="dialog">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-reglages"></use></svg>
-        </button>
+        <div class="accueil-coin">
+            <button type="button" class="selecteur-mode bouton-reglages" id="accueil-reglages" title="Réglages" aria-label="Réglages" aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-reglages"></use></svg>
+            </button>
+            <button type="button" class="selecteur-mode bouton-reglages bouton-quitter" data-quitter hidden title="Quitter le COVAS" aria-label="Quitter le COVAS">
+                <span>Quitter ?</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-quitter"></use></svg>
+            </button>
+        </div>
         <div class="accueil-centre">
             <p class="accueil-marque">COVAS</p>
             <p class="accueil-sous-titre">Assistance de bord</p>
@@ -552,6 +563,7 @@
             <div class="reglages-onglets" id="reglages-onglets" role="tablist" aria-label="Sections des réglages">
                 <button type="button" role="tab" data-reglage="energie" aria-selected="true">Énergie</button>
                 <button type="button" role="tab" data-reglage="commandes" aria-selected="false" tabindex="-1">Commandes</button>
+                <button type="button" role="tab" data-reglage="son" aria-selected="false" tabindex="-1">Son</button>
                 <button type="button" role="tab" data-reglage="studio" aria-selected="false" tabindex="-1">Studio vocal</button>
                 <button type="button" role="tab" data-reglage="hangar" aria-selected="false" tabindex="-1">Hangar</button>
                 <button type="button" role="tab" data-reglage="atelier" aria-selected="false" tabindex="-1">Atelier</button>
@@ -593,6 +605,50 @@
                 <section class="reglages-modes" id="commandes-contenu"></section>
             </div>
         </div>
+        <!-- Casque, haut-parleurs et micro : voir reglages_son.js -->
+        <div class="reglages-panneau" data-panneau="son" role="tabpanel" hidden>
+            <div class="son-corps">
+                <div class="reglages-profil">
+                    <div>
+                        <h3>Son</h3>
+                        <p>S'applique dès la prochaine réplique et la prochaine écoute du COVAS.</p>
+                    </div>
+                    <div class="son-liste">
+                        <span class="son-note" id="son-note-liste" role="status"></span>
+                        <button type="button" id="son-actualiser">Actualiser la liste</button>
+                    </div>
+                </div>
+                <div class="son-grille">
+                    <section class="carte-son" aria-labelledby="son-titre-sortie">
+                        <h4 id="son-titre-sortie">Sortie audio</h4>
+                        <p>La voix du COVAS : casque ou haut-parleurs.</p>
+                        <label class="son-champ">Périphérique
+                            <select id="son-sortie"></select>
+                        </label>
+                        <label class="son-champ">Volume du COVAS
+                            <span class="son-volume">
+                                <input type="range" id="son-volume" min="0" max="100" step="5">
+                                <b id="son-volume-valeur"></b>
+                            </span>
+                        </label>
+                        <div class="son-actions"><button type="button" id="son-tester-sortie">Écouter un essai</button></div>
+                        <p class="son-note" id="son-note-sortie" role="status"></p>
+                    </section>
+                    <section class="carte-son" aria-labelledby="son-titre-entree">
+                        <h4 id="son-titre-entree">Entrée audio</h4>
+                        <p>Le micro sur lequel le COVAS t'écoute.</p>
+                        <label class="son-champ">Périphérique
+                            <select id="son-entree"></select>
+                        </label>
+                        <div class="son-champ">Niveau du micro
+                            <div class="son-vumetre" id="son-vumetre" data-etat="faible" aria-hidden="true"><i></i></div>
+                        </div>
+                        <div class="son-actions"><button type="button" id="son-tester-micro" aria-pressed="false">Tester le micro</button></div>
+                        <p class="son-note" id="son-note-micro" role="status"></p>
+                    </section>
+                </div>
+            </div>
+        </div>
         <!-- Pages existantes chargées à la première ouverture de leur onglet -->
         <div class="reglages-panneau" data-panneau="studio" role="tabpanel" hidden>
             <p class="vide reglages-attente" id="reglages-studio-note" hidden></p>
@@ -608,6 +664,7 @@
     <script src="hologramme.js"></script>
     <script src="demo.js"></script>
     <script src="reglages_commandes.js"></script>
+    <script src="reglages_son.js"></script>
     <script src="reglages.js"></script>
     <script src="interface.js"></script>
 </body>

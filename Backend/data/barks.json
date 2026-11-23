@@ -531,6 +531,9 @@
             "vitesse 0",
             "arrêt des moteurs",
             "coupe les gaz",
+            "coupe les moteurs",
+            "coupe le moteur",
+            "arrête les moteurs",
             "arrêt complet",
             "immobilise"
         ],

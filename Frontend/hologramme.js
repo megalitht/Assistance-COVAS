@@ -10,6 +10,9 @@
        holo.afficher('anaconda');          // symbole "Ship" du journal
        holo.signalerZones(['armes']);      // modules touchés : voyants rouge/noir sur la coque
        holo.signalerImpact('coque');       // coup reçu : 'bouclier' | 'effondrement' | 'coque'
+
+   Le bouclier est un bandeau de LED qui suit le contour du vaisseau et éclaire sa coque.
+   Un coup fait passer au rouge la partie du bandeau la plus proche de l'impact.
    ===================================================================== */
 window.COVAS_HOLOGRAMMES = (() => {
     'use strict';
@@ -21,8 +24,24 @@ window.COVAS_HOLOGRAMMES = (() => {
     // Avaries (ms) : chaque nouveau coup relance l'effet depuis le début
     const DUREE_VOYANT_ZONE = 4000;     // repère d'un module touché : voyant rouge/noir
     const DUREE_VOYANT_COQUE = 1600;    // coup sur la coque sans savoir quel module : toute la silhouette
-    const DUREE_ECLAT_BOUCLIER = 700;   // coup absorbé par le bouclier
     const DUREE_EFFONDREMENT = 1300;    // boucliers qui tombent
+    // Bouclier : il épouse la coque à cette distance, fixe à l'écran quel que soit le vaisseau
+    const ECART_BOUCLIER_PX = 19;       // environ 5 mm (1 cm = 38 px sur un écran standard)
+    const ECART_BOUCLIER_MAX = 0.03;    // ... sans dépasser cette part du petit côté de l'hologramme
+    const FINESSE_BOUCLIER = 480;       // cases sur le grand côté pour calculer le contour
+    // Bandeau de LED du bouclier
+    const PAS_LED_PX = 8;               // distance entre deux LED
+    const IMAGES_REPOS = 24;            // images par seconde au repos (le jeu tourne à côté)
+    const IMAGES_EFFET = 60;            // ... pendant un impact ou un allumage
+    const DUREE_ROUGE = 1900;           // ms : une zone touchée reste rouge, puis repasse au bleu
+    const MAINTIEN_ROUGE = 450;         // ms à pleine intensité avant le retour au bleu
+    const LARGEUR_IMPACT_PX = 120;      // étendue de la zone rouge de part et d'autre de l'impact
+    const DUREE_BASCULE = 1000;         // ms : les LED s'allument ou s'éteignent en vague
+    const IMPACTS_MAX = 10;
+    const RAFALE = 1800;                // ms : des coups rapprochés restent du même côté du vaisseau
+    const REDUCTION_LUMIERE = 0.4;      // la lumière projetée est douce : calculée en plus petit
+    const LED_BLEU = [159, 220, 255];
+    const LED_ROUGE = [255, 44, 22];
 
     // Symbole du journal -> [nom, constructeur, longueur, largeur, hauteur (m), plateforme]
     const CATALOGUE = {
@@ -196,6 +215,474 @@ window.COVAS_HOLOGRAMMES = (() => {
     }
 
     // ----------------------------------------------------------------
+    //  CONTOUR DU BOUCLIER
+    //  La coque, épaissie de `ecart` dans toutes les directions, est dessinée sur une petite
+    //  toile ; on en relève le bord extérieur. Les creux plus étroits que le bouclier
+    //  (entre deux nacelles, par exemple) se referment, comme sur une vraie bulle d'énergie.
+    // ----------------------------------------------------------------
+    // Bords d'une case : 0 haut, 1 droite, 2 bas, 3 gauche. Pour chaque combinaison de coins
+    // pleins (1 haut-gauche, 2 haut-droite, 4 bas-droite, 8 bas-gauche) : [bord d'entrée, de sortie]
+    const SEGMENTS = [[], [[3, 0]], [[0, 1]], [[3, 1]], [[1, 2]], [[3, 0], [1, 2]], [[0, 2]], [[3, 2]],
+        [[2, 3]], [[2, 0]], [[0, 1], [2, 3]], [[2, 1]], [[1, 3]], [[1, 0]], [[0, 3]], []];
+    const SEUIL_CONTOUR = 128;
+
+    /** Plus grande boucle du bord de la forme, en coordonnées de la toile. */
+    function bordExterieur(alpha, w, h) {
+        const valeur = (x, y) => alpha[(y * w + x) * 4 + 3];
+        const bord = (x, y, cote) => (cote === 0 ? 2 * (y * w + x) : cote === 2 ? 2 * ((y + 1) * w + x)
+            : cote === 3 ? 2 * (y * w + x) + 1 : 2 * (y * w + x + 1) + 1);
+        const suivants = new Map();
+        for (let y = 0; y < h - 1; y++) {
+            for (let x = 0; x < w - 1; x++) {
+                const cas = (valeur(x, y) >= SEUIL_CONTOUR ? 1 : 0) | (valeur(x + 1, y) >= SEUIL_CONTOUR ? 2 : 0)
+                    | (valeur(x + 1, y + 1) >= SEUIL_CONTOUR ? 4 : 0) | (valeur(x, y + 1) >= SEUIL_CONTOUR ? 8 : 0);
+                for (const [entree, sortie] of SEGMENTS[cas]) suivants.set(bord(x, y, entree), bord(x, y, sortie));
+            }
+        }
+        // Position du bord entre ses deux pixels, d'après leur opacité : un tracé sans escalier
+        const point = id => {
+            const vertical = id % 2 === 1, indice = Math.floor(id / 2);
+            const x = indice % w, y = Math.floor(indice / w);
+            const a = valeur(x, y), b = vertical ? valeur(x, y + 1) : valeur(x + 1, y);
+            const t = a === b ? 0.5 : (SEUIL_CONTOUR - a) / (b - a);
+            return vertical ? [x + 0.5, y + 0.5 + t] : [x + 0.5 + t, y + 0.5];
+        };
+        const vus = new Set();
+        let meilleure = null, aireMax = 0;
+        for (const depart of suivants.keys()) {
+            if (vus.has(depart)) continue;
+            const boucle = [];
+            let id = depart;
+            while (id !== undefined && !vus.has(id)) {
+                vus.add(id);
+                boucle.push(point(id));
+                id = suivants.get(id);
+            }
+            let aire = 0;
+            boucle.forEach(([x, y], i) => {
+                const [xs, ys] = boucle[(i + 1) % boucle.length];
+                aire += x * ys - xs * y;
+            });
+            if (Math.abs(aire) > aireMax) { aireMax = Math.abs(aire); meilleure = boucle; }
+        }
+        return meilleure || [];
+    }
+
+    /** Retire les points inutiles d'une ligne (Douglas-Peucker). */
+    function simplifier(points, tolerance) {
+        const garder = new Uint8Array(points.length);
+        garder[0] = garder[points.length - 1] = 1;
+        const pile = [[0, points.length - 1]];
+        while (pile.length) {
+            const [debut, fin] = pile.pop();
+            const [ax, ay] = points[debut], [bx, by] = points[fin];
+            const dx = bx - ax, dy = by - ay, carre = dx * dx + dy * dy;
+            let pire = -1, ecartMax = tolerance * tolerance;
+            for (let i = debut + 1; i < fin; i++) {
+                const [px, py] = points[i];
+                const t = carre ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / carre)) : 0;
+                const ex = px - ax - t * dx, ey = py - ay - t * dy, d = ex * ex + ey * ey;
+                if (d > ecartMax) { ecartMax = d; pire = i; }
+            }
+            if (pire >= 0) {
+                garder[pire] = 1;
+                pile.push([debut, pire], [pire, fin]);
+            }
+        }
+        return points.filter((_, i) => garder[i]);
+    }
+
+    const contours = new WeakMap();     // plan -> (écart -> forme) : un plan remplacé repart de zéro
+    const FORME_VIDE = { trace: '', points: [] };
+
+    /** Forme du bouclier : la coque du plan, décalée de `ecart` unités vers l'extérieur.
+        trace : chemin SVG ; points : le même contour en unités du plan. */
+    function formeBouclier(plan, ecart) {
+        const cle = Math.round(ecart / 2) * 2;      // un redimensionnement fin ne relance pas le calcul
+        let parEcart = contours.get(plan);
+        if (!parEcart) contours.set(plan, parEcart = new Map());
+        if (parEcart.has(cle)) return parEcart.get(cle);
+
+        const reserve = cle + 0.04 * Math.max(plan.largeur, LONGUEUR);
+        const x0 = -plan.largeur / 2 - reserve, y0 = -reserve;
+        const largeur = plan.largeur + 2 * reserve, hauteur = LONGUEUR + 2 * reserve;
+        const k = FINESSE_BOUCLIER / Math.max(largeur, hauteur);
+        const toile = document.createElement('canvas');
+        toile.width = Math.ceil(largeur * k);
+        toile.height = Math.ceil(hauteur * k);
+        const c = toile.getContext('2d', { willReadFrequently: true });
+        if (!c) return FORME_VIDE;
+        c.setTransform(k, 0, 0, k, -x0 * k, -y0 * k);
+        const coque = new Path2D(plan.coque);
+        c.lineJoin = c.lineCap = 'round';
+        c.lineWidth = cle * 2;
+        c.fill(coque);
+        c.stroke(coque);
+        const boucle = bordExterieur(c.getImageData(0, 0, toile.width, toile.height).data, toile.width, toile.height);
+        if (boucle.length < 3) return FORME_VIDE;
+
+        // La boucle est coupée en son point le plus éloigné du départ pour la simplifier en deux moitiés
+        let loin = 0, distanceMax = -1;
+        boucle.forEach(([x, y], i) => {
+            const d = (x - boucle[0][0]) ** 2 + (y - boucle[0][1]) ** 2;
+            if (d > distanceMax) { distanceMax = d; loin = i; }
+        });
+        const points = [...simplifier(boucle.slice(0, loin + 1), 0.3).slice(0, -1), ...simplifier([...boucle.slice(loin), boucle[0]], 0.3).slice(0, -1)]
+            .map(([x, y]) => [arrondi(x0 + x / k), arrondi(y0 + y / k)]);
+        const forme = { trace: 'M' + points.map(([x, y]) => `${x} ${y}`).join('L') + 'Z', points };
+        if (parEcart.size >= 6) parEcart.delete(parEcart.keys().next().value);
+        parEcart.set(cle, forme);
+        return forme;
+    }
+
+    const contourBouclier = (plan, ecart) => formeBouclier(plan, ecart).trace;
+
+    // ----------------------------------------------------------------
+    //  BANDEAU DE LED DU BOUCLIER
+    //  Une toile entre le plan et les effets : le plan détaillé n'est jamais repeint.
+    //  La lumière bleue projetée sur la coque est calculée une fois par vaisseau et par taille ;
+    //  seules les LED et la zone rouge d'un impact sont redessinées.
+    // ----------------------------------------------------------------
+    function toileVide(l, h) {
+        const toile = document.createElement('canvas');
+        toile.width = Math.max(1, Math.ceil(l));
+        toile.height = Math.max(1, Math.ceil(h));
+        return toile;
+    }
+
+    /** Point lumineux prêt à copier : cœur blanc, teinte de la LED, halo qui s'estompe. */
+    function spriteLed([r, v, b], rayon) {
+        const toile = toileVide(rayon * 2, rayon * 2);
+        const c = toile.getContext('2d');
+        const degrade = c.createRadialGradient(rayon, rayon, 0, rayon, rayon, rayon);
+        degrade.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        degrade.addColorStop(0.14, `rgba(${r}, ${v}, ${b}, 1)`);
+        degrade.addColorStop(0.32, `rgba(${r}, ${v}, ${b}, 0.34)`);
+        degrade.addColorStop(1, `rgba(${r}, ${v}, ${b}, 0)`);
+        c.fillStyle = degrade;
+        c.fillRect(0, 0, rayon * 2, rayon * 2);
+        return toile;
+    }
+
+    /** Tache de lumière projetée par une LED sur la coque. */
+    function spriteLumiere([r, v, b], rayon) {
+        const toile = toileVide(rayon * 2, rayon * 2);
+        const c = toile.getContext('2d');
+        const degrade = c.createRadialGradient(rayon, rayon, 0, rayon, rayon, rayon);
+        degrade.addColorStop(0, `rgba(${r}, ${v}, ${b}, 1)`);
+        degrade.addColorStop(0.5, `rgba(${r}, ${v}, ${b}, 0.3)`);
+        degrade.addColorStop(1, `rgba(${r}, ${v}, ${b}, 0)`);
+        c.fillStyle = degrade;
+        c.fillRect(0, 0, rayon * 2, rayon * 2);
+        return toile;
+    }
+
+    const SPRITES_LED = {};
+    const spritesLed = rayon => (SPRITES_LED[rayon] ??= {
+        bleu: spriteLed(LED_BLEU, rayon), rouge: spriteLed(LED_ROUGE, rayon),
+    });
+
+    class BandeauLed {
+        constructor(hote) {
+            this.hote = hote;
+            this.toile = document.createElement('canvas');
+            this.toile.className = 'holo-led';
+            this.toile.setAttribute('aria-hidden', 'true');
+            hote.calques[2].before(this.toile);
+            this.c = this.toile.getContext('2d');
+            this.n = 0;
+            this.geo = null;
+            this.aConstruire = false;
+            this.impacts = [];
+            this.transition = null;
+            this.enLigne = hote.conteneur.dataset.boucliers !== 'non';
+            this.dernierImpact = -Infinity;
+            this.positionRafale = 0;
+            this.origineChute = null;
+            this.image = 0;
+            this.attente = 0;
+            this.demande = 0;
+            this.tourner = this.tourner.bind(this);
+            new MutationObserver(() => this.suivreEtat()).observe(hote.conteneur, { attributes: true, attributeFilter: ['data-boucliers'] });
+        }
+
+        placer(plan, points, vue, u, ecartPx) {
+            const g = this.geo;
+            if (g && g.plan === plan && g.points === points && g.u === u && g.vue.x === vue.x && g.vue.y === vue.y
+                && g.vue.l === vue.l && g.vue.h === vue.h) return;
+            this.geo = { plan, points, vue: { ...vue }, u, ecartPx };
+            this.aConstruire = true;
+            this.toile.hidden = false;
+            this.reveiller();
+        }
+
+        masquer() {
+            this.geo = null;
+            this.n = 0;
+            this.toile.hidden = true;
+        }
+
+        /** Répartit les LED à distance égale sur le contour et prépare la lumière projetée. */
+        construire() {
+            const { plan, points, vue, u, ecartPx } = this.geo;
+            const lp = this.toile.clientWidth, hp = this.toile.clientHeight;
+            if (lp < 10 || hp < 10) return false;
+            const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+            const L = this.toile.width = Math.round(lp * dpr);
+            const H = this.toile.height = Math.round(hp * dpr);
+            const k = this.k = dpr / u;
+            this.vue = vue;
+
+            const longueurs = [];
+            let perimetre = 0;
+            points.forEach(([x, y], i) => {
+                const [xs, ys] = points[(i + 1) % points.length];
+                const d = Math.hypot(xs - x, ys - y);
+                longueurs.push(d);
+                perimetre += d;
+            });
+            const n = this.n = Math.max(24, Math.round(perimetre / (PAS_LED_PX * u)));
+            this.perimetrePx = perimetre / u;
+            const X = this.X = new Float32Array(n), Y = this.Y = new Float32Array(n);
+            this.allumees = new Float32Array(n);
+            this.rouges = new Float32Array(n);
+            let segment = 0, debut = 0;
+            for (let i = 0; i < n; i++) {
+                const s = (i / n) * perimetre;
+                while (segment < points.length - 1 && s > debut + longueurs[segment]) debut += longueurs[segment++];
+                const [ax, ay] = points[segment], [bx, by] = points[(segment + 1) % points.length];
+                const t = longueurs[segment] ? (s - debut) / longueurs[segment] : 0;
+                X[i] = (ax + (bx - ax) * t - vue.x) * k;
+                Y[i] = (ay + (by - ay) * t - vue.y) * k;
+            }
+            let nez = 0;
+            for (let i = 1; i < n; i++) if (Y[i] < Y[nez]) nez = i;
+            this.positionNez = nez / n;
+
+            // Ce que la lumière peut éclairer : la coque, et surtout ses lignes
+            const R = REDUCTION_LUMIERE, lr = L * R, hr = H * R;
+            const masque = this.masque = toileVide(lr, hr);
+            const m = masque.getContext('2d');
+            m.setTransform(k * R, 0, 0, k * R, -vue.x * k * R, -vue.y * k * R);
+            const coque = new Path2D(plan.coque);
+            m.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            m.fill(coque);
+            m.lineJoin = m.lineCap = 'round';
+            m.strokeStyle = 'rgba(255, 255, 255, 0.62)';
+            m.lineWidth = 1.1 / (k * R);
+            if (plan.traits) m.stroke(new Path2D(plan.traits));
+            m.strokeStyle = '#fff';
+            m.lineWidth = 2.2 / (k * R);
+            m.stroke(coque);
+
+            this.rayonLumiere = Math.max(10, Math.ceil(Math.max(ecartPx, 34) * 2.15 * dpr * R));
+            this.tacheRouge = spriteLumiere(LED_ROUGE, this.rayonLumiere);
+            const bleue = this.lumiereBleue = toileVide(lr, hr);
+            this.projeter(bleue.getContext('2d'), spriteLumiere(LED_BLEU, this.rayonLumiere), () => 0.05);
+            this.lumiereRouge = toileVide(lr, hr);
+            this.cRouge = this.lumiereRouge.getContext('2d');
+            this.rayonSprite = Math.max(6, Math.round(10 * dpr));
+            this.sprites = spritesLed(this.rayonSprite);
+            return true;
+        }
+
+        /** Dessine la lumière de chaque LED, puis ne garde que ce qui tombe sur le vaisseau. */
+        projeter(c, tache, intensite) {
+            const R = REDUCTION_LUMIERE, rayon = this.rayonLumiere;
+            c.globalCompositeOperation = 'source-over';
+            c.globalAlpha = 1;
+            c.clearRect(0, 0, c.canvas.width, c.canvas.height);
+            c.globalCompositeOperation = 'lighter';
+            for (let i = 0; i < this.n; i++) {
+                const a = intensite(i);
+                if (a < 0.002) continue;
+                c.globalAlpha = a;
+                c.drawImage(tache, this.X[i] * R - rayon, this.Y[i] * R - rayon);
+            }
+            c.globalCompositeOperation = 'destination-in';
+            c.globalAlpha = 1;
+            c.drawImage(this.masque, 0, 0);
+        }
+
+        // --- Évènements ---------------------------------------------------
+        suivreEtat() {
+            const voulu = this.hote.conteneur.dataset.boucliers !== 'non';
+            if (voulu === this.enLigne) return;
+            this.enLigne = voulu;
+            this.transition = {
+                debut: performance.now(), allumage: voulu,
+                origine: voulu ? null : this.origineChute,       // null : depuis le nez du vaisseau
+            };
+            this.origineChute = null;
+            this.reveiller();
+        }
+
+        /** Nouveau vaisseau à l'écran : les LED s'allument depuis le nez. */
+        allumer() {
+            if (!this.enLigne) return;
+            this.transition = { debut: performance.now(), allumage: true, origine: null };
+            this.reveiller();
+        }
+
+        /** Point du bandeau pour un coup sur le bouclier : une rafale reste du même côté. */
+        pointImpact() {
+            if (this.aConstruire && this.geo) this.aConstruire = !this.construire();
+            if (!this.n) return null;
+            const t = performance.now();
+            const position = t - this.dernierImpact < RAFALE
+                ? (this.positionRafale + (Math.random() - 0.5) * 0.05 + 1) % 1 : Math.random();
+            this.dernierImpact = t;
+            this.positionRafale = position;
+            const i = Math.min(this.n - 1, Math.floor(position * this.n));
+            return { x: this.X[i] / this.k + this.vue.x, y: this.Y[i] / this.k + this.vue.y };
+        }
+
+        /** Fait passer au rouge la partie du bandeau la plus proche de `point` (unités du plan). */
+        toucher(type, point) {
+            if (this.aConstruire && this.geo) this.aConstruire = !this.construire();
+            if (!this.n || !point) return;
+            const px = (point.x - this.vue.x) * this.k, py = (point.y - this.vue.y) * this.k;
+            let proche = 0, mini = Infinity;
+            for (let i = 0; i < this.n; i++) {
+                const d = (this.X[i] - px) ** 2 + (this.Y[i] - py) ** 2;
+                if (d < mini) { mini = d; proche = i; }
+            }
+            const position = proche / this.n;
+            const largeur = (type === 'effondrement' ? 2.4 : 1) * LARGEUR_IMPACT_PX / this.perimetrePx;
+            this.impacts.push({ position, largeur, debut: performance.now() });
+            if (this.impacts.length > IMPACTS_MAX) this.impacts.shift();
+            if (type === 'effondrement') {
+                this.origineChute = position;
+                const tr = this.transition;
+                if (tr && !tr.allumage && performance.now() - tr.debut < 300) tr.origine = position;
+            }
+            this.reveiller();
+        }
+
+        // --- Animation ----------------------------------------------------
+        reveiller() {
+            clearTimeout(this.attente);
+            this.attente = 0;
+            if (!this.demande) this.demande = requestAnimationFrame(this.tourner);
+        }
+
+        visible() {
+            if (document.hidden) return false;
+            return this.toile.checkVisibility ? this.toile.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
+                : !!this.toile.offsetParent;
+        }
+
+        tourner(t) {
+            this.demande = 0;
+            if (!this.geo) return;
+            if (!this.visible()) {                       // vue cachée : rien à dessiner
+                this.attente = setTimeout(() => this.reveiller(), 400);
+                return;
+            }
+            if (this.aConstruire) {
+                this.aConstruire = !this.construire();
+                this.image = 0;
+                if (this.aConstruire) { this.attente = setTimeout(() => this.reveiller(), 200); return; }
+            }
+            if (!this.n) return;
+            const effet = this.impacts.length > 0 || !!this.transition;
+            const intervalle = 1000 / (effet ? IMAGES_EFFET : IMAGES_REPOS);
+            let dessine = false;
+            if (t - this.image >= intervalle - 2) {
+                this.image = t;
+                const maintenant = performance.now();
+                this.calculer(maintenant);
+                this.dessiner(maintenant);
+                dessine = true;
+            }
+            // Hors ligne et sans effet : l'image ne change plus, on attend le prochain évènement
+            if (!dessine || this.enLigne || this.impacts.length || this.transition) this.demande = requestAnimationFrame(this.tourner);
+        }
+
+        calculer(t) {
+            const { n, allumees, rouges } = this;
+            this.impacts = this.impacts.filter(impact => t - impact.debut < DUREE_ROUGE);
+            const tr = this.transition;
+            let front = 0;
+            if (tr) {
+                const p = (t - tr.debut) / DUREE_BASCULE;
+                if (p >= 1) this.transition = null;
+                else front = p * 0.58;
+            }
+            const enCours = this.transition;
+            const origine = enCours ? (enCours.origine ?? this.positionNez) : 0;
+            const forces = this.impacts.map(({ debut }) => {
+                const age = t - debut;
+                if (age < 60) return age / 60;
+                if (age < MAINTIEN_ROUGE) return 1;
+                return (1 - (age - MAINTIEN_ROUGE) / (DUREE_ROUGE - MAINTIEN_ROUGE)) ** 2;
+            });
+            const largeurs = this.impacts.map(({ debut, largeur }) => largeur * (0.3 + 0.7 * (1 - Math.exp(-(t - debut) / 90))));
+            let somme = 0;
+            for (let i = 0; i < n; i++) {
+                const pos = i / n;
+                let rouge = 0, allume = this.enLigne ? 1 : 0;
+                if (enCours) {
+                    let d = Math.abs(pos - origine);
+                    d = Math.min(d, 1 - d);
+                    const passe = Math.max(0, Math.min(1, (front - d) / 0.05));
+                    allume = enCours.allumage ? passe : 1 - passe;
+                    if (!enCours.allumage) rouge = Math.exp(-(((front - d) / 0.035) ** 2));
+                }
+                for (let j = 0; j < this.impacts.length; j++) {
+                    let d = Math.abs(pos - this.impacts[j].position);
+                    d = Math.min(d, 1 - d) / largeurs[j];
+                    if (d < 3) rouge = Math.max(rouge, forces[j] * Math.exp(-d * d));
+                }
+                allumees[i] = allume;
+                rouges[i] = rouge;
+                somme += allume;
+            }
+            this.moyenneAllumees = n ? somme / n : 0;
+        }
+
+        dessiner(t) {
+            const { c, n, X, Y, allumees, rouges, sprites, rayonSprite: rs } = this;
+            const L = this.toile.width, H = this.toile.height;
+            c.setTransform(1, 0, 0, 1, 0, 0);
+            c.globalCompositeOperation = 'source-over';
+            c.globalAlpha = 1;
+            c.clearRect(0, 0, L, H);
+            c.globalCompositeOperation = 'lighter';
+
+            // Lumière projetée sur la coque
+            if (this.moyenneAllumees > 0.01) {
+                c.globalAlpha = this.moyenneAllumees * (0.86 + 0.14 * Math.sin(t / 1900));
+                c.drawImage(this.lumiereBleue, 0, 0, L, H);
+            }
+            let rougeActif = false;
+            for (let i = 0; i < n && !rougeActif; i++) rougeActif = rouges[i] > 0.03;
+            if (rougeActif) {
+                this.projeter(this.cRouge, this.tacheRouge, i => (rouges[i] > 0.03 ? rouges[i] * 0.3 : 0));
+                c.globalAlpha = 1;
+                c.drawImage(this.lumiereRouge, 0, 0, L, H);
+            }
+
+            // Les LED : une vague lumineuse lente parcourt le bandeau
+            const phase = t / 5200;
+            for (let i = 0; i < n; i++) {
+                const rouge = rouges[i], allume = allumees[i] * (1 - rouge);
+                if (allume > 0.02) {
+                    const vague = 0.5 + 0.5 * Math.cos(2 * Math.PI * (3 * i / n - phase));
+                    c.globalAlpha = allume * (0.5 + 0.5 * vague * vague);
+                    c.drawImage(sprites.bleu, X[i] - rs, Y[i] - rs);
+                }
+                const veille = (1 - allumees[i]) * (1 - rouge) * 0.2;      // bouclier hors ligne : LED rouges très faibles
+                const a = Math.max(rouge, veille);
+                if (a > 0.02) {
+                    c.globalAlpha = a;
+                    c.drawImage(sprites.rouge, X[i] - rs, Y[i] - rs);
+                }
+            }
+        }
+    }
+
+    // ----------------------------------------------------------------
     //  HOLOGRAMME
     // ----------------------------------------------------------------
     let compteur = 0;
@@ -220,6 +707,7 @@ window.COVAS_HOLOGRAMMES = (() => {
             this.demande = null;
             this.uParPx = 1;
             this.minuteries = new Map();      // élément -> (classe -> minuterie) des effets en cours
+            this.led = null;                  // bandeau de LED, créé si cet hologramme montre le bouclier
             this.construire();
             this.observateur = new ResizeObserver(() => this.mettreEnPage());
             this.observateur.observe(conteneur);
@@ -228,6 +716,7 @@ window.COVAS_HOLOGRAMMES = (() => {
         /*  Trois calques SVG superposés, au même viewBox :
               fond   : grille métrique, lumière du projecteur, bouclier (animé)
               plan   : la coque et ses milliers de traits, statique (peint une seule fois)
+              (toile : le bandeau de LED du bouclier et la lumière qu'il projette)
               effets : balayage, avaries (coque en alerte, lueurs des zones touchées), front
                        d'apparition, cotes, repères de modules, impacts
             Les animations ne repeignent ainsi jamais le plan détaillé. */
@@ -250,8 +739,8 @@ window.COVAS_HOLOGRAMMES = (() => {
                     </defs>
                     <g class="holo-grille"></g>
                     <ellipse class="holo-lumiere" fill="url(#holo-lumiere-${n})"/>
-                    <ellipse class="bouclier-voile"/>
-                    <ellipse class="bouclier-anneau"/>`),
+                    <path class="bouclier-voile"/>
+                    <path class="bouclier-anneau"/>`),
                 calque('holo-plan', `
                     <defs>
                         <clipPath id="holo-revele-${n}" clipPathUnits="userSpaceOnUse"><rect class="holo-revele" x="-5000" y="-5000" width="10000" height="10000"/></clipPath>
@@ -381,6 +870,7 @@ window.COVAS_HOLOGRAMMES = (() => {
             this.mettreEnPage();
             this.placerZones();
             this.apparaitre();
+            this.led?.allumer();
         }
 
         /** Cadre le vaisseau dans le conteneur : viewBox, grille, bouclier, cotes, étiquettes. */
@@ -390,17 +880,24 @@ window.COVAS_HOLOGRAMMES = (() => {
             const { width: lp, height: hp } = this.conteneur.getBoundingClientRect();
             if (lp < 10 || hp < 10) return;
             const W = plan.largeur;
-            const marge = 0.07 * Math.max(W, LONGUEUR);
+            const cote = this.avecCotes ? 0.075 * Math.max(W, LONGUEUR) : 0;
+            const reserve = this.etiquettes ? Math.min(124, lp * 0.24) : 0;    // colonne des étiquettes, en px
+            const haut = this.legende ? this.legende.offsetHeight + 6 : 0;     // légende en haut à gauche, en px
+
+            // Le bouclier garde le même écart à l'écran : on le retire de la place avant de calculer
+            // l'échelle. Les miniatures du hangar n'en ont pas et gardent une simple marge.
+            const avecBouclier = getComputedStyle(this.el.bouclier).display !== 'none';
+            const ecartPx = avecBouclier ? Math.min(ECART_BOUCLIER_PX, ECART_BOUCLIER_MAX * Math.min(lp, hp)) : 0;
+            const margeFixe = avecBouclier ? 0 : 0.07 * Math.max(W, LONGUEUR);
+            const s = Math.max(0.01, Math.min((lp - reserve - 16 - 2 * ecartPx) / (W + 2 * margeFixe + cote),
+                (hp - haut - 16 - 2 * ecartPx) / (LONGUEUR + 2 * margeFixe + cote * 0.9)));
+            const u = 1 / s;                                                    // unités par pixel
+            const marge = margeFixe + ecartPx * u;
             const rx = W / 2 + marge, ry = LONGUEUR / 2 + marge;
             this.bouclier = { rx, ry };
-            const cote = this.avecCotes ? 0.075 * Math.max(W, LONGUEUR) : 0;
 
-            // Boîte utile (unités du plan) puis échelle px/unité
+            // Boîte utile (unités du plan)
             const x0 = -rx - cote, x1 = rx, y0 = LONGUEUR / 2 - ry, y1 = LONGUEUR / 2 + ry + cote * 0.9;
-            const reserve = this.etiquettes ? Math.min(190, lp * 0.32) : 0;    // colonne des étiquettes, en px
-            const haut = this.legende ? this.legende.offsetHeight + 6 : 0;     // légende en haut à gauche, en px
-            const s = Math.max(0.01, Math.min((lp - reserve - 16) / (x1 - x0), (hp - haut - 16) / (y1 - y0)));
-            const u = 1 / s;                                                    // unités par pixel
             this.uParPx = u;
             const largeurVue = lp * u, hauteurVue = hp * u;
             const vx = x0 - ((lp - reserve) * u - (x1 - x0)) / 2;
@@ -411,8 +908,13 @@ window.COVAS_HOLOGRAMMES = (() => {
             const e = this.el;
 
             // Bouclier, halo de projection
-            poser(e.bouclier, { cx: 0, cy: LONGUEUR / 2, rx: arrondi(rx), ry: arrondi(ry) });
-            poser(e.voile, { cx: 0, cy: LONGUEUR / 2, rx: arrondi(rx), ry: arrondi(ry) });
+            const forme = avecBouclier ? formeBouclier(plan, ecartPx * u) : FORME_VIDE;
+            if (e.bouclier.getAttribute('d') !== forme.trace) {
+                e.bouclier.setAttribute('d', forme.trace);
+                e.voile.setAttribute('d', forme.trace);
+            }
+            if (forme.points.length) (this.led ??= new BandeauLed(this)).placer(plan, forme.points, this.vue, u, ecartPx);
+            else this.led?.masquer();
             poser(e.lumiere, { cx: 0, cy: LONGUEUR / 2, rx: arrondi(rx * 1.25), ry: arrondi(ry * 1.15) });
 
             // Trame horizontale (une ligne sur trois pixels) et bande de balayage
@@ -558,17 +1060,14 @@ window.COVAS_HOLOGRAMMES = (() => {
             this.animationApparition = requestAnimationFrame(etape);
         }
 
-        /** Place les ondes d'impact (avant d'ajouter la classe « touche ») : sur la bulle du bouclier
-            s'il encaisse le coup, sinon sur un point au hasard de la coque. */
+        /** Place les ondes d'impact (avant d'ajouter la classe « touche ») et renvoie leur point :
+            sur le bandeau du bouclier s'il encaisse le coup, sinon au hasard sur la coque.
+            Le jeu ne dit pas d'où vient le tir : le côté touché est choisi au hasard. */
         preparerImpact(surBouclier = false) {
             const plan = this.plan;
-            if (!plan) return;
-            let point = null;
+            if (!plan) return null;
+            let point = surBouclier ? this.led?.pointImpact() ?? null : null;
             this.el.impact.dataset.sur = surBouclier ? 'bouclier' : 'coque';
-            if (surBouclier && this.bouclier) {
-                const angle = Math.random() * Math.PI * 2;
-                point = { x: Math.cos(angle) * this.bouclier.rx, y: LONGUEUR / 2 + Math.sin(angle) * this.bouclier.ry };
-            }
             for (let essai = 0; essai < 12 && !point; essai++) {
                 const y = (0.1 + Math.random() * 0.8) * LONGUEUR;
                 const [min, max] = largeurA(plan, y);
@@ -578,6 +1077,7 @@ window.COVAS_HOLOGRAMMES = (() => {
             point = point || { x: 0, y: LONGUEUR / 2 };
             const r = 0.035 * Math.max(plan.largeur, LONGUEUR);
             for (const cercle of this.el.impact.children) poser(cercle, { cx: arrondi(point.x), cy: arrondi(point.y), r: arrondi(r) });
+            return point;
         }
 
         // ----------------------------------------------------------------
@@ -608,21 +1108,21 @@ window.COVAS_HOLOGRAMMES = (() => {
         }
 
         /** Coup reçu sans savoir quel module (le jeu ne le dit pas) :
-              'bouclier'     : coup absorbé, la bulle du bouclier s'illumine
-              'effondrement' : les boucliers tombent
+              'bouclier'     : coup absorbé, une partie des LED passe au rouge
+              'effondrement' : les boucliers tombent, les LED s'éteignent depuis l'impact
               'coque'        : coup sur la coque, toute la silhouette clignote rouge/noir */
         signalerImpact(type) {
             if (!this.plan) return;
-            this.preparerImpact(type !== 'coque');
+            const point = this.preparerImpact(type !== 'coque');
+            this.led?.toucher(type, point);
             if (type === 'coque') this.relancer([this.el.alerteCoque], 'voyant', DUREE_VOYANT_COQUE);
             else if (type === 'effondrement') this.relancer([this.el.voile, this.el.bouclier], 'effondrement', DUREE_EFFONDREMENT);
-            else this.relancer([this.el.voile], 'eclat', DUREE_ECLAT_BOUCLIER);
         }
     }
 
     return {
         LONGUEUR, CATALOGUE, SOURCES,
-        enregistrer, charger, connu, nom, normaliser, horsVaisseau,
+        enregistrer, charger, connu, nom, normaliser, horsVaisseau, contourBouclier,
         creer: (conteneur, options) => new Hologramme(conteneur, options),
         identifiants: () => Object.keys(CATALOGUE),
     };

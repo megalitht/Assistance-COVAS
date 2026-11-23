@@ -30,6 +30,19 @@ SUIVIS = {
     "nvg": (28, ("nvg",), "manuel_nvg_on", "manuel_nvg_off"),
 }
 _FSD = ("saut", "supercroisiere")
+# Commande vocale -> module suivi : la réponse à un ordre dit le bon sens
+_ORDRES = {"train_atterrissage": "train", "soute": "soute", "armement": "armes", "phares": "phares",
+           "silencieux": "silencieux", "hud": "analyse", "nvg": "nvg"}
+
+
+def replique_ordre(action, sens):
+    """Réplique d'un ordre : celle du sens voulu, neutre si le sens est inconnu."""
+    nom = _ORDRES.get(action.lower())
+    if nom is None:
+        return action
+    if sens is None:
+        return "affirmation"
+    return SUIVIS[nom][2 if sens == "sortir" else 3]
 
 
 class DetecteurManuel:

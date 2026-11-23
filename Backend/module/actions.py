@@ -35,6 +35,7 @@ from module import reglages
 from module import serveur_ws
 from module import sol
 from module import touches
+from module.comprehension import intention, ordre_nie
 
 # Page de l'interface (le « panel »), ouverte par la commande vocale « ouvre le panel »
 CHEMIN_INTERFACE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
@@ -50,9 +51,9 @@ BIT = {"amarre": 0, "pose": 1, "train": 2, "boucliers": 3, "supercroisiere": 4, 
        "fsd_refroid": 18, "surchauffe": 20, "danger": 22, "interdiction": 23, "vaisseau": 24,
        "chasseur": 25, "vrs": 26, "analyse": 27, "nvg": 28, "saut": 30}
 
-# Débuts de mots qui indiquent ce que veut le commandant
-MOTS_RENTRER = ("rentr", "rang", "remont", "ferm", "etein", "desactiv", "coup", "repli", "retract")
-MOTS_SORTIR = ("sor", "deploi", "deploy", "descend", "baiss", "ouvr", "allum", "activ")
+# Débuts de mots : arrêter un programme (« coupe l'autopilote »), retirer de l'énergie
+MOTS_ANNULER = ("annul", "arret", "stopp", "interromp", "coup", "desactiv", "desengag", "ferm")
+MOTS_RETRAIT = ("coup", "retir", "enlev", "desactiv", "etein", "baiss")
 
 _SC = ("supercroisiere", None, "refus_supercroisiere", "en supercroisière")
 _AMARRE = ("amarre", None, "refus_amarre", "quand le vaisseau est amarré")
@@ -171,16 +172,6 @@ def situation():
     return sol.situation(_flags(), _flags2())
 
 
-def intention(texte):
-    """'sortir', 'rentrer' ou None (= basculer) d'après les verbes de la phrase."""
-    for mot in normaliser(texte).replace("'", " ").split():
-        if mot.startswith(MOTS_RENTRER):
-            return "rentrer"
-        if mot.startswith(MOTS_SORTIR):
-            return "sortir"
-    return None
-
-
 def _mots(texte):
     return normaliser(texte).replace("'", " ").replace("-", " ").split()
 
@@ -208,9 +199,9 @@ async def refuser(dire, cle, texte):
     await dire(cle, "refus")
 
 
-async def confirmer(dire, action, poli=False):
-    """Réplique de la commande ; à défaut, un simple « Bien, commandant »."""
-    await dire(action, "affirmation", poli=poli)
+async def confirmer(dire, action, poli=False, sens=None):
+    """Réplique de la commande (dans le sens demandé) ; à défaut, un simple « Bien, commandant »."""
+    await dire(annonces.replique_ordre(action, sens), "affirmation", poli=poli)
 
 
 async def preparer_jeu(dire):
@@ -407,9 +398,19 @@ async def executer_commande(action, texte, dire, poli=False):
 
     if cle == "stop":
         return await _stop(dire)
+    if ordre_nie(texte):                # « ne sors pas le train » : surtout ne rien toucher
+        await logs.annoncer("Ordre à la forme négative : aucune action")
+        return await dire("affirmation")
+    if cle in PROGRAMMES and _contient(texte, MOTS_ANNULER):    # « coupe l'autopilote »
+        return await _stop(dire)
 
     # VRS et pied à terre : leurs touches ne sont pas celles du vaisseau
     lieu = situation()
+    # « Quitte le mode combat », « coupe l'énergie des armes » : retour à l'équilibre
+    if lieu != "pied" and ((cle in commandes.SEQUENCES_MACROS and _contient(texte, MOTS_RETRAIT))
+                           or (reglages.est_mode(cle) and cle != "fsd"
+                               and intention(texte) == "rentrer")):
+        return await executer_commande("reset", "", dire, poli)
     cible = sol.traduire(cle, _mots(texte), lieu)
     if cible:
         return await _commande_sol(action, cible, texte, dire, poli)
@@ -425,12 +426,19 @@ async def executer_commande(action, texte, dire, poli=False):
     if cle in SIMPLES:
         return await _simple(action, SIMPLES[cle], dire, poli)
     if cle in CARTES:
-        return await _carte(action, *CARTES[cle], dire, poli)
+        return await _carte(action, *CARTES[cle], dire, poli, texte)
     if cle in PROGRAMMES:
         nom, fabrique = PROGRAMMES[cle]
         return await _lancer_programme(nom, fabrique(dire, poli), dire)
     if cle in SPECIALES:
         return await SPECIALES[cle](action, texte, dire, poli)
+
+    if cle == "fsd":
+        sens = intention(texte)
+        if sens == "rentrer":
+            return await _couper_fsd(dire, poli)
+        if sens == "sortir" and drapeau("fsd_charge"):      # un 2e appui annulerait la charge
+            return await logs.annoncer("FSD déjà en charge")
 
     if cle == "fsd" and _fsd_differe_en_cours():
         # Surtout pas de 2e appui : il annulerait la charge lancée par le programme
@@ -461,6 +469,23 @@ async def executer_commande(action, texte, dire, poli=False):
     await asyncio.to_thread(macros.executer_touches, cle)
 
 
+async def _couper_fsd(dire, poli=False):
+    """« Coupe le FSD » : annule la charge ; sans charge, surtout ne pas appuyer (ça la lancerait)."""
+    if _fsd_differe_en_cours():
+        return await _stop(dire)
+    if not drapeau("fsd_charge"):
+        return await refuser(dire, "refus", "FSD : aucune charge à annuler")
+    if not await touche_prete(dire, "saut", "FSD") or not await preparer_jeu(dire):
+        return
+    await confirmer(dire, "affirmation", poli)
+    await appuyer("saut")
+    if await attendre(lambda: not drapeau("fsd_charge"), 3):
+        await logs.annoncer("Charge du FSD annulée")
+    else:
+        await logs.annoncer(sans_reaction("FSD", "saut"), "alerte")
+        await dire("macro_echec", "refus")
+
+
 # =====================================================================
 #  VRS ET PIED À TERRE (tables et traduction des ordres : voir sol.py)
 # =====================================================================
@@ -485,7 +510,7 @@ async def _commande_sol(action, cle, texte, dire, poli):
     if not await touche_prete(dire, cle, cfg["nom"]):
         return
     if "carte" in cfg:
-        return await _carte(action, cle, cfg["carte"], cfg["nom"], dire, poli)
+        return await _carte(action, cle, cfg["carte"], cfg["nom"], dire, poli, texte)
     if cle == "vrs_vaisseau":
         return await _rappel_vaisseau(action, texte, dire, poli)
     if cfg.get("energie"):
@@ -494,7 +519,7 @@ async def _commande_sol(action, cle, texte, dire, poli):
         return await _bascule_sol(action, cle, cfg, texte, dire, poli)
     if not await preparer_jeu(dire):
         return
-    await confirmer(dire, action, poli)
+    await confirmer(dire, action, poli, intention(texte))
     if await appuyer(cle):
         await logs.annoncer(cfg["nom"])
 
@@ -523,7 +548,7 @@ async def _bascule_sol(action, cle, cfg, texte, dire, poli):
         return await refuser(dire, "refus", f"{cfg['nom']} : impossible, {cfg['raison']}")
     if not await preparer_jeu(dire):
         return
-    await confirmer(dire, action, poli)
+    await confirmer(dire, action, poli, voulu or ("rentrer" if actuel else "sortir"))
 
     # Phares : éteindre peut demander deux appuis (croisement, pleins phares, éteints)
     appuis = 3 if cfg.get("cycle") and voulu == "rentrer" else 1
@@ -603,12 +628,20 @@ async def _mode_energie(action, cle, dire, poli):
 # =====================================================================
 #  TRAIN, SOUTE, NVG, PHARES, ARMEMENT, MODE SILENCIEUX, COCKPIT
 # =====================================================================
+def _sens_voulu(cfg, texte):
+    """Sens de l'ordre. Cockpit : le mode nommé, ou l'autre si on le quitte (« coupe l'analyse »)."""
+    voulu = intention(texte)
+    if "mots" not in cfg:
+        return voulu
+    nomme = ("sortir" if _contient(texte, cfg["mots"][0])
+             else "rentrer" if _contient(texte, cfg["mots"][1]) else None)
+    if nomme and voulu == "rentrer":
+        return "rentrer" if nomme == "sortir" else "sortir"
+    return nomme
+
+
 async def _bascule(action, cfg, texte, dire, poli):
-    if "mots" in cfg:
-        voulu = ("sortir" if _contient(texte, cfg["mots"][0])
-                 else "rentrer" if _contient(texte, cfg["mots"][1]) else None)
-    else:
-        voulu = intention(texte)
+    voulu = direction = _sens_voulu(cfg, texte)
 
     if not await touche_prete(dire, cfg["touche"], cfg["nom"]):
         return
@@ -629,7 +662,7 @@ async def _bascule(action, cfg, texte, dire, poli):
 
     if not await preparer_jeu(dire):
         return
-    await confirmer(dire, action, poli)
+    await confirmer(dire, action, poli, direction)
     await appuyer(cfg["touche"])
 
     if actuel is None:
@@ -663,9 +696,13 @@ async def _simple(action, cfg, dire, poli):
     await logs.annoncer(cfg["nom"])
 
 
-async def _carte(action, touche, focus, nom, dire, poli):
+async def _carte(action, touche, focus, nom, dire, poli, texte=""):
     if not await touche_prete(dire, touche, nom):
         return
+    voulu = intention(texte)
+    if etat_connu() and voulu and (_focus() == focus) == (voulu == "sortir"):
+        # La touche ouvre ET ferme : « ferme la carte » ne doit pas l'ouvrir
+        return await logs.annoncer(f"{nom} déjà {'ouverte' if voulu == 'sortir' else 'fermée'}")
     if not await preparer_jeu(dire):
         return
     deja_ouverte = _focus() == focus

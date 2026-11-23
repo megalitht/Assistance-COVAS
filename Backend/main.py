@@ -28,6 +28,7 @@ import winsound
 # Importation de nos modules personnalisés situés dans le sous-dossier 'module'
 from module.actions import executer_commande, surveiller_reactions, programme_en_cours
 from module.cerveau import obtenir_chemin_audio
+from module import audio
 from module import touches
 from module import lecteur_logs as logs
 from module.lecteur_logs import DOSSIER_ED, surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
@@ -94,6 +95,7 @@ MOTS_REVEIL = []
 PROMPT_WHISPER = ""
 modele_vocal = None
 reconnaisseur = None
+micro_calibre = None            # micro sur lequel le seuil d'écoute a été calibré
 
 
 def _signaler(progression, texte, etat="etape"):
@@ -108,7 +110,7 @@ def _signaler(progression, texte, etat="etape"):
 def initialiser(progression=None):
     """Charge les répliques, le modèle vocal (GPU) et calibre le micro.
     `progression(texte, etat)` : rappel facultatif pour l'écran d'accueil."""
-    global barks, MOTS_REVEIL, PROMPT_WHISPER, modele_vocal, reconnaisseur
+    global barks, MOTS_REVEIL, PROMPT_WHISPER, modele_vocal, reconnaisseur, micro_calibre
 
     # --- CHARGEMENT DES RÉPLIQUES ET PARAMÈTRES (BARKS) ---
     _signaler(progression, "Indexation des répliques")
@@ -157,45 +159,63 @@ def initialiser(progression=None):
     reconnaisseur.dynamic_energy_threshold = True
     reconnaisseur.pause_threshold = 0.7         # silence (s) qui marque la fin de la phrase
     reconnaisseur.non_speaking_duration = 0.4
-    with sr.Microphone() as source:
+    micro_calibre = audio.entree()
+    with sr.Microphone(device_index=audio.index_micro()) as source:
         t.ligne("MICRO", "Calibrage du micro (silence, s'il vous plaît)...")
         reconnaisseur.adjust_for_ambient_noise(source, duration=1.0)
     t.ok(f"Micro calibré (seuil {reconnaisseur.energy_threshold:.0f}).")
 
 
 def ecouter(silencieux=False):
-    """Capte le son du micro et le transcrit localement avec Whisper"""
-    with sr.Microphone() as source:
-        if not silencieux:
-            t.etat("ÉCOUTE", "ACTIVE — parlez maintenant", t.CYAN)
-        try:
-            audio = reconnaisseur.listen(source, timeout=3, phrase_time_limit=7)
-            # Directement en mémoire, au format attendu par Whisper (16 kHz, mono, float32)
-            brut = audio.get_raw_data(convert_rate=16000, convert_width=2)
-            echantillons = np.frombuffer(brut, dtype=np.int16).astype(np.float32) / 32768.0
+    """Écoute le micro choisi dans Réglages > Son. S'il ne s'ouvre pas, celui de Windows prend
+    le relais quelques secondes : un micro débranché ne doit pas arrêter le COVAS."""
+    global micro_calibre
+    choisi = audio.entree()
+    try:
+        with sr.Microphone(device_index=audio.index_micro()) as source:
+            if choisi != micro_calibre:             # autre micro : autre niveau de bruit de fond
+                reconnaisseur.adjust_for_ambient_noise(source, duration=0.6)
+                micro_calibre = choisi
+            return transcrire(source, silencieux)
+    except (OSError, AssertionError, AttributeError) as erreur:
+        t.erreur("MICRO", f"Micro inaccessible : {erreur}")
+        audio.micro_en_echec()
+        time.sleep(1)
+        return ""
 
-            segments, info = modele_vocal.transcribe(
-                echantillons,
-                language="fr",
-                beam_size=5,
-                temperature=0.0,
-                initial_prompt=PROMPT_WHISPER,
-                condition_on_previous_text=False,
-                without_timestamps=True,
-                no_speech_threshold=0.6,
-                # Ne transcrit que les passages où quelqu'un parle vraiment : évite que
-                # Whisper « invente » une phrase (voire une commande) sur un bruit.
-                vad_filter=True,
-                vad_parameters={"min_silence_duration_ms": 500, "speech_pad_ms": 300},
-            )
-            texte = "".join(s.text for s in segments if s.no_speech_prob < 0.6).strip()
-            if texte and not silencieux:
-                t.ligne("WHISPER", f"« {texte} »", t.CYAN)
-            return texte
-        except sr.WaitTimeoutError:
-            pass
-        except Exception as e:
-            t.erreur("MICRO", f"Erreur lors de la capture : {e}")
+
+def transcrire(source, silencieux=False):
+    """Capte une phrase et la transcrit localement avec Whisper"""
+    if not silencieux:
+        t.etat("ÉCOUTE", "ACTIVE — parlez maintenant", t.CYAN)
+    try:
+        prise = reconnaisseur.listen(source, timeout=3, phrase_time_limit=7)
+        # Directement en mémoire, au format attendu par Whisper (16 kHz, mono, float32)
+        brut = prise.get_raw_data(convert_rate=16000, convert_width=2)
+        echantillons = np.frombuffer(brut, dtype=np.int16).astype(np.float32) / 32768.0
+
+        segments, info = modele_vocal.transcribe(
+            echantillons,
+            language="fr",
+            beam_size=5,
+            temperature=0.0,
+            initial_prompt=PROMPT_WHISPER,
+            condition_on_previous_text=False,
+            without_timestamps=True,
+            no_speech_threshold=0.6,
+            # Ne transcrit que les passages où quelqu'un parle vraiment : évite que
+            # Whisper « invente » une phrase (voire une commande) sur un bruit.
+            vad_filter=True,
+            vad_parameters={"min_silence_duration_ms": 500, "speech_pad_ms": 300},
+        )
+        texte = "".join(s.text for s in segments if s.no_speech_prob < 0.6).strip()
+        if texte and not silencieux:
+            t.ligne("WHISPER", f"« {texte} »", t.CYAN)
+        return texte
+    except sr.WaitTimeoutError:
+        pass
+    except Exception as e:
+        t.erreur("MICRO", f"Erreur lors de la capture : {e}")
     return ""
 
 

@@ -8,11 +8,14 @@ Enregistrés dans data/reglages.json. Pour l'énergie :
 Pour les commandes (voir commandes.py), seulement ce qui diffère de l'origine :
   touches    : {commande: [touche, [modificateurs]]}
   sequences  : {séquence: [étapes]}
+Pour le son (voir audio.py) :
+  audio      : {entree: micro, sortie: casque ou haut-parleurs (None : Windows), volume: 0 à 100}
 
 Tout ce qui arrive de l'interface est revérifié ici. Aucune touche, aucun import de macros.py.
 """
 import copy
 import json
+import math
 import os
 import re
 
@@ -44,6 +47,7 @@ VOIX_BASE = {"mode_esquive": ["esquive", "mode esquive"]}
 MODES_PERSO_MAX = 12
 VAISSEAUX_MAX = 80
 LONGUEUR_NOM = 24
+LONGUEUR_PERIPHERIQUE = 200
 _ID_PERSO = re.compile(r"^mode_perso_[a-z0-9]{1,16}$")
 _TYPE_VAISSEAU = re.compile(r"^[a-z0-9_]{1,40}$")
 
@@ -86,6 +90,19 @@ def _modes_perso(brut):
     return modes
 
 
+def _audio_propre(brut):
+    """Micro, sortie et volume valides (un nom de périphérique absent reste permis : débranché)."""
+    brut = brut if isinstance(brut, dict) else {}
+
+    def peripherique(valeur):
+        return valeur if isinstance(valeur, str) and 0 < len(valeur) <= LONGUEUR_PERIPHERIQUE else None
+
+    volume = brut.get("volume")
+    valide = isinstance(volume, (int, float)) and not isinstance(volume, bool) and math.isfinite(volume)
+    return {"entree": peripherique(brut.get("entree")), "sortie": peripherique(brut.get("sortie")),
+            "volume": max(0, min(100, round(volume))) if valide else 100}
+
+
 def nettoyer(brut):
     """Document complet et valide à partir de n'importe quoi (le reste est ignoré)."""
     pips = brut.get("pips") if isinstance(brut, dict) else None
@@ -112,7 +129,8 @@ def nettoyer(brut):
 
     return {"pips": {"modes": [_description_base(m) for m in MODES_BASE] + perso,
                      "defaut": defaut, "vaisseaux": vaisseaux},
-            "commandes": clavier.nettoyer(brut.get("commandes") if isinstance(brut, dict) else None)}
+            "commandes": clavier.nettoyer(brut.get("commandes") if isinstance(brut, dict) else None),
+            "audio": _audio_propre(brut.get("audio") if isinstance(brut, dict) else None)}
 
 
 def _sur_disque(doc):
@@ -121,7 +139,7 @@ def _sur_disque(doc):
     return {"version": 1, "pips": {
         "modes": [{"id": m["id"], "nom": m["nom"]} for m in pips["modes"] if not m["base"]],
         "defaut": pips["defaut"], "vaisseaux": pips["vaisseaux"]},
-        "commandes": doc["commandes"]}
+        "commandes": doc["commandes"], "audio": doc["audio"]}
 
 
 def charger(chemin=None):
@@ -193,6 +211,11 @@ def touche_perso(nom):
     """(touche, [modificateurs]) choisie dans l'interface pour cette commande, ou None."""
     valeur = _actuel()["commandes"]["touches"].get(nom)
     return (valeur[0], list(valeur[1])) if valeur else None
+
+
+def audio():
+    """Micro, sortie et volume choisis dans Réglages > Son."""
+    return dict(_actuel()["audio"])
 
 
 def sequence(cle):

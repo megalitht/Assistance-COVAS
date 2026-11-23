@@ -106,6 +106,79 @@ def meilleure_approche(texte_norm: str, mot_cle_norm: str) -> float:
     return meilleur
 
 
+# ---------- Sens de l'ordre : sortir / activer, ou rentrer / couper ----------
+_RENTRER = ("rentr", "rang", "remball", "remont", "relev", "ferm", "referm", "etein", "eteig",
+            "desactiv", "desengag", "debranch", "coup", "repli", "retract", "escamot", "planqu",
+            "cach", "retir", "enlev", "rabat", "rengain", "desarm", "arret", "stopp", "quitt")
+_RENTRER_EXACT = {"leve", "leves", "lever", "levez", "monte", "montes", "monter", "montez",
+                  "ote", "oter", "otez", "vire", "virer", "virez", "off", "dedans"}
+_SORTIR = ("deploi", "deploy", "redeplo", "depli", "descend", "baiss", "abaiss", "ouvr", "rouvr",
+           "allum", "rallum", "activ", "reactiv", "enclench", "engag", "branch", "rebranch",
+           "demarr", "lanc", "degain", "affich")
+_SORTIR_EXACT = {"mets", "met", "mettre", "mettez", "remets", "remet", "remettre", "dehors",
+                 "montre", "montrer", "montrez"}
+# « sors », « sortir », « sortie »... mais pas « sorte » (« de sorte que »)
+_FORME_SORTIR = re.compile(r"(?:res)?sor(?:s|t|ti|tis|tie|tir|tez)$")
+_HORS_SERVICE = re.compile(r"\bhors (?:tension|service|ligne)\b|\bau repos\b")
+# « ne sors pas », « n'ouvre plus »... mais « n'oublie pas de sortir le train » reste un ordre,
+# et « je n'ai plus de munitions » un constat (être, avoir, savoir, voir ne sont pas des ordres)
+_NEGATION = re.compile(r"\bne? (?:(?:me|te|le|la|les|l|lui|leur|nous|vous|y|en) )*"
+                       r"(?!oubli|hesit|manqu|(?:a|ai|as|avons|avez|ont|est|es|suis|sommes|etes"
+                       r"|sont|sais|sait|vois|voit|comprends)\b)\w+ (?:pas|plus|jamais)\b")
+
+
+def _sens_du_mot(mot):
+    if mot in _RENTRER_EXACT or mot.startswith(_RENTRER):
+        return "rentrer"
+    if mot in _SORTIR_EXACT or mot.startswith(_SORTIR) or _FORME_SORTIR.match(mot):
+        return "sortir"
+    return None
+
+
+def _analyser_sens(texte):
+    """(sens de l'ordre ou None, True si la phrase contient un ordre à la forme négative)."""
+    phrase = normaliser(texte).replace("'", " ")
+    sans_negation = _NEGATION.sub(" ", phrase)
+    nie = sans_negation != phrase
+    mots, gardes = sans_negation.split(), []
+    for mot, suivant in zip(mots, mots[1:] + [""]):
+        if suivant in ("pas", "jamais") and _sens_du_mot(mot):      # à l'oral : « sors pas le train »
+            nie = True
+        else:
+            gardes.append(mot)
+    if _HORS_SERVICE.search(" ".join(gardes)):
+        return "rentrer", nie
+    for i, mot in enumerate(gardes):
+        sens = _sens_du_mot(mot)
+        if sens:
+            suivant = gardes[i + 1] if i + 1 < len(gardes) else ""
+            if sens == "sortir" and _FORME_SORTIR.match(mot) and suivant in ("du", "de", "des"):
+                return "rentrer", nie               # « sors du mode silencieux »
+            if mot.startswith("rentr") and suivant in ("en", "dans"):
+                return "sortir", nie                # « rentre en mode silencieux »
+            return sens, nie
+    return ("sortir" if len(gardes) > 1 and gardes[-1] == "on" else None), nie      # « phares on »
+
+
+def intention(texte: str) -> str | None:
+    """'sortir', 'rentrer' ou None (= basculer) d'après la phrase."""
+    return _analyser_sens(texte)[0]
+
+
+def ordre_nie(texte: str) -> bool:
+    """True pour « ne sors pas le train » ; False si un autre ordre suit (« ne sors pas, rentre-le »)."""
+    sens, nie = _analyser_sens(texte)
+    return nie and sens is None
+
+
+_ENERGIE_ARMES = re.compile(r"\b(?:energie|puissance|pips?|aliment\w*)\b|\baux? armes?\b")
+
+
+def _deplace_les_armes(texte_norm):
+    """« Remballe tes armes » parle des points d'emport ; « énergie aux armes » des pips."""
+    return intention(texte_norm) is not None and not _ENERGIE_ARMES.search(texte_norm)
+
+
 class Correspondance(NamedTuple):
     cle: str | None          # clé de barks.json, ou None
     mot_cle: str | None      # mot-clé reconnu (normalisé)
@@ -144,6 +217,9 @@ def trouver_action_detail(texte: str, actions: dict, ignorees=()) -> Corresponda
                 if score > score_max:
                     approchee, mot_approche, score_max = cle, mot_cle, score
 
+    if exacte == "energie_arm" and mot_exact.startswith("arme") and "armement" in actions \
+            and "armement" not in ignorees and _deplace_les_armes(texte_norm):
+        exacte = "armement"
     if exacte:
         return Correspondance(exacte, mot_exact, True, 1.0)
     if approchee and score_max >= SEUIL_APPROCHE:
@@ -183,7 +259,8 @@ def est_reveil_seul(texte: str, mots_reveil) -> bool:
 def vocabulaire_pour_whisper(actions: dict) -> str:
     """Phrase d'amorce : Whisper écrit beaucoup mieux les mots qu'il « a déjà vus » ici."""
     return ("Commandes vocales du COVAS dans Elite Dangerous. Covas, mets les NVG. "
-            "Covas, active le FSD. Sors le train d'atterrissage. Ouvre la soute. Boost. "
+            "Covas, active le FSD. Sors le train d'atterrissage. Rentre le train d'atterrissage. "
+            "Remballe les points d'emport. Ouvre la soute. Boost. "
             "Pips aux moteurs, aux armes, aux boucliers. Mode croisière, mode combat. "
             "Puce thermique, leurres, appontage, décollage, autopilote, HUD, "
             "vision nocturne, phares, drone de prospection, chasseur, sous-système. "

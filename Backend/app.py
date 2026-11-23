@@ -12,9 +12,11 @@ Variable COVAS_DEBUG=1 : ouvre les outils de développement de la fenêtre.
 """
 import json
 import os
+import shutil
 import socket
 import sys
 import threading
+import time
 import traceback
 
 DOSSIER_BACKEND = os.path.dirname(os.path.abspath(__file__))
@@ -23,6 +25,7 @@ TITRE = "COVAS — Assistance de bord"      # même titre que main.TITRE / macro
 PORT_WS = 8765                            # liaison du panneau (module/serveur_ws.py)
 PORT_PAGE = 8766                          # serveur local de la page
 DOSSIER_PROFIL = os.path.join(DOSSIER_BACKEND, "data", "fenetre")   # profil WebView2 (préférences)
+DELAI_FERMETURE = 5                       # secondes au plus pour fermer proprement
 
 # Lancé par pythonw (sans console) : print() et traceback n'ont nulle part où écrire.
 if sys.stdout is None or sys.stderr is None:
@@ -35,7 +38,7 @@ sys.path.insert(0, DOSSIER_BACKEND)
 
 import webview  # noqa: E402
 
-from module import ecoute, plans, reglages  # noqa: E402  (légers : ni micro, ni touches)
+from module import audio, ecoute, plans, reglages  # noqa: E402  (légers : ni micro, ni touches)
 from module.pont_studio import PontStudio  # noqa: E402
 
 DOSSIER_PLANS = os.path.join(DOSSIER_FRONTEND, "vaisseaux")
@@ -49,6 +52,7 @@ class Api:
         self._fenetre = None
         self._verrou = threading.Lock()
         self._etat = "veille"          # veille -> activation -> actif (ou retour en veille si erreur)
+        self._pauses = set()           # ce qui suspend l'écoute du COVAS : studio, test du micro
         self._pont = PontStudio([sys.executable, os.path.join(DOSSIER_BACKEND, "studio_vocal.py"),
                                  "--service"])
 
@@ -96,6 +100,21 @@ class Api:
         """F11 dans la fenêtre : quitte ou retrouve le plein écran."""
         self._fenetre.toggle_fullscreen()
 
+    def quitter(self):
+        """Bouton Quitter de l'interface. La suite de la fermeture est dans lancer()."""
+        threading.Thread(target=self._fermer_fenetre, name="Fermeture", daemon=True).start()
+        return True
+
+    def _fermer_fenetre(self):
+        time.sleep(0.1)                 # laisse la réponse repartir vers la page
+        try:
+            self._fenetre.destroy()
+        except Exception:
+            traceback.print_exc()
+        time.sleep(DELAI_FERMETURE)     # la fenêtre ne s'est pas fermée : on ne reste pas bloqué
+        _fermer_proprement(self)
+        os._exit(0)
+
     # --- Réglages (icône d'engrenage) -------------------------------------
     def reglages_lire(self):
         return reglages.document()
@@ -108,6 +127,40 @@ class Api:
         nouveau, erreur = reglages.enregistrer(document)
         return {"reglages": nouveau, "erreur": erreur}
 
+    def _suspendre_ecoute(self, raison):
+        with self._verrou:
+            self._pauses.add(raison)
+            ecoute.PAUSE.set()
+
+    def _reprendre_ecoute(self, raison):
+        with self._verrou:
+            self._pauses.discard(raison)
+            if not self._pauses:
+                ecoute.PAUSE.clear()
+
+    # --- Son (Réglages > Son) ---------------------------------------------
+    def audio_lister(self):
+        return audio.peripheriques()
+
+    def audio_tester_sortie(self, nom=None, volume=100):
+        return audio.tester_sortie(nom, volume)
+
+    def audio_micro_demarrer(self, nom=None):
+        """Test du micro : le COVAS n'écoute pas, ce qu'on dit au test n'est pas un ordre."""
+        self._suspendre_ecoute("test_micro")
+        resultat = audio.TEST_MICRO.demarrer(nom, apres=lambda: self._reprendre_ecoute("test_micro"))
+        if resultat.get("erreur"):
+            self._reprendre_ecoute("test_micro")
+        return resultat
+
+    def audio_micro_niveau(self):
+        return audio.TEST_MICRO.niveau()
+
+    def audio_micro_arreter(self):
+        resultat = audio.TEST_MICRO.arreter()
+        self._reprendre_ecoute("test_micro")
+        return resultat
+
     def studio_ouvrir(self):
         """Onglet Studio affiché : lance le studio et met l'écoute du COVAS en pause."""
         if _fenetre_ouverte(TITRE_STUDIO):
@@ -117,7 +170,7 @@ class Api:
             self._pont.demarrer()
         except OSError as erreur:
             return {"erreur": f"Studio vocal impossible à lancer ({erreur})"}
-        ecoute.PAUSE.set()
+        self._suspendre_ecoute("studio")
         return {"ok": True}
 
     def studio_appel(self, nom, args=None):
@@ -125,11 +178,11 @@ class Api:
 
     def studio_veille(self):
         """Onglet quitté : le micro du studio se coupe, le COVAS réécoute."""
-        ecoute.PAUSE.clear()
+        self._reprendre_ecoute("studio")
         return self._pont.appeler("veille") if self._pont.actif else {"ok": True}
 
     def studio_fermer(self):
-        ecoute.PAUSE.clear()
+        self._reprendre_ecoute("studio")
         self._pont.arreter()
         return {"ok": True}
 
@@ -141,6 +194,42 @@ class Api:
             return {"erreur": str(erreur)}
         except OSError as erreur:
             return {"erreur": f"écriture impossible ({erreur})"}
+
+
+def _nettoyer(api):
+    """Ne laisse ni touche enfoncée dans le jeu, ni studio vocal en arrière-plan.
+    macros n'est utilisé que s'il est déjà chargé : son import peut écrire le fichier de touches."""
+    try:
+        audio.TEST_MICRO.arreter()
+    except Exception:
+        traceback.print_exc()
+    macros = sys.modules.get("module.macros")
+    if macros:
+        try:
+            macros.STOP.set()           # un appui en cours se termine et relâche sa touche
+            time.sleep(0.1)
+            macros.relacher_tout()
+        except Exception:
+            traceback.print_exc()
+    try:
+        api._pont.arreter()
+    except Exception:
+        traceback.print_exc()
+
+
+def _fermer_proprement(api):
+    """Nettoyage avec une limite de temps : la fermeture ne doit jamais rester bloquée."""
+    nettoyage = threading.Thread(target=_nettoyer, args=(api,), name="Nettoyage", daemon=True)
+    nettoyage.start()
+    nettoyage.join(DELAI_FERMETURE)
+
+
+def _vider_cache_page():
+    """Sans cela, WebView2 peut remettre d'anciennes versions de l'interface après une mise à jour :
+    le serveur de pywebview ne lui demande pas de les revérifier. Préférences conservées."""
+    profil = os.path.join(DOSSIER_PROFIL, "EBWebView", "Default")
+    for dossier in ("Cache", "Code Cache"):
+        shutil.rmtree(os.path.join(profil, dossier), ignore_errors=True)
 
 
 def _fenetre_ouverte(titre):
@@ -202,6 +291,7 @@ def _ramener_fenetre_existante():
 def lancer():
     if _ramener_fenetre_existante():
         return
+    _vider_cache_page()
     api = Api()
     # Servie en http (et non en file://) : WebView2 garde ainsi le « ?app » de l'adresse.
     page = os.path.join(DOSSIER_FRONTEND, "interface.html") + "?app"
@@ -216,7 +306,8 @@ def lancer():
     webview.start(gui="edgechromium", debug=os.environ.get("COVAS_DEBUG") == "1",
                   http_server=True, http_port=_port_page(), private_mode=False,
                   storage_path=DOSSIER_PROFIL)
-    # Fenêtre fermée : on coupe tout (threads du micro, de l'audio, des journaux...)
+    # Fenêtre fermée (bouton Quitter, Alt+F4...) : on coupe tout (micro, audio, journaux...)
+    _fermer_proprement(api)
     os._exit(0)
 
 

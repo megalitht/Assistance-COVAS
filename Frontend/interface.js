@@ -1121,6 +1121,44 @@
     }
 
     // ----------------------------------------------------------------
+    //  QUITTER L'APPLICATION
+    //  Deux clics : le premier arme le bouton quelques secondes. Un double-clic ne suffit pas,
+    //  pour ne pas couper le COVAS par erreur en plein vol.
+    // ----------------------------------------------------------------
+    const DUREE_CONFIRMATION = 4000;  // ms pendant lesquelles le bouton reste armé
+    const DELAI_ANTI_DOUBLE = 350;    // ms avant que le second clic soit accepté
+
+    function installerQuitter() {
+        if (!MODE_APP) return;          // dans un navigateur, il n'y a pas d'application à fermer
+        tous('[data-quitter]').forEach(bouton => {
+            let armeDepuis = 0, minuterie = 0;
+            const desarmer = () => {
+                clearTimeout(minuterie);
+                armeDepuis = 0;
+                bouton.classList.remove('arme');
+                bouton.setAttribute('aria-label', 'Quitter le COVAS');
+            };
+            bouton.hidden = false;
+            bouton.onblur = desarmer;
+            bouton.onclick = () => {
+                if (!armeDepuis) {
+                    armeDepuis = performance.now();
+                    bouton.classList.add('arme');
+                    bouton.setAttribute('aria-label', 'Confirmer : quitter le COVAS');
+                    minuterie = setTimeout(desarmer, DUREE_CONFIRMATION);
+                    return;
+                }
+                if (performance.now() - armeDepuis < DELAI_ANTI_DOUBLE) return;
+                const api = window.pywebview?.api;
+                if (!api?.quitter) { desarmer(); return; }
+                clearTimeout(minuterie);
+                bouton.disabled = true;
+                api.quitter();
+            };
+        });
+    }
+
+    // ----------------------------------------------------------------
     //  MISE EN PLACE
     // ----------------------------------------------------------------
     function installer() {
@@ -1178,6 +1216,7 @@
             };
         });
         installerBoussole();
+        installerQuitter();
         $('selecteur-mode').onclick = () => {
             modeChoisi = { auto: 'combat', combat: 'nav', nav: 'auto' }[modeChoisi];
             garderPreference('covas-mode', modeChoisi);
