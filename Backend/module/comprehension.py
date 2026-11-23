@@ -187,6 +187,8 @@ def vocabulaire_pour_whisper(actions: dict) -> str:
             "Pips aux moteurs, aux armes, aux boucliers. Mode croisière, mode combat. "
             "Puce thermique, leurres, appontage, décollage, autopilote, HUD, "
             "vision nocturne, phares, drone de prospection, chasseur, sous-système. "
+            "Frein à main, tourelle, rappelle le vaisseau, lampe, trousse de soin, "
+            "cellule d'énergie, échantillonneur. "
             "Rapport d'avarie, état des dégâts. Comment va le vaisseau ? "
             "Raconte-moi une histoire. Thargoïdes, Gardiens, Raxxla, Hutton Orbital, "
             "Fuel Rats, Colonia, Jameson.")

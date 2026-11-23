@@ -2,9 +2,9 @@
 Touches envoyées au jeu.
 
 Les touches sont lues automatiquement dans le fichier de raccourcis d'Elite Dangerous
-(voir touches.py). Le tableau TOUCHES ci-dessous ne sert que de secours : il est utilisé
-pour les commandes que le fichier du jeu ne donne pas.
-None = pas de touche connue : le COVAS refusera la commande en t'expliquant quoi régler.
+(voir touches.py). Une touche choisie dans Réglages > Commandes passe avant ; le tableau de
+secours (commandes.py) sert pour les commandes que le fichier du jeu ne donne pas.
+Les séquences de menus (apontage, décollage, ravitaillement...) se règlent au même endroit.
 """
 import os
 import threading
@@ -13,6 +13,9 @@ import unicodedata
 
 import pydirectinput
 
+from module import commandes
+from module import pips
+from module import reglages
 from module import touches
 
 pydirectinput.PAUSE = 0.05
@@ -22,68 +25,13 @@ pydirectinput.PAUSE = 0.05
 for _n, _code in zip(range(13, 25), (0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B,
                                      0x6C, 0x6D, 0x6E, 0x76)):
     pydirectinput.KEYBOARD_MAPPING.setdefault(f"f{_n}", _code)
+# Ni le pavé numérique
+for _n, _code in enumerate((0x52, 0x4F, 0x50, 0x51, 0x4B, 0x4C, 0x4D, 0x47, 0x48, 0x49)):
+    pydirectinput.KEYBOARD_MAPPING.setdefault(f"numpad{_n}", _code)
 
-TOUCHES = {
-    # Vol
-    "train": "l",
-    "soute": "home",
-    "cible": "t",
-    "boost": "tab",
-    "saut": "j",
-    "supercroisiere": None,
-    "vitesse_zero": "x",
-    "vitesse_75": None,
-    "vitesse_max": None,
-    "poussee_haut": "r",
-    "tangage_haut": None,
-    "tangage_bas": None,
-    # Répartition d'énergie (pips)
-    "pips_sys": "left",
-    "pips_moteurs": "up",
-    "pips_armes": "right",
-    "pips_equilibre": "down",
-    # Navigation dans les menus du jeu
-    "ui_haut": "w",
-    "ui_bas": "s",
-    "ui_gauche": "a",
-    "ui_droite": "d",
-    "ui_onglet_gauche": "q",
-    "ui_onglet_droite": "e",
-    "ui_selection": "space",
-    "ui_retour": "backspace",
-    # Ecran 
-    "ec_nav": "1",
-    "ec_com": "2",
-    "ec_deploy": "3",
-    "ec_sys": "4",
-    "carte_galaxie": None,
-    "carte_systeme": None,
-    # Cockpit
-    "nvg": None,
-    "phares": "insert",
-    "armement": "u",
-    "hud": None,
-    "silencieux": "delete",
-    # Combat
-    "puce_thermique": "v",
-    "leurres": None,
-    "cible_menace": "h",
-    "cible_hostile": None,
-    "sous_systeme_suivant": "y",
-    "sous_systeme_precedent": None,
-    "tir_principal": None,
-    "tir_secondaire": None,
-    "groupe_suivant": "n",
-    "groupe_precedent": None,
-    # Chasseur embarqué
-    "chasseur_defense": None,
-    "chasseur_attaque": None,
-    "chasseur_feu_libre": None,
-    "chasseur_position": None,
-    "chasseur_suivre": None,
-    "chasseur_cessez": None,
-    "chasseur_rappel": None,
-}
+TOUCHES = dict(commandes.TOUCHES_SECOURS)
+# VRS et pied à terre : la touche vient du jeu ou des réglages, jamais d'une valeur devinée
+TOUCHES.update({nom: None for nom in touches.COMMANDES_SOL})
 
 # Touches que tu veux imposer, quoi que dise le fichier du jeu. Ex. : {"nvg": "f9"}
 TOUCHES_FORCEES = {}
@@ -91,31 +39,6 @@ TOUCHES_FORCEES = {}
 # Les raccourcis du jeu remplacent le tableau de secours
 TOUCHES.update(touches.charger(assigner=True, sauf=TOUCHES_FORCEES))
 TOUCHES.update(TOUCHES_FORCEES)
-
-# --- RAVITAILLEMENT À QUAI -------------------------------------------------
-# Touches pour ouvrir les services de la station depuis le menu d'amarrage.
-# Par défaut : remonter tout en haut du menu, descendre d'un cran (« Services
-# de la station »), valider. Si ton menu est dans un autre ordre, ajuste ici.
-SEQUENCE_OUVRIR_SERVICES = ["ui_haut"] * 4 + ["ui_bas", "ui_selection"]
-
-# Une fois dans les services : Ravitailler, Réparer, Réarmer (boutons en haut à gauche).
-# Espace, D, Espace, D, Espace — le curseur est déjà sur « Ravitailler » à l'ouverture.
-SEQUENCE_RAVITAILLEMENT = ["ui_selection",
-                           "ui_droite", "ui_selection",
-                           "ui_droite", "ui_selection"]
-
-# 1, E, E, D, Espace — un seul appui sur 1 : le panneau est refermé ensuite
-# par fermer_panneaux() (Retour arrière), pas par un second 1.
-SEQUENCE_DEMANDE_APONTAGE = ["ec_nav"] + ["ui_onglet_droite"] * 2 + ["ui_droite", "ui_selection"]
-
-# Décollage : remonter tout en haut du menu d'amarrage (« Décollage »), valider.
-SEQUENCE_DECOLLAGE = ["ui_haut"] * 4 + ["ui_bas"] * 2 + ["ui_selection"]
-
-# Assistance de supercroisière (autopilote station). Elle s'active dans le panneau de
-# navigation, sur la ligne de ta destination. L'emplacement de cette ligne change d'un
-# système à l'autre : tant que la liste est vide, le COVAS te demande de l'activer
-# toi-même. Exemple à essayer : ["ec_nav", "ui_selection", "ui_bas", "ui_selection", "ec_nav"]
-SEQUENCE_ASSISTANCE_SC = []
 
 # Décollage d'une planète : durée max. de poussée verticale pour quitter le sol, puis
 # durée de montée supplémentaire avant de rentrer le train (secondes).
@@ -182,19 +105,25 @@ PAUSE_ENTRE = 0.12
 MACROS = {
     "train_atterrissage": [("train", 1)],
     "soute": [("soute", 1)],
-    "energie_mtr": [("pips_equilibre", 1), ("pips_moteurs", 4)],
-    "energie_sys": [("pips_equilibre", 1), ("pips_sys", 4)],
-    "energie_arm": [("pips_equilibre", 1), ("pips_armes", 4)],
     "reset": [("pips_equilibre", 1)],
     "lock": [("cible", 1)],
     "boost": [("boost", 1)],
-    "mode_combat": [("pips_sys", 4), ("pips_armes", 4)],
-    "mode_croisiere": [("pips_sys", 4), ("pips_moteurs", 4)],
-    "mode_recuperation": [("pips_moteurs", 4), ("pips_sys", 4)],
-    "fsd": [("saut", 1), ("pips_sys", 4), ("pips_moteurs", 4)],
-    # 4 aux systèmes, 2 aux moteurs, rien aux armes
-    "pips_defense": [("pips_equilibre", 1), ("pips_moteurs", 1), ("pips_sys", 3)],
+    # Énergie à fond : étapes réglées dans Réglages > Commandes
+    **{cle: [] for cle in commandes.SEQUENCES_MACROS},
 }
+
+# Les modes d'énergie (combat, esquive, croisière...) sont réglés dans l'interface : voir
+# reglages.py. Touches à presser avant de placer les pips :
+AVANT_PIPS = {"fsd": [("saut", 1)]}
+
+
+# Branchés par actions.py (ce module ne lit pas l'état du jeu lui-même)
+def lire_pips():
+    return None
+
+
+def vaisseau_actuel():
+    return None
 
 
 def normaliser(nom: str) -> str:
@@ -209,7 +138,14 @@ DERNIERS_APPUIS = {}          # touche -> heure du dernier appui du COVAS (voir 
 
 
 def touche_de(nom):
-    """(touche, [modificateurs]) pour un nom du tableau TOUCHES, ou None s'il n'y en a pas."""
+    """(touche, [modificateurs]) pour une commande, ou None s'il n'y en a pas. Par priorité :
+    Réglages > Commandes, TOUCHES_FORCEES, fichier actuel du jeu, tableau de secours."""
+    perso = reglages.touche_perso(nom)
+    if perso:
+        return perso
+    jeu = None if nom in TOUCHES_FORCEES else commandes.touches_jeu().get(nom)
+    if jeu:
+        return jeu[0], list(jeu[1])
     valeur = TOUCHES.get(nom, nom)
     if not valeur:
         return None
@@ -267,9 +203,27 @@ def appuyer(nom: str, fois: int = 1, duree: float = None) -> bool:
     return True
 
 
+def jouer_etapes(etapes) -> bool:
+    """Joue une séquence (commandes et pauses). False si une touche manque ou sur « stop »."""
+    for etape in etapes:
+        pause = commandes.duree_pause(etape)
+        if pause is not None:
+            if STOP.wait(pause):
+                return False
+        elif not appuyer(etape):
+            return False
+    return True
+
+
 def executer_touches(action: str) -> bool:
-    """Exécute la macro simple associée à l'action. Renvoie False si elle n'existe pas."""
-    etapes = MACROS.get(normaliser(action))
+    """Exécute la macro simple ou le mode d'énergie associé à l'action.
+    Renvoie False si elle n'existe pas ou n'a pas abouti."""
+    cle = normaliser(action)
+    if reglages.est_mode(cle):
+        return appliquer_mode(cle) in ("ok", "sans_verification")
+    if cle in commandes.SEQUENCES_MACROS:
+        return jouer_etapes(reglages.sequence(cle))
+    etapes = MACROS.get(cle)
     if not etapes:
         print(f"[Macros] Aucune touche associée à l'action : {action}")
         return False
@@ -277,6 +231,14 @@ def executer_touches(action: str) -> bool:
         if not appuyer(touche, fois):
             return False
     return True
+
+
+def appliquer_mode(cle: str) -> str:
+    """Place les pips du mode pour le vaisseau actuel. Renvoie le résultat de pips.appliquer."""
+    for touche, fois in AVANT_PIPS.get(cle, ()):
+        if not appuyer(touche, fois):
+            return "interrompu"
+    return pips.appliquer(reglages.pips_pour(cle, vaisseau_actuel()), lire_pips, appuyer)
 
 
 FENETRE_JEU = "FrontierDevelopmentsAppWinClass"

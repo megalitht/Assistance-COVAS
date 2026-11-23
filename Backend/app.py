@@ -35,6 +35,12 @@ sys.path.insert(0, DOSSIER_BACKEND)
 
 import webview  # noqa: E402
 
+from module import ecoute, plans, reglages  # noqa: E402  (légers : ni micro, ni touches)
+from module.pont_studio import PontStudio  # noqa: E402
+
+DOSSIER_PLANS = os.path.join(DOSSIER_FRONTEND, "vaisseaux")
+TITRE_STUDIO = "COVAS — Studio vocal"     # fenêtre de STUDIO VOCAL.bat
+
 
 class Api:
     """Fonctions appelables depuis la page : window.pywebview.api.<nom>()."""
@@ -43,6 +49,8 @@ class Api:
         self._fenetre = None
         self._verrou = threading.Lock()
         self._etat = "veille"          # veille -> activation -> actif (ou retour en veille si erreur)
+        self._pont = PontStudio([sys.executable, os.path.join(DOSSIER_BACKEND, "studio_vocal.py"),
+                                 "--service"])
 
     def _pousser(self, texte, etat="etape"):
         """Envoie une étape du démarrage à l'écran d'accueil."""
@@ -87,6 +95,59 @@ class Api:
     def plein_ecran(self):
         """F11 dans la fenêtre : quitte ou retrouve le plein écran."""
         self._fenetre.toggle_fullscreen()
+
+    # --- Réglages (icône d'engrenage) -------------------------------------
+    def reglages_lire(self):
+        return reglages.document()
+
+    def reglages_ecrire(self, document):
+        """Réglages changés sur l'écran d'accueil (COVAS en veille : pas encore de liaison)."""
+        if self._etat != "veille":
+            return {"reglages": reglages.document(),
+                    "erreur": "COVAS en cours de démarrage : réessaie dans un instant"}
+        nouveau, erreur = reglages.enregistrer(document)
+        return {"reglages": nouveau, "erreur": erreur}
+
+    def studio_ouvrir(self):
+        """Onglet Studio affiché : lance le studio et met l'écoute du COVAS en pause."""
+        if _fenetre_ouverte(TITRE_STUDIO):
+            return {"erreur": "Le studio vocal est déjà ouvert dans sa propre fenêtre. "
+                              "Ferme-la pour l'utiliser ici."}
+        try:
+            self._pont.demarrer()
+        except OSError as erreur:
+            return {"erreur": f"Studio vocal impossible à lancer ({erreur})"}
+        ecoute.PAUSE.set()
+        return {"ok": True}
+
+    def studio_appel(self, nom, args=None):
+        return self._pont.appeler(nom, args or [])
+
+    def studio_veille(self):
+        """Onglet quitté : le micro du studio se coupe, le COVAS réécoute."""
+        ecoute.PAUSE.clear()
+        return self._pont.appeler("veille") if self._pont.actif else {"ok": True}
+
+    def studio_fermer(self):
+        ecoute.PAUSE.clear()
+        self._pont.arreter()
+        return {"ok": True}
+
+    def installer_plan(self, identifiant, contenu):
+        """Bouton de l'atelier : remplace le plan du vaisseau (l'ancien est mis de côté)."""
+        try:
+            return plans.installer(DOSSIER_PLANS, identifiant, contenu)
+        except ValueError as erreur:
+            return {"erreur": str(erreur)}
+        except OSError as erreur:
+            return {"erreur": f"écriture impossible ({erreur})"}
+
+
+def _fenetre_ouverte(titre):
+    if os.name != "nt":
+        return False
+    import ctypes
+    return bool(ctypes.windll.user32.FindWindowW(None, titre))
 
 
 def _ecran_secondaire():

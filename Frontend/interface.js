@@ -16,6 +16,12 @@
     const LIGNES_JOURNAL_MAX = 150;
     const DUREE_LIGNE_TOUCHEE = 4;    // secondes : ligne d'un module qui vient de perdre de l'intégrité
     const DUREE_RAPPORT = 25;         // secondes : modules cités par le rapport d'avarie mis en évidence
+    const DUREE_GRESILLEMENT = 250;   // ms : parasites à chaque changement d'interface
+    const MILIEU_GRESILLEMENT = 100;  // ms : l'interface change au plus fort des parasites
+    const ECART_GRESILLEMENTS = 800;  // ms entre deux grésillements, même si l'état du jeu oscille
+    const ECART_GRESILLEMENTS_CLICS = 400; // ms : clics rapprochés sur les onglets, sans effet stroboscopique
+    const PROTECTION_COMMANDES = 500; // ms sans clic après un changement de boutons (évite un décollage par erreur)
+    const CONTEXTES_COMMANDES = { vol: 'en vol', station: 'à quai', sol: 'au sol' };
     // Coups qui secouent l'écran (les autres, comme les salves sur le bouclier, sont trop fréquents)
     const IMPACTS_FORTS = new Set(['HullDamage', 'ShieldState', 'CockpitBreached']);
 
@@ -29,9 +35,29 @@
         masse: 16, fsdCharge: 17, fsdRefroid: 18, carburantBas: 19, surchauffe: 20,
         latLong: 21, danger: 22, interdiction: 23, vaisseau: 24, chasseur: 25, vrs: 26,
         analyse: 27, visionNuit: 28, saut: 30,
+        frein: 12, tourelle: 13, sousVaisseau: 14, conduiteAssistee: 15, pleinsPhares: 31,
+    };
+    // Second champ de drapeaux, surtout pour le pied à terre
+    const BIT2 = {
+        aPied: 0, viseur: 5, oxygeneBas: 6, santeBasse: 7, froid: 8, chaud: 9, tresFroid: 10,
+        tresChaud: 11, planeur: 12, respirable: 16,
     };
 
     const VOYANTS = {
+        vrs: [
+            ['frein', 'Frein à main', 'attention'], ['conduiteAssistee', 'Conduite assistée'],
+            ['feux', 'Phares'], ['pleinsPhares', 'Pleins phares'], ['tourelle', 'Vue tourelle'],
+            ['sousVaisseau', 'Sous le vaisseau', 'attention'], ['ecope', 'Écope de soute'],
+            ['visionNuit', 'Vision nocturne'], ['danger', 'Hostiles proches', 'attention'],
+            ['surchauffe', 'Surchauffe', 'alerte'],
+        ],
+        pied: [
+            ['oxygeneBas', 'Oxygène bas', 'alerte'], ['santeBasse', 'Santé basse', 'alerte'],
+            ['froid', 'Froid', 'attention'], ['chaud', 'Chaud', 'attention'],
+            ['tresFroid', 'Grand froid', 'alerte'], ['tresChaud', 'Forte chaleur', 'alerte'],
+            ['respirable', 'Air respirable'], ['visionNuit', 'Vision nocturne'],
+            ['viseur', 'Visée'], ['danger', 'Hostiles proches', 'attention'],
+        ],
         vol: [
             ['train', 'Train sorti'], ['ecope', 'Écope de soute'], ['feux', 'Feux'],
             ['visionNuit', 'Vision nocturne'], ['assistanceOff', 'Assistance coupée', 'attention'],
@@ -135,6 +161,7 @@
         session: {}, commandant: { rangs: {}, progression: {} }, vaisseau: {}, position: {},
         status: {}, route: { etapes: [] }, modules: { liste: [] }, soute: { inventaire: [] },
         cible: {}, combat: {}, missions: { liste: [] }, proches: { liste: [] },
+        sol: { vaisseau: {} },
     };
     let journal = [];                 // lignes du journal de bord, la plus récente en premier
     let filtreJournal = 'tous';
@@ -155,7 +182,9 @@
     // ----------------------------------------------------------------
     const $ = id => document.getElementById(id);
     const tous = selecteur => document.querySelectorAll(selecteur);
-    const drapeau = nom => Math.floor((etat.status.flags || 0) / 2 ** BIT[nom]) % 2 === 1;
+    const drapeau = nom => (nom in BIT2
+        ? Math.floor((etat.status.flags2 || 0) / 2 ** BIT2[nom]) % 2 === 1
+        : Math.floor((etat.status.flags || 0) / 2 ** BIT[nom]) % 2 === 1);
     const nombre = n => (n == null ? '—' : Math.round(n).toLocaleString('fr-FR'));
     const credits = n => (n == null ? '—' : nombre(n) + ' cr');
     const pourcent = x => (x == null ? '—' : Math.round(x * 100) + ' %');
@@ -239,6 +268,7 @@
     }
 
     function etatDeVol() {
+        if (drapeau('aPied')) return 'À pied';        // Flags peut valoir 0 à pied en station
         if (!etat.status.flags) return etat.session.jeu_actif === false ? 'Jeu fermé' : 'En attente du jeu';
         if (drapeau('amarre')) return 'Amarré';
         if (drapeau('pose')) return 'Posé en surface';
@@ -326,6 +356,7 @@
         tous('[data-hologramme]').forEach(h => { h.dataset.boucliers = boucliers === false ? 'non' : 'oui'; });
         // Silhouette du vaisseau : change avec le type (à pied, en VRS ou en chasseur, on garde le vaisseau)
         hologrammes.forEach(h => h.afficher(vaisseauForce || v.type || 'generique'));
+        window.COVAS_REGLAGES?.majVaisseau(v.type);
         tous('.vital').forEach(el => { el.dataset.etat = el.classList.contains('bouclier') ? (boucliers === false ? 'critique' : '') : palier(v.coque); });
 
         ecrire('carburant', s.carburant != null ? `${s.carburant.toFixed(1)}${v.carburant_max ? ' / ' + v.carburant_max : ''} t` : '—');
@@ -345,6 +376,7 @@
 
     function rendreStatus() {
         const pips = etat.status.pips || [0, 0, 0];
+        window.COVAS_REGLAGES?.majPips(etat.status.pips);
         tous('[data-pips]').forEach(conteneur => {
             const rangees = ['SYS', 'MOT', 'ARM'].map((nom, i) => {
                 const rangee = creer('div', 'rangee');
@@ -562,15 +594,151 @@
         const bord = journal.filter(e => e.categorie !== 'comms' && (filtreJournal === 'tous' || e.categorie === filtreJournal));
         remplir($('liste-journal'), bord.map(ligneJournal), 'Rien à signaler pour l\'instant.');
         remplir($('liste-comms'), journal.filter(e => e.categorie === 'comms').map(ligneJournal), 'Aucun message reçu.');
+        remplir($('liste-journal-surface'), journal.filter(e => e.categorie !== 'comms').map(ligneJournal), 'Rien à signaler pour l\'instant.');
+        remplir($('liste-comms-surface'), journal.filter(e => e.categorie === 'comms').map(ligneJournal), 'Aucun message reçu.');
         remplir($('liste-menaces'), journal.filter(e => e.categorie === 'combat').map(ligneJournal), 'Aucune menace enregistrée.');
+    }
+
+    // ----------------------------------------------------------------
+    //  SURFACE : VRS ET PIED À TERRE
+    // ----------------------------------------------------------------
+    const distanceLisible = m => (m == null ? '—' : m >= 1000
+        ? (m / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' km' : Math.round(m) + ' m');
+    const decimales = (x, n) => x.toLocaleString('fr-FR', { minimumFractionDigits: n, maximumFractionDigits: n });
+    const angle = x => (x == null ? '—' : decimales(x, 4) + '°');
+
+    /** Où se trouve le cap visé par rapport au regard du commandant. */
+    function directionRelative(capCible, cap) {
+        if (capCible == null || cap == null) return '—';
+        const ecart = ((capCible - cap + 540) % 360) - 180;
+        if (Math.abs(ecart) <= 8) return 'Droit devant';
+        if (Math.abs(ecart) >= 165) return 'Derrière vous';
+        return `${ecart > 0 ? 'À droite' : 'À gauche'} de ${Math.abs(Math.round(ecart))}°`;
+    }
+
+    function installerBoussole() {
+        const SVG = 'http://www.w3.org/2000/svg';
+        const cadran = $('boussole-cadran');
+        for (let a = 0; a < 360; a += 5) {
+            const trait = document.createElementNS(SVG, 'line');
+            const majeure = a % 30 === 0;
+            trait.setAttribute('class', 'boussole-graduation' + (majeure ? ' majeure' : ''));
+            trait.setAttribute('x1', 200);
+            trait.setAttribute('x2', 200);
+            trait.setAttribute('y1', 10);
+            trait.setAttribute('y2', majeure ? 30 : 20);
+            trait.setAttribute('transform', `rotate(${a} 200 200)`);
+            cadran.append(trait);
+        }
+        for (const [lettre, degres] of [['N', 0], ['E', 90], ['S', 180], ['O', 270]]) {
+            const texte = document.createElementNS(SVG, 'text');
+            texte.setAttribute('class', 'boussole-lettre' + (lettre === 'N' ? ' nord' : ''));
+            texte.dataset.degres = degres;
+            texte.textContent = lettre;
+            $('boussole-cardinaux').append(texte);
+        }
+    }
+
+    function rendreBoussole(cap, capVaisseau) {
+        const regard = cap ?? 0;
+        $('boussole-cadran').setAttribute('transform', `rotate(${-regard} 200 200)`);
+        $('boussole-cardinaux').querySelectorAll('text').forEach(t => {
+            const a = (Number(t.dataset.degres) - regard) * Math.PI / 180;
+            t.setAttribute('x', (200 + 142 * Math.sin(a)).toFixed(1));
+            t.setAttribute('y', (200 - 142 * Math.cos(a)).toFixed(1));
+        });
+        const fleche = $('boussole-vaisseau');
+        const visible = capVaisseau != null && cap != null;
+        fleche.toggleAttribute('hidden', !visible);
+        if (visible) fleche.setAttribute('transform', `rotate(${capVaisseau - cap} 200 200)`);
+    }
+
+    function rendreExobio(exo) {
+        $('exo-vide').hidden = !!exo;
+        $('exo-fiche').hidden = !exo;
+        ecrire('exo-progres', exo ? `${exo.echantillons} / 3` : '');
+        if (!exo) return;
+        ecrire('exo-espece', exo.espece || exo.genre || 'Espèce inconnue');
+        ecrire('exo-variante', exo.variante || exo.genre || '');
+        [...$('exo-points').children].forEach((li, i) => li.classList.toggle('fait', i < exo.echantillons));
+        const portee = exo.portee ? distanceLisible(exo.portee) : null;
+        ecrire('exo-distance', exo.termine ? '—' : `${distanceLisible(exo.distance)}${portee ? ' / ' + portee : ''}`);
+        jauge('exo-distance', exo.termine ? 1 : exo.portee ? (exo.distance || 0) / exo.portee : 0, exo.termine || exo.libre ? 'ok' : 'attention');
+        const consigne = tous('[data-v="exo-consigne"]')[0];
+        let texte = 'Position du dernier prélèvement inconnue.';
+        if (exo.termine) texte = 'Analyse terminée.';
+        else if (exo.libre) texte = 'Assez loin : prélèvement suivant possible.';
+        else if (exo.distance != null && exo.portee) texte = `Éloignez-vous encore de ${distanceLisible(exo.portee - exo.distance)}.`;
+        consigne.textContent = texte;
+        consigne.dataset.etat = exo.termine || exo.libre ? 'ok' : '';
+    }
+
+    function rendreSurface() {
+        const s = etat.status, p = etat.position, sol = etat.sol || {}, v = sol.vaisseau || {};
+        const aPied = drapeau('aPied');
+        ecrire('surface-situation', aPied ? 'à pied' : 'en VRS');
+        ecrire('surface-corps', s.corps || p.corps || p.station?.nom || '—');
+        ecrire('surface-lat', angle(s.latitude));
+        ecrire('surface-lon', angle(s.longitude));
+        ecrire('surface-alt', s.altitude != null ? nombre(s.altitude) + ' m' : '—');
+        ecrire('surface-cap', s.cap != null ? s.cap + '°' : '—');
+        ecrire('surface-gravite', s.gravite != null ? decimales(s.gravite, 2) + ' g' : '—');
+        ecrire('surface-air', drapeau('respirable') ? 'Respirable' : aPied ? 'Non respirable' : '—');
+
+        const present = v.etat === 'pose';
+        ecrire('retour-etat', present ? 'Posé' : v.etat === 'parti' ? 'En orbite' : 'Position inconnue');
+        ecrire('retour-distance', distanceLisible(v.distance));
+        ecrire('retour-direction', directionRelative(v.cap, s.cap));
+        ecrire('boussole-distance', v.distance != null ? distanceLisible(v.distance) : '—');
+        ecrire('boussole-consigne', v.distance != null ? directionRelative(v.cap, s.cap)
+            : v.etat === 'parti' ? 'Vaisseau en orbite' : 'Vaisseau non localisé');
+        rendreBoussole(s.cap, v.cap);
+        $('bouton-rappel').firstChild.textContent = present ? 'Renvoyer le vaisseau' : 'Rappeler le vaisseau';
+
+        ecrire('vrs-modele', sol.vrs?.modele || 'VRS');
+        const carburant = s.carburant != null || s.reserve != null ? (s.carburant || 0) + (s.reserve || 0) : null;
+        ecrire('vrs-carburant', carburant != null ? decimales(carburant, 2) + ' t' : '—');
+
+        const c = sol.combinaison || {};
+        ecrire('pied-combinaison', c.nom || '—');
+        ecrire('pied-chargement', c.chargement || '—');
+        ecrire('pied-arme', s.arme || '—');
+        remplir($('liste-armes'), (c.armes || []).map(a => { const li = creer('li'); li.append(creer('span', 'nom', a)); return li; }));
+
+        ecrire('pied-oxygene', pourcent(s.oxygene));
+        jauge('pied-oxygene', s.oxygene ?? 0, s.oxygene == null ? 'ok' : s.oxygene < 0.25 ? 'critique' : s.oxygene < 0.5 ? 'attention' : 'ok');
+        ecrire('pied-sante', pourcent(s.sante));
+        jauge('pied-sante', s.sante ?? 0);
+        const kelvins = s.temperature;
+        ecrire('pied-temperature', kelvins != null ? `${Math.round(kelvins - 273.15)} °C` : '—');
+        const extreme = drapeau('tresFroid') || drapeau('tresChaud');
+        const inconfort = drapeau('froid') || drapeau('chaud');
+        jauge('pied-temperature', kelvins != null ? Math.min(1, kelvins / 600) : 0, extreme ? 'critique' : inconfort ? 'attention' : 'ok');
+        rendreExobio(sol.exobio);
+    }
+
+    /** Boutons VRS et à pied sans touche dans le jeu : marqués, le clic expliquera quoi régler. */
+    function marquerTouches(document_) {
+        const groupes = document_?.catalogue?.groupes;
+        if (!groupes) return;
+        const lignes = new Map(groupes.flatMap(g => g.commandes).map(c => [c.id, c]));
+        const perso = document_.commandes?.touches || {};
+        tous('.vue-surface [data-action]').forEach(bouton => {
+            const c = lignes.get(bouton.dataset.action);
+            if (!c) return;
+            const manque = !(perso[c.id] || c.jeu || c.secours);
+            bouton.classList.toggle('sans-touche', manque);
+            bouton.title = manque ? `Aucune touche dans le jeu : « ${c.libelle} » (Options > Commandes)` : '';
+        });
     }
 
     const RENDUS = {
         session: [rendrePosition],
         commandant: [rendreEntete, rendreCommandant],
         vaisseau: [rendreEntete, rendreVaisseau],
-        position: [rendreEntete, rendrePosition],
-        status: [rendreEntete, rendrePosition, rendreVaisseau, rendreStatus, evaluerMode],
+        position: [rendreEntete, rendrePosition, rendreSurface],
+        sol: [rendreSurface],
+        status: [rendreEntete, rendrePosition, rendreVaisseau, rendreStatus, rendreSurface, evaluerMode],
         route: [rendreRoute],
         modules: [rendreModules],
         soute: [rendreSoute, rendreVaisseau],
@@ -598,16 +766,38 @@
         return sousLeFeu() || Date.now() - derniereMenace < DELAI_RETOUR_NAV * 1000;
     }
 
+    /** Jeu de commandes selon la situation. Au menu du jeu (aucun drapeau), on garde le dernier. */
+    function contexteCommandes() {
+        if (!etat.status.flags) return voulue.commandes;
+        return drapeau('amarre') ? 'station' : drapeau('pose') ? 'sol' : 'vol';
+    }
+
+    /** 'vrs', 'pied' ou null. Au menu du jeu (aucun drapeau), on garde la dernière situation. */
+    let derniereSurface = null;
+    function situationSurface() {
+        if (!etat.status.flags && !etat.status.flags2) return derniereSurface;
+        derniereSurface = drapeau('aPied') ? 'pied' : drapeau('vrs') ? 'vrs' : null;
+        return derniereSurface;
+    }
+
     function evaluerMode() {
-        const combat = modeChoisi === 'combat' || (modeChoisi === 'auto' && menaceActive());
-        document.body.dataset.mode = combat ? 'combat' : 'nav';
+        const menace = menaceActive();
+        const surface = situationSurface();
+        // Hors du vaisseau, la vue combat (coque, FSD, sous-systèmes) ne servirait à rien :
+        // on reste sur la vue de surface, avec le bandeau d'alerte
+        const auto = surface || (menace ? 'combat' : 'nav');
+        const mode = modeChoisi === 'auto' ? auto : modeChoisi;
+        demanderInterface(mode, contexteCommandes());
         ecrire('mode-choisi', { auto: 'auto', combat: 'combat', nav: 'navigation' }[modeChoisi]);
-        if (!combat) return;
+        const alerteSurface = (mode === 'vrs' || mode === 'pied') && menace;
+        document.body.toggleAttribute('data-alerte', alerteSurface);
+        if (mode !== 'combat' && !alerteSurface) return;
 
         const sousMenace = sousLeFeu();
         ecrire('alerte-cause', causeMenace || (drapeau('interdiction') ? 'Interdiction en cours' : 'Contact hostile détecté'));
-        const reste = Math.ceil(DELAI_RETOUR_NAV - (Date.now() - derniereMenace) / 1000);
-        ecrire('alerte-retour', modeChoisi === 'combat' ? 'Vue combat forcée' : sousMenace ? 'Menace toujours présente' : `Retour à la navigation dans ${Math.max(reste, 0)} s`);
+        const reste = Math.max(Math.ceil(DELAI_RETOUR_NAV - (Date.now() - derniereMenace) / 1000), 0);
+        const fin = alerteSurface ? `Fin de l'alerte dans ${reste} s` : `Retour à la navigation dans ${reste} s`;
+        ecrire('alerte-retour', modeChoisi === 'combat' ? 'Vue combat forcée' : sousMenace ? 'Menace toujours présente' : fin);
     }
 
     function signalerMenace(evenement) {
@@ -619,14 +809,127 @@
     }
 
     // ----------------------------------------------------------------
+    //  CHANGEMENT D'INTERFACE : grésillement d'un quart de seconde
+    //  Tout se joue sur un canvas posé par-dessus : l'hologramme n'est jamais redessiné.
+    // ----------------------------------------------------------------
+    const voulue = { mode: 'nav', commandes: 'vol' };
+    let affichee = null;              // ce qui est à l'écran (null avant le premier rendu)
+    let interfacePrete = false;       // le premier état reçu s'affiche sans effet
+    let minuterieBascule = 0, prochainGresillement = 0, protectionCommandes = 0;
+
+    const interfaceAJour = () => affichee?.mode === voulue.mode && affichee?.commandes === voulue.commandes;
+    // En vue combat, le panneau de commandes de navigation est caché : rien à montrer
+    const changementVisible = () => affichee.mode !== voulue.mode || voulue.mode === 'nav';
+
+    function appliquerInterface() {
+        if (affichee && affichee.mode !== voulue.mode) protectionCommandes = performance.now() + PROTECTION_COMMANDES;
+        document.body.dataset.mode = voulue.mode;
+        if (affichee?.commandes !== voulue.commandes) {
+            tous('[data-commandes]').forEach(bloc => { bloc.hidden = bloc.dataset.commandes !== voulue.commandes; });
+            ecrire('commandes-contexte', CONTEXTES_COMMANDES[voulue.commandes]);
+            if (affichee) protectionCommandes = performance.now() + PROTECTION_COMMANDES;
+        }
+        affichee = { ...voulue };
+    }
+
+    function demanderInterface(mode, commandes) {
+        voulue.mode = mode;
+        voulue.commandes = commandes;
+        if (interfaceAJour() || minuterieBascule) return;
+        const accueilVisible = MODE_APP && !$('ecran-accueil').hidden;
+        if (!affichee || !interfacePrete || accueilVisible) { appliquerInterface(); return; }
+        minuterieBascule = setTimeout(gresiller, Math.max(0, prochainGresillement - performance.now()));
+    }
+
+    function gresiller() {
+        minuterieBascule = 0;
+        if (interfaceAJour()) return;                 // l'état est revenu entre-temps
+        if (document.hidden || !changementVisible()) { appliquerInterface(); return; }
+        prochainGresillement = performance.now() + ECART_GRESILLEMENTS;
+        jouerParasites(voulue.mode, MILIEU_GRESILLEMENT);
+        minuterieBascule = setTimeout(() => {
+            minuterieBascule = 0;
+            appliquerInterface();
+        }, MILIEU_GRESILLEMENT);
+    }
+
+    /** Changement d'écran immédiat (réglages, accueil) : les parasites partent de leur maximum
+        et couvrent le changement fait juste après, sans retarder le clic. */
+    function gresillerEcran() {
+        const maintenant = performance.now();
+        if (document.hidden || maintenant < prochainGresillement - ECART_GRESILLEMENTS + ECART_GRESILLEMENTS_CLICS) return;
+        prochainGresillement = maintenant + ECART_GRESILLEMENTS;
+        jouerParasites(voulue.mode, 0);
+    }
+
+    let parasitesEnCours = 0, finParasites = 0;
+
+    function cacherParasites() {
+        const toile = $('gresillement');
+        if (toile.matches('[popover]:popover-open')) toile.hidePopover();
+        toile.removeAttribute('popover');
+        toile.hidden = true;
+    }
+
+    function jouerParasites(mode, montee) {
+        const toile = $('gresillement');
+        const contexte = toile.getContext('2d');
+        if (!contexte) return;
+        clearTimeout(finParasites);
+        cacherParasites();
+        const jeton = ++parasitesEnCours;
+        toile.width = 320;                            // basse définition : de gros grains, peu de calcul
+        toile.height = Math.max(90, Math.round(320 * innerHeight / Math.max(innerWidth, 1)));
+        const image = contexte.createImageData(toile.width, toile.height);
+        const pixels = new Uint32Array(image.data.buffer);
+        const [rouge, vert, bleu] = { combat: [255, 74, 40], vrs: [240, 190, 70], pied: [150, 215, 115] }[mode] || [255, 158, 72];
+        const debut = performance.now();
+
+        const trame = () => {
+            if (toile.hidden || jeton !== parasitesEnCours) return;
+            const t = Math.min(1, (performance.now() - debut) / DUREE_GRESILLEMENT);
+            const pic = montee / DUREE_GRESILLEMENT;
+            const force = t < pic ? t / pic : (1 - t) / (1 - pic);
+            for (let y = 0, i = 0; y < toile.height; y++) {
+                const tirage = Math.random();         // lignes déchirées : plus claires ou noires
+                const gain = tirage < 0.07 ? 1.5 : tirage < 0.16 ? 0.12 : 1;
+                for (let x = 0; x < toile.width; x++, i++) {
+                    const grain = Math.random();
+                    const lumiere = Math.min(1, grain * grain * gain);
+                    const alpha = Math.round(255 * force * (0.72 + 0.28 * grain));
+                    pixels[i] = (alpha << 24) | (Math.round(bleu * lumiere) << 16)
+                        | (Math.round(vert * lumiere) << 8) | Math.round(rouge * lumiere);
+                }
+            }
+            contexte.putImageData(image, 0, 0);
+            requestAnimationFrame(trame);
+        };
+        toile.hidden = false;
+        if (document.querySelector('dialog[open]')) {  // une fenêtre modale passe au-dessus de tout le reste
+            toile.setAttribute('popover', 'manual');
+            toile.showPopover();
+        }
+        trame();
+        finParasites = setTimeout(cacherParasites, DUREE_GRESILLEMENT);   // même si la fenêtre ne se redessine plus
+    }
+
+    // ----------------------------------------------------------------
     //  MESSAGES DU BACKEND
     // ----------------------------------------------------------------
+    /** Le bouton Stop n'existe à l'écran que pendant un programme du backend. */
+    function afficherStop(actif) {
+        $('bouton-stop').hidden = !actif;
+    }
+
     function recevoir(message) {
-        if (message.type === 'etat') {
+        if (message.type === 'programme') {
+            afficherStop(Boolean(message.nom));
+        } else if (message.type === 'etat') {
             Object.assign(etat, message.etat);
             memoriserSantes(etat.modules.liste);
             journal = [...(message.historique || [])].reverse();
             rendreTout();
+            interfacePrete = true;
         } else if (message.type === 'maj') {
             // Modules : la santé reçue est comparée au relevé précédent (avant le rendu, pour marquer les lignes)
             if (message.section === 'modules') signalerModulesTouches(modulesTouches(message.donnees.liste));
@@ -639,7 +942,33 @@
             if (e.hostile) signalerMenace(e);
         } else if (message.type === 'rapport_avarie') {
             afficherRapport(message.rapport);
+        } else if (message.type === 'reglages') {
+            window.COVAS_REGLAGES?.recevoir(message);
+            marquerTouches(message.reglages);
         }
+    }
+
+    /** Réglages modifiés (reglages.js) : le backend les enregistre et les renvoie à toutes les interfaces. */
+    function envoyerReglages(reglages, rev) {
+        if (simulation) {
+            recevoir({ type: 'reglages', reglages, rev });
+            return true;
+        }
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ reglages, rev }));
+            return true;
+        }
+        // Écran d'accueil : le COVAS est en veille, l'application enregistre elle-même
+        const api = window.pywebview?.api;
+        if (!MODE_APP || document.body.dataset.liaison !== 'veille' || !api?.reglages_ecrire) return false;
+        api.reglages_ecrire(reglages).then(r => recevoir({ type: 'reglages', ...r, rev }));
+        return true;
+    }
+
+    /** Plan installé depuis l'atelier : l'hologramme du vaisseau change tout de suite. */
+    function majPlan(plan) {
+        window.COVAS_HOLOGRAMMES?.enregistrer(plan);
+        hologrammes.forEach(h => { if (h.id === plan.id) h.poserPlan(plan, plan.id); });
     }
 
     function envoyerAction(action) {
@@ -676,6 +1005,7 @@
             try { recevoir(JSON.parse(event.data)); } catch (erreur) { console.error('Message COVAS illisible', erreur); }
         };
         socket.onclose = () => {
+            afficherStop(false);        // plus de backend : plus rien à arrêter
             if (simulation) return;
             document.body.dataset.liaison = 'hors-ligne';
             ecrire('liaison', 'Hors ligne');
@@ -747,9 +1077,10 @@
                 if (type === 'erreur') {
                     ajouter(texte, 'erreur');
                     if (accueil.hidden) {           // le COVAS s'est arrêté après l'allumage : retour à l'accueil
+                        gresillerEcran();
                         accueil.hidden = false;
-                        accueil.classList.remove('sortie');
                         if (socket) { socket.onclose = null; socket.close(); }
+                        afficherStop(false);
                         document.body.dataset.liaison = 'veille';
                     }
                     etat('erreur', 'Activation impossible', 'Réessayer');
@@ -768,19 +1099,19 @@
         };
 
         fermerAccueil = () => {
-            if (accueil.hidden || accueil.classList.contains('sortie')) return;
+            if (accueil.hidden) return;
             if (derniere && !derniere.className) derniere.className = 'fait';
-            accueil.classList.add('sortie');
+            gresillerEcran();
+            accueil.hidden = true;
             document.body.classList.add('allumage');
-            setTimeout(() => {
-                accueil.hidden = true;
-                document.body.classList.remove('allumage');
-            }, 1200);
+            setTimeout(() => document.body.classList.remove('allumage'), 1200);
         };
 
         // Fenêtre rechargée (F5) alors que le COVAS tourne déjà : on rejoint directement le panneau
         const verifier = async () => {
             try {
+                const reglages = await window.pywebview.api.reglages_lire?.();
+                if (reglages) recevoir({ type: 'reglages', reglages });
                 if (await window.pywebview.api.etat() === 'actif') { etat('pret', 'COVAS en ligne', 'En ligne'); connecter(); }
             } catch (_) { /* API pas prête */ }
         };
@@ -832,18 +1163,27 @@
         });
 
         // Boutons d'action (macros du backend) et sélecteur de vue
-        tous('[data-action]').forEach(bouton => { bouton.onclick = () => envoyerAction(bouton.dataset.action); });
-        $('form-question').onsubmit = event => {
-            event.preventDefault();
-            const champ = $('champ-question');
-            const question = champ.value.trim();
-            if (question && envoyerQuestion(question)) champ.value = '';
-        };
+        tous('[data-action]').forEach(bouton => {
+            bouton.onclick = () => {
+                if (bouton.closest('[data-commandes], .vue-surface') && performance.now() < protectionCommandes) return;
+                envoyerAction(bouton.dataset.action);
+            };
+        });
+        tous('.parler').forEach(formulaire => {
+            formulaire.onsubmit = event => {
+                event.preventDefault();
+                const champ = formulaire.querySelector('input');
+                const question = champ.value.trim();
+                if (question && envoyerQuestion(question)) champ.value = '';
+            };
+        });
+        installerBoussole();
         $('selecteur-mode').onclick = () => {
             modeChoisi = { auto: 'combat', combat: 'nav', nav: 'auto' }[modeChoisi];
             garderPreference('covas-mode', modeChoisi);
             evaluerMode();
         };
+        window.COVAS_REGLAGES?.installer({ envoyer: envoyerReglages, action: envoyerAction, noms: VAISSEAUX, majPlan, gresiller: gresillerEcran });
         $('bouton-demo').hidden = !window.COVAS_DEMO;
         $('bouton-demo').onclick = lancerSimulation;
 

@@ -7,6 +7,7 @@ charge ni le modèle vocal au démarrage, ni les touches, ni le jeu. Le COVAS pe
 
 Lancement : « STUDIO VOCAL.bat » (sans console)
         ou  .venv\\Scripts\\python.exe Backend\\studio_vocal.py   (journal dans la console)
+        ou  depuis l'onglet Studio des réglages du COVAS (option --service, voir module/pont_studio.py)
 Variable COVAS_DEBUG=1 : ouvre les outils de développement de la fenêtre.
 
 Le travail (nettoyage, effet, rangement, étalonnage) est dans module/studio.py et module/effet_voix.py ;
@@ -235,6 +236,12 @@ class Api:
         self._micro.finir()
         return {"ok": True}
 
+    def veille(self):
+        """Onglet Studio quitté : plus de micro ni de son, le reste du studio attend."""
+        sd.stop()
+        self._micro.fermer()
+        return {"ok": True}
+
     def _jouer(self, quoi, ident=None):
         p = self._studio.prise
         if quoi in ("covas", "brut", "propre") and p:
@@ -373,5 +380,48 @@ def lancer():
     os._exit(0)
 
 
+def service():
+    """Sans fenêtre, pour l'onglet Studio des réglages : une demande JSON par ligne sur l'entrée,
+    une réponse par ligne sur la sortie. Entrée fermée (COVAS quitté) : micro coupé, fin."""
+    sortie = os.fdopen(os.dup(1), "wb", buffering=0)
+    # Ce que les bibliothèques écrivent sur la sortie ne doit pas se mêler aux réponses
+    journal = open(os.path.join(DOSSIER_BACKEND, "data", "studio.log"), "w", encoding="utf-8", buffering=1)
+    os.dup2(journal.fileno(), 1)
+    os.dup2(journal.fileno(), 2)
+    sys.stdout = sys.stderr = journal
+
+    api = Api()
+    permis = {nom for nom, f in vars(Api).items() if callable(f) and not nom.startswith("_")}
+    verrou = threading.Lock()
+
+    def traiter(demande):
+        reponse = {"id": demande.get("id")}
+        nom = demande.get("nom")
+        try:
+            if nom not in permis:
+                raise ValueError(f"commande inconnue : {nom}")
+            reponse["resultat"] = getattr(api, nom)(*(demande.get("args") or []))
+            ligne = json.dumps(reponse)
+        except Exception as erreur:
+            traceback.print_exc()
+            ligne = json.dumps({"id": demande.get("id"), "erreur": str(erreur)})
+        with verrou:
+            sortie.write(ligne.encode("ascii") + b"\n")
+
+    for brut in sys.stdin.buffer:
+        try:
+            demande = json.loads(brut)
+        except ValueError:
+            continue
+        if isinstance(demande, dict):
+            threading.Thread(target=traiter, args=(demande,), name="Studio-appel", daemon=True).start()
+    api._micro.fermer()
+    sd.stop()
+    os._exit(0)
+
+
 if __name__ == "__main__":
-    lancer()
+    if "--service" in sys.argv:
+        service()
+    else:
+        lancer()

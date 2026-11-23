@@ -104,6 +104,39 @@ COMMANDES_JEU = {
     "chasseur_rappel": ("OrderRequestDock", "Chasseur : rappel au vaisseau"),
 }
 
+# VRS et pied à terre : lus dans le profil de leur catégorie, jamais écrits. Contrairement à
+# COMMANDES_JEU, le COVAS ne leur donne aucune touche virtuelle : sans touche dans le jeu, il
+# le dit et n'envoie rien.
+COMMANDES_SOL = {
+    "vrs_frein": ("AutoBreakBuggyButton", "VRS : frein à main"),
+    "vrs_assistance": ("ToggleDriveAssist", "VRS : assistance de conduite"),
+    "vrs_phares": ("HeadlightsBuggyButton", "VRS : phares"),
+    "vrs_tourelle": ("ToggleBuggyTurretButton", "VRS : vue tourelle"),
+    "vrs_soute": ("ToggleCargoScoop_Buggy", "VRS : écope de soute"),
+    "vrs_groupe": ("BuggyCycleFireGroupNext", "VRS : groupe de tir suivant"),
+    "vrs_pips_sys": ("IncreaseSystemsPower_Buggy", "VRS : énergie vers les systèmes"),
+    "vrs_pips_moteurs": ("IncreaseEnginesPower_Buggy", "VRS : énergie vers les moteurs"),
+    "vrs_pips_armes": ("IncreaseWeaponsPower_Buggy", "VRS : énergie vers les armes"),
+    "vrs_pips_equilibre": ("ResetPowerDistribution_Buggy", "VRS : équilibrer l'énergie"),
+    "vrs_carte_galaxie": ("GalaxyMapOpen_Buggy", "VRS : carte de la galaxie"),
+    "vrs_carte_systeme": ("SystemMapOpen_Buggy", "VRS : carte du système"),
+    "vrs_vaisseau": ("RecallDismissShip", "VRS : rappeler ou renvoyer le vaisseau"),
+    "pied_lampe": ("HumanoidToggleFlashlightButton", "À pied : lampe"),
+    "pied_vision": ("HumanoidToggleNightVisionButton", "À pied : vision nocturne"),
+    "pied_bouclier": ("HumanoidToggleShieldsButton", "À pied : bouclier"),
+    "pied_arme": ("HumanoidHideWeaponButton", "À pied : ranger ou sortir l'arme"),
+    "pied_recharger": ("HumanoidReloadButton", "À pied : recharger l'arme"),
+    "pied_grenade": ("HumanoidSelectNextGrenadeTypeButton", "À pied : grenade suivante"),
+    "pied_soin": ("HumanoidHealthPack", "À pied : trousse de soin"),
+    "pied_cellule": ("HumanoidBattery", "À pied : cellule d'énergie"),
+    "pied_echantillonneur": ("HumanoidSwitchToSuitTool", "À pied : outil de la combinaison"),
+    "pied_analyseur": ("HumanoidSwitchToCompAnalyser", "À pied : analyseur de profil"),
+    "pied_carte_galaxie": ("GalaxyMapOpen_Humanoid", "À pied : carte de la galaxie"),
+    "pied_carte_systeme": ("SystemMapOpen_Humanoid", "À pied : carte du système"),
+}
+# Ligne du fichier StartPreset de chaque catégorie (général, vaisseau, VRS, à pied)
+_LIGNES_SOL = {"vrs_": 2, "pied_": 3}
+
 # Noms de touches du jeu -> noms compris par pydirectinput
 _SPECIALES = {
     "space": "space", "tab": "tab", "enter": "enter", "backspace": "backspace", "escape": "esc",
@@ -181,6 +214,22 @@ def trouver_fichier():
     if profil and _fichier_du_profil(profil, fichiers):
         fichiers = _fichier_du_profil(profil, fichiers)
     return max(fichiers, key=os.path.getmtime)
+
+
+def fichier_categorie(ligne):
+    """Le fichier .binds d'une ligne de StartPreset, ou None pour un profil intégré au jeu.
+    Ancien fichier à une seule ligne : le même fichier sert pour tout."""
+    profils = lire_profils()[1]
+    if len(profils) <= ligne:
+        return trouver_fichier()
+    fichiers = _fichier_du_profil(profils[ligne], glob.glob(os.path.join(dossier_binds(), "*.binds")))
+    return max(fichiers, key=os.path.getmtime) if fichiers else None
+
+
+def fichiers_utilises():
+    """Tous les fichiers .binds lus par le COVAS (vaisseau, VRS, à pied), sans doublon."""
+    fichiers = [trouver_fichier()] + [fichier_categorie(n) for n in _LIGNES_SOL.values()]
+    return tuple(sorted({f for f in fichiers if f}))
 
 
 def profil_integre():
@@ -473,9 +522,45 @@ def charger(assigner=False, sauf=()):
     return dict(ETAT["lues"])
 
 
+def lire_sans_ecrire():
+    """(fichier, azerty, {nom COVAS: (touche, [modificateurs])}) : lecture seule, ETAT intact."""
+    fichier = trouver_fichier()
+    if not fichier:
+        return None, False, {}
+    racine = ET.parse(fichier).getroot()
+    azerty = _detecter_azerty(racine, racine.findtext("KeyboardLayout"))
+    lues = {}
+    for nom, (commande, _) in COMMANDES_JEU.items():
+        element = racine.find(commande)
+        touche = _touche_clavier(element, azerty) if element is not None else None
+        if touche:
+            lues[nom] = touche
+    lues.update(_lire_sol(fichier, racine, azerty))
+    return fichier, azerty, lues
+
+
+def _lire_sol(fichier, racine, azerty):
+    """Touches du VRS et du pied à terre, chacune dans le profil de sa catégorie."""
+    lues = {}
+    for prefixe, ligne in _LIGNES_SOL.items():
+        source = fichier_categorie(ligne)
+        if not source:
+            continue                    # profil intégré au jeu : ses touches ne sont pas lisibles
+        arbre, clavier = racine, azerty
+        if source != fichier:
+            arbre = ET.parse(source).getroot()
+            clavier = _detecter_azerty(arbre, arbre.findtext("KeyboardLayout"))
+        for nom, (commande, _) in COMMANDES_SOL.items():
+            element = arbre.find(commande) if nom.startswith(prefixe) else None
+            touche = _touche_clavier(element, clavier) if element is not None else None
+            if touche:
+                lues[nom] = touche
+    return lues
+
+
 def libelle(nom):
     """Nom du réglage dans Options > Commandes, pour dire au commandant quoi régler."""
-    return COMMANDES_JEU.get(nom, (None, nom))[1]
+    return (COMMANDES_JEU.get(nom) or COMMANDES_SOL.get(nom) or (None, nom))[1]
 
 
 if __name__ == "__main__":

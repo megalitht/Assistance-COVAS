@@ -34,6 +34,8 @@ from module.lecteur_logs import DOSSIER_ED, surveiller_logs, surveiller_status_j
 from module.voix import generer_et_jouer_voix
 from module import sons
 from module import conversation
+from module import ecoute as pause_ecoute
+from module import reglages
 from module import serveur_ws
 from module.serveur_ws import demarrer_serveur_web
 from module.comprehension import trouver_action, contient_reveil, est_reveil_seul, vocabulaire_pour_whisper
@@ -113,6 +115,7 @@ def initialiser(progression=None):
     chemin_barks = os.path.join(DOSSIER_BACKEND, "data", "barks.json")
     with open(chemin_barks, "r", encoding="utf-8") as fichier:
         barks = json.load(fichier)
+    reglages.lier_commandes(barks)      # modes d'énergie créés dans l'interface
     t.ok(f"Répliques indexées ({len(barks)} entrées).")
 
     # Conversations RP (data/conversations.json) : vérifiées au démarrage
@@ -229,7 +232,8 @@ class CovasBackend:
 
     def occupe(self):
         """Le COVAS ne lance pas de conversation pendant qu'on lui parle ou qu'il parle."""
-        return (self.phrases_en_cours > 0 or self.parole["en_cours"] or not self.tts_queue.empty()
+        return (pause_ecoute.PAUSE.is_set()      # studio vocal ouvert : on ne parle pas sur une prise
+                or self.phrases_en_cours > 0 or self.parole["en_cours"] or not self.tts_queue.empty()
                 or not self.action_queue.empty())
 
     # --- Conversations -------------------------------------------------------
@@ -400,8 +404,13 @@ class CovasBackend:
         t.vide()
 
         while True:
+            if pause_ecoute.PAUSE.is_set():      # studio vocal ouvert : ses répliques ne sont pas des ordres
+                await asyncio.sleep(0.2)
+                continue
             debut_ecoute = time.monotonic()
             text = await asyncio.to_thread(ecouter, silencieux=True)
+            if pause_ecoute.PAUSE.is_set():
+                continue
 
             if text:
                 text_min = text.lower()
@@ -426,6 +435,8 @@ class CovasBackend:
 
                     debut_ecoute = time.monotonic()
                     text = await asyncio.to_thread(ecouter, silencieux=False)
+                    if pause_ecoute.PAUSE.is_set():
+                        continue
                     if not text:
                         t.ligne("SIGNAL", "Délai d'attente dépassé.", t.ROUGE)
                         t.etat("ÉCOUTE", "VEILLE", t.CYAN)

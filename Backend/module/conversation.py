@@ -182,8 +182,10 @@ CONDITIONS = {
     "pose": (lambda e, p: _bit(e, "pose") and not _amarre(e), "posé sur une planète"),
     "supercroisiere": (lambda e, p: _bit(e, "supercroisiere"), "en supercroisière"),
     "en_vol": (lambda e, p: _en_vol(e), "en vol"),
-    "a_pied": (lambda e, p: bool(_flags(e)) and not (_bit(e, "vaisseau") or _bit(e, "vrs")
-                                                     or _bit(e, "chasseur")), "à pied"),
+    # Flags2 d'abord : à pied en station, Flags peut valoir 0
+    "a_pied": (lambda e, p: bool((_section(e, "status").get("flags2") or 0) & 1) or (
+        bool(_flags(e)) and not (_bit(e, "vaisseau") or _bit(e, "vrs") or _bit(e, "chasseur"))),
+               "à pied"),
     "vrs": (lambda e, p: _bit(e, "vrs"), "en VRS"),
     # Le drapeau du jeu s'allume dès qu'un hostile rôde (zone d'extraction...) : seul, il ne
     # veut pas dire qu'on nous tire dessus

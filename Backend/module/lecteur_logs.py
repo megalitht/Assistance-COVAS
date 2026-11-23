@@ -25,6 +25,7 @@ from collections import deque
 from datetime import datetime, timezone
 
 from module import edsm
+from module import sol
 from module.avaries import nommer
 from module.serveur_ws import definir_instantane, envoyer_donnees_web
 
@@ -101,6 +102,7 @@ def _reinitialiser_etat():
         "combat": _combat_vierge(),
         "missions": {"liste": [], "anterieures": 0},
         "proches": {"etat": "attente", "systeme": None, "rayon": None, "total": 0, "liste": []},
+        "sol": sol.vierge(),      # VRS et pied à terre : voir module/sol.py
     })
 
 
@@ -541,11 +543,17 @@ def _chasseur_reconstruit(e):
 
 @_sur("LaunchSRV")
 def _vrs_sorti(e):
+    ETAT["sol"]["vrs"] = {"modele": e.get("SRVType_Localised") or e.get("SRVType")}
+    if e.get("PlayerControlled", True):
+        sol.reperer_vaisseau(ETAT["sol"], ETAT["status"])
+    _touche("sol")
     _note(e, "vaisseau", "VRS déployé")
 
 
 @_sur("DockSRV")
 def _vrs_rentre(e):
+    ETAT["sol"]["vrs"] = None
+    _touche("sol")
     _note(e, "vaisseau", "VRS récupéré — retour à bord")
     _parle("bienvenue")
 
@@ -563,11 +571,37 @@ def _embarquement(e):
 
 @_sur("Disembark")
 def _debarquement(e):
+    if e.get("Taxi") or e.get("Multicrew"):
+        sol.vaisseau_oublie(ETAT["sol"])      # arrivé autrement : le vaisseau n'est pas ici
+        _touche("sol")
+    elif not e.get("SRV") and e.get("OnPlanet"):
+        sol.reperer_vaisseau(ETAT["sol"], ETAT["status"], e.get("Body"))
+        _touche("sol")
     _note(e, "vaisseau", "Débarquement du VRS" if e.get("SRV") else "Débarquement à pied")
+
+
+@_sur("SuitLoadout", "SwitchSuitLoadout")
+def _combinaison(e):
+    sol.combinaison(ETAT["sol"], e)
+    _touche("sol")
+
+
+@_sur("ScanOrganic")
+def _scan_organique(e):
+    sol.scan_organique(ETAT["sol"], e, ETAT["status"])
+    sol.actualiser(ETAT["sol"], ETAT["status"])
+    _touche("sol")
+    exo = ETAT["sol"]["exobio"]
+    if exo["termine"]:
+        _note(e, "exploration", f"Analyse terminée — {exo['espece']}", "succes")
+    else:
+        _note(e, "exploration", f"Prélèvement {exo['echantillons']}/{sol.ECHANTILLONS} — {exo['espece']}")
 
 
 @_sur("SRVDestroyed")
 def _vrs_detruit(e):
+    ETAT["sol"]["vrs"] = None
+    _touche("sol")
     _note(e, "vaisseau", "VRS détruit", "alerte")
 
 
@@ -761,12 +795,19 @@ def _depart_corps(e):
 
 @_sur("Touchdown")
 def _pose(e):
+    if not (e.get("Taxi") or e.get("Multicrew")):     # un taxi posé n'est pas notre vaisseau
+        sol.vaisseau_pose(ETAT["sol"], e.get("Latitude"), e.get("Longitude"), e.get("Body"))
+        _touche("sol")
     if e.get("PlayerControlled", True):
         _note(e, "navigation", f"Posé sur {e.get('Body', 'la surface')}", "succes")
 
 
 @_sur("Liftoff")
 def _decollage(e):
+    # Sans pilote : renvoyé en orbite pendant que le commandant est au sol
+    if not (e.get("Taxi") or e.get("Multicrew")):
+        sol.vaisseau_oublie(ETAT["sol"], None if e.get("PlayerControlled", True) else "parti")
+        _touche("sol")
     if e.get("PlayerControlled", True):
         _note(e, "navigation", "Décollage de la surface")
 
@@ -1289,8 +1330,17 @@ async def surveiller_status_json():
                     "altitude": status.get("Altitude"),
                     "cap": status.get("Heading"),
                     "corps": status.get("BodyName"),
+                    "rayon": status.get("PlanetRadius"),
+                    # À pied seulement : niveaux de 0 à 1, kelvins, g
+                    "oxygene": status.get("Oxygen"),
+                    "sante": status.get("Health"),
+                    "temperature": status.get("Temperature"),
+                    "gravite": status.get("Gravity"),
+                    "arme": status.get("SelectedWeapon_Localised") or status.get("SelectedWeapon"),
                 }
                 await _publier("status")
+                if sol.actualiser(ETAT["sol"], ETAT["status"]):
+                    await _publier("sol")
 
                 # Alertes vocales : seulement quand le drapeau vient de s'allumer sous nos yeux
                 if drapeaux_precedents is not None:

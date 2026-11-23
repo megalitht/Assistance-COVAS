@@ -32,6 +32,8 @@
         #vue-source { width: 100%; flex: 1; min-height: 0; object-fit: contain; background: #000; border: 1px solid var(--trait); cursor: crosshair; }
         .colonne-vue .hologramme { flex: 1; min-height: 0; }
         #etat { color: var(--creme); font-size: 0.85rem; min-height: 1.2em; }
+        /* Dans l'onglet Atelier des réglages : pas de navigation entre les pages */
+        body[data-integre] .marque, body[data-integre] .bandeau-droite { display: none; }
         @media (max-width: 1100px) {
             body.atelier { height: auto; overflow: auto; display: block; }
             .atelier-vue { display: flex; flex-direction: column; }
@@ -40,6 +42,7 @@
     </style>
 </head>
 <body class="atelier" data-mode="nav" data-liaison="simulation">
+    <script>if (new URLSearchParams(location.search).has('integre')) document.body.dataset.integre = '';</script>
     <header class="bandeau">
         <div class="marque">
             <strong>COVAS</strong>
@@ -88,8 +91,10 @@
             <p>L'axe (pointillé bleu) est trouvé par symétrie ; le point jaune marque le nez. S'il se trompe, « Placer l'axe » : clique sur le nez, puis sur le milieu de la poupe.</p>
 
             <h2>4 · Le plan</h2>
+            <button type="button" id="installer" disabled hidden>Installer dans le COVAS</button>
+            <p id="note-installer" hidden>Le plan remplace celui du vaisseau, l'ancien est gardé dans <code>vaisseaux/anciens/</code>.</p>
             <button type="button" id="telecharger" disabled>Télécharger le plan (.js)</button>
-            <p>Range le fichier téléchargé dans <code>Frontend/vaisseaux/</code> : il remplace l'ancien plan du vaisseau.</p>
+            <p id="note-telecharger">Range le fichier téléchargé dans <code>Frontend/vaisseaux/</code> : il remplace l'ancien plan du vaisseau.</p>
         </section>
 
         <section class="colonne-vue">

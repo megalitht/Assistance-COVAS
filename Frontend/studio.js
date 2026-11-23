@@ -635,6 +635,12 @@ async function appliquerATous() {
     }
 }
 
+// Onglet Studio des réglages quitté : la prise en cours est annulée, le son coupé
+window.suspendreStudio = () => {
+    if (etat.enregistre === "oui") annulerPrise();
+    arreterLecture();
+};
+
 // ---------------------------------------------------------------- clavier
 document.addEventListener("click", (e) => {
     const bouton = e.target.closest("button");

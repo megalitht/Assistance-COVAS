@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="studio.css">
 </head>
 <body data-enregistre="non">
+    <script>if (new URLSearchParams(location.search).has('integre')) document.body.dataset.integre = '';</script>
     <header class="bandeau">
         <div class="marque">
             <strong>COVAS</strong>
@@ -129,6 +130,14 @@
         </aside>
     </main>
 
+    <!-- Onglet Studio des réglages : les appels passent par l'application (module/pont_studio.py) -->
+    <script>
+        if (document.body.hasAttribute('data-integre')) {
+            const appel = window.parent.COVAS_REGLAGES.appelStudio;
+            window.pywebview = { api: new Proxy({}, { get: (_, nom) => (...args) => appel(String(nom), args) }) };
+            window.addEventListener('load', () => window.dispatchEvent(new Event('pywebviewready')));
+        }
+    </script>
     <script src="studio.js"></script>
 </body>
 </html>

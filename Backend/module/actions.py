@@ -18,17 +18,22 @@ Point d'entrée : executer_commande(action, texte, dire, poli)
   dire   : fonction async dire(*cles, poli=False) qui joue la première réplique trouvée
 """
 import asyncio
+import json
 import os
 import time
 import traceback
 
 from module import annonces
 from module import avaries
+from module import commandes
 from module import ecran
 from module import lecteur_logs as logs
 from module import macros
 from module import morceaux
+from module import pips
+from module import reglages
 from module import serveur_ws
+from module import sol
 from module import touches
 
 # Page de l'interface (le « panel »), ouverte par la commande vocale « ouvre le panel »
@@ -147,13 +152,23 @@ def _flags():
     return logs.ETAT["status"].get("flags") or 0
 
 
+def _flags2():
+    return logs.ETAT["status"].get("flags2") or 0
+
+
 def etat_connu():
-    """False si le jeu n'a pas encore écrit Status.json (ou est au menu principal)."""
-    return bool(_flags())
+    """False si le jeu n'a pas encore écrit Status.json (ou est au menu principal).
+    À pied en station, Flags peut valoir 0 : seul Flags2 dit alors où on est."""
+    return bool(_flags() or _flags2())
 
 
 def drapeau(nom):
     return bool(_flags() & (1 << BIT[nom]))
+
+
+def situation():
+    """'vaisseau', 'chasseur', 'vrs', 'pied', ou None si le jeu ne le dit pas."""
+    return sol.situation(_flags(), _flags2())
 
 
 def intention(texte):
@@ -213,6 +228,31 @@ def sans_reaction(nom, touche):
     if raison:
         return f"{nom} : le jeu n'a pas réagi à {macros.nom_touche(touche).upper()} ({raison})"
     return f"{nom} : le jeu n'a pas réagi (touche « {macros.nom_touche(touche)} » ?)"
+
+
+async def _jouer_sequence(cle, dire):
+    """Joue une séquence de Réglages > Commandes. False (en disant pourquoi) si elle ne peut
+    pas aller au bout : une séquence de menu incomplète validerait la mauvaise ligne."""
+    modele = commandes.SEQUENCES[cle]
+    etapes = reglages.sequence(cle)
+    if not etapes:
+        await refuser(dire, "macro_echec", f"{modele['nom']} : séquence vide (Réglages > Commandes)")
+        return False
+    absente = next((e for e in etapes if commandes.duree_pause(e) is None
+                    and not macros.touche_connue(e)), None)
+    if absente:
+        await refuser(dire, "refus_touche_absente", f"{modele['nom']} : aucune touche pour "
+                      f"« {touches.libelle(absente)} » (Réglages > Commandes)")
+        return False
+    for etape in etapes:
+        duree = commandes.duree_pause(etape)
+        if duree is not None:
+            await asyncio.sleep(duree)
+            continue
+        if not await appuyer(etape):
+            return False                        # « stop »
+        await asyncio.sleep(modele["pause"])
+    return True
 
 
 async def touche_prete(dire, nom_touche, nom_commande):
@@ -275,6 +315,13 @@ async def _lancer_programme(nom, coroutine, dire):
 
     _programme["nom"] = nom
     _programme["tache"] = asyncio.create_task(enveloppe(), name=nom)
+    _programme["tache"].add_done_callback(_programme_termine)
+    serveur_ws.signaler_programme(nom)
+
+
+def _programme_termine(_tache):
+    # Un autre programme a pu démarrer juste avant ce rappel : on publie l'état réel
+    serveur_ws.signaler_programme(_programme["nom"] if programme_en_cours() else None)
 
 
 async def _stop(dire):
@@ -360,6 +407,19 @@ async def executer_commande(action, texte, dire, poli=False):
 
     if cle == "stop":
         return await _stop(dire)
+
+    # VRS et pied à terre : leurs touches ne sont pas celles du vaisseau
+    lieu = situation()
+    cible = sol.traduire(cle, _mots(texte), lieu)
+    if cible:
+        return await _commande_sol(action, cible, texte, dire, poli)
+    if cle in sol.COMMANDES:
+        ici = "en VRS" if sol.COMMANDES[cle]["lieu"] == "vrs" else "à pied"
+        return await refuser(dire, "refus", f"{sol.COMMANDES[cle]['nom']} : disponible seulement {ici}")
+    if lieu in ("vrs", "pied") and _exige_vaisseau(cle, lieu):
+        ici = "en VRS" if lieu == "vrs" else "à pied"
+        return await refuser(dire, "refus_hors_vaisseau", f"Commande du vaisseau : impossible {ici}")
+
     if cle in BASCULES:
         return await _bascule(action, BASCULES[cle], texte, dire, poli)
     if cle in SIMPLES:
@@ -388,7 +448,10 @@ async def executer_commande(action, texte, dire, poli=False):
                 return
             return await _lancer_programme(NOM_FSD_DIFFERE, _fsd_apres_masse(dire, poli), dire)
 
-    # Commande simple (pips, verrouillage, boost...)
+    if reglages.est_mode(cle):
+        return await _mode_energie(action, cle, dire, poli)
+
+    # Commande simple (équilibrage, verrouillage, boost...)
     if cle not in macros.MACROS:
         await dire(action, poli=poli)
         return
@@ -396,6 +459,145 @@ async def executer_commande(action, texte, dire, poli=False):
         return
     await confirmer(dire, action, poli)
     await asyncio.to_thread(macros.executer_touches, cle)
+
+
+# =====================================================================
+#  VRS ET PIED À TERRE (tables et traduction des ordres : voir sol.py)
+# =====================================================================
+RAPPEL_DELAI = 20               # s : un 2e appui sur la touche de rappel renverrait le vaisseau
+_rappel = {"dernier": -1e9}
+
+
+def _exige_vaisseau(cle, lieu):
+    """True pour une commande qui n'a de sens qu'aux commandes du vaisseau."""
+    if cle in BASCULES:
+        return not (lieu == "vrs" and BASCULES[cle].get("vrs"))
+    return (cle in SIMPLES or cle in CARTES or cle in PROGRAMMES or cle in macros.MACROS
+            or cle in ("fsd", "sous_systeme", "chasseur", "drone") or reglages.est_mode(cle))
+
+
+def _bit_sol(numero):
+    return bool(_flags() & (1 << numero))
+
+
+async def _commande_sol(action, cle, texte, dire, poli):
+    cfg = sol.COMMANDES[cle]
+    if not await touche_prete(dire, cle, cfg["nom"]):
+        return
+    if "carte" in cfg:
+        return await _carte(action, cle, cfg["carte"], cfg["nom"], dire, poli)
+    if cle == "vrs_vaisseau":
+        return await _rappel_vaisseau(action, texte, dire, poli)
+    if cfg.get("energie"):
+        return await _energie_vrs(action, cle, cfg, dire, poli)
+    if "bit" in cfg:
+        return await _bascule_sol(action, cle, cfg, texte, dire, poli)
+    if not await preparer_jeu(dire):
+        return
+    await confirmer(dire, action, poli)
+    if await appuyer(cle):
+        await logs.annoncer(cfg["nom"])
+
+
+async def _energie_vrs(action, cle, cfg, dire, poli):
+    if not await touche_prete(dire, "vrs_pips_equilibre", "Énergie du VRS"):
+        return
+    if not await preparer_jeu(dire):
+        return
+    await confirmer(dire, action, poli)
+    if await appuyer("vrs_pips_equilibre") and await appuyer(cle, 4):
+        await logs.annoncer(cfg["nom"])
+
+
+async def _bascule_sol(action, cle, cfg, texte, dire, poli):
+    if "mots" in cfg:
+        # Les mots d'arrêt d'abord : « desserre » ne doit jamais compter comme « serre »
+        voulu = ("rentrer" if _contient(texte, cfg["mots"][1])
+                 else "sortir" if _contient(texte, cfg["mots"][0]) else None)
+    else:
+        voulu = intention(texte)
+    actuel = _bit_sol(cfg["bit"])
+    if voulu and actuel == (voulu == "sortir"):
+        return await logs.annoncer(f"{cfg['nom']} déjà {cfg['etats'][0 if actuel else 1]}")
+    if "bloque_par" in cfg and _bit_sol(cfg["bloque_par"]):
+        return await refuser(dire, "refus", f"{cfg['nom']} : impossible, {cfg['raison']}")
+    if not await preparer_jeu(dire):
+        return
+    await confirmer(dire, action, poli)
+
+    # Phares : éteindre peut demander deux appuis (croisement, pleins phares, éteints)
+    appuis = 3 if cfg.get("cycle") and voulu == "rentrer" else 1
+    for _ in range(appuis):
+        avant = _flags() & (1 << cfg["bit"] | 1 << 31)
+        if not await appuyer(cle):
+            return
+        if not await attendre(lambda: (_flags() & (1 << cfg["bit"] | 1 << 31)) != avant, 3):
+            await logs.annoncer(sans_reaction(cfg["nom"], cle), "alerte")
+            return await dire("macro_echec", "refus")
+        if appuis == 1 or not _bit_sol(cfg["bit"]):
+            break
+    await logs.annoncer(f"{cfg['nom']} {cfg['etats'][0 if _bit_sol(cfg['bit']) else 1]}")
+
+
+async def _rappel_vaisseau(action, texte, dire, poli):
+    """Une seule touche rappelle ET renvoie : on n'appuie que si on sait où est le vaisseau."""
+    etat = logs.ETAT["sol"]["vaisseau"]["etat"]
+    if etat is None:
+        return await refuser(dire, "refus", "Vaisseau : position inconnue, utilise le menu du jeu "
+                                            "pour ne pas le renvoyer par erreur")
+    if time.monotonic() - _rappel["dernier"] < RAPPEL_DELAI:
+        return await logs.annoncer("Vaisseau : ordre déjà transmis, patiente quelques secondes",
+                                   "attention")
+    renvoyer = _contient(texte, ("renvo", "congedi", "eloign", "orbite"))
+    rappeler = _contient(texte, ("rappel", "reviens", "revenir", "fais"))
+    if renvoyer and etat == "parti":
+        return await logs.annoncer("Vaisseau déjà renvoyé en orbite")
+    if rappeler and not renvoyer and etat == "pose":
+        return await logs.annoncer("Vaisseau déjà posé à proximité")
+    if not await preparer_jeu(dire):
+        return
+    await confirmer(dire, action, poli)
+    if await appuyer("vrs_vaisseau"):
+        _rappel["dernier"] = time.monotonic()
+        await logs.annoncer("Vaisseau renvoyé en orbite" if etat == "pose" else "Vaisseau rappelé")
+
+
+# =====================================================================
+#  MODES D'ÉNERGIE (réglés dans l'interface, par vaisseau : voir reglages.py)
+# =====================================================================
+def _pips_du_jeu():
+    """Lu directement dans Status.json : la surveillance ne passe que toutes les 0,5 s."""
+    try:
+        with open(logs.CHEMIN_STATUS, "r", encoding="utf-8") as f:
+            return json.load(f).get("Pips")
+    except (OSError, ValueError):
+        return None                 # fichier absent, ou en cours d'écriture par le jeu
+
+
+macros.lire_pips = _pips_du_jeu
+macros.vaisseau_actuel = lambda: logs.ETAT["vaisseau"].get("type")
+
+
+async def _mode_energie(action, cle, dire, poli):
+    if cle != "fsd":                # le saut ne doit jamais dépendre des touches d'énergie
+        for touche in (*pips.TOUCHES, pips.TOUCHE_EQUILIBRE):
+            if not await touche_prete(dire, touche, "Énergie"):
+                return
+    if not await preparer_jeu(dire):
+        return
+    await confirmer(dire, action, poli)
+    resultat = await asyncio.to_thread(macros.appliquer_mode, cle)
+
+    nom = reglages.nom_mode(cle)
+    if resultat in ("sans_reaction", "ecart"):
+        raison = ("le jeu n'a pas réagi aux touches d'énergie (menu ouvert ?)"
+                  if resultat == "sans_reaction" else "répartition demandée non atteinte")
+        await logs.annoncer(f"{nom} : {raison}", "alerte")
+        if cle != "fsd":
+            await dire("macro_echec", "refus")
+    elif resultat == "ok" and cle != "fsd":
+        sys_, mot, arm = reglages.pips_pour(cle, macros.vaisseau_actuel())
+        await logs.annoncer(f"{nom} : {sys_ / 2:g} SYS · {mot / 2:g} MOT · {arm / 2:g} ARM")
 
 
 # =====================================================================
@@ -673,7 +875,7 @@ async def _reagir(nom, texte, dire, cle, *etapes):
     await logs.annoncer(f"Réaction automatique : {texte}", "attention")
     await dire(cle)
     for etape in etapes:
-        if etape in macros.MACROS:
+        if etape in macros.MACROS or reglages.est_mode(etape):
             await asyncio.to_thread(macros.executer_touches, etape)
         else:
             await appuyer(etape)
@@ -819,14 +1021,13 @@ async def _decollage_station(dire, poli=False):
 
     if not await fermer_panneaux():
         return await refuser(dire, "macro_echec", "Décollage : un menu reste ouvert, ferme-le et réessaie")
-    for touche in macros.SEQUENCE_DECOLLAGE:
-        await appuyer(touche)
-        await asyncio.sleep(0.15)
+    if not await _jouer_sequence("decollage", dire):
+        return
     # La plateforme peut devoir remonter du hangar : on laisse du temps au jeu
     if not await attendre(lambda: not drapeau("amarre"), 90):
         return await refuser(dire, "macro_echec",
                              "Décollage : le vaisseau est toujours amarré "
-                             "(SEQUENCE_DECOLLAGE dans macros.py)")
+                             "(séquence à vérifier dans Réglages > Commandes)")
 
     if _module_present("dockingcomputer_advanced"):
         await logs.annoncer("Pinces libérées : l'ordinateur d'appontage sort le vaisseau")
@@ -855,9 +1056,8 @@ async def _demander_apontage(dire):
         if not await fermer_panneaux():
             await refuser(dire, "macro_echec", "Apontage : un menu reste ouvert, ferme-le et réessaie")
             return False
-        for touche in macros.SEQUENCE_DEMANDE_APONTAGE:
-            await appuyer(touche)
-            await asyncio.sleep(0.25)
+        if not await _jouer_sequence("apontage", dire):
+            return False
         await attendre(lambda: any(e["event"] != "DockingRequested" for e in reponses), 10)
         await fermer_panneaux()
     finally:
@@ -874,7 +1074,7 @@ async def _demander_apontage(dire):
         await dire("apontage_refuse", "refus")
     else:
         await logs.annoncer("Apontage : la station n'a pas répondu. Trop loin (plus de 7,5 km), ou "
-                            "demande mal envoyée (SEQUENCE_DEMANDE_APONTAGE dans macros.py)", "alerte")
+                            "demande mal envoyée (séquence à vérifier dans Réglages > Commandes)", "alerte")
         await dire("macro_echec", "refus")
     return False
 
@@ -958,10 +1158,9 @@ async def _autopilote_station(dire, poli=False):
     # 2. Gaz dans la zone bleue + assistance de supercroisière
     if macros.touche_connue("vitesse_75"):
         await appuyer("vitesse_75")
-    if macros.SEQUENCE_ASSISTANCE_SC:
-        for touche in macros.SEQUENCE_ASSISTANCE_SC:
-            await appuyer(touche)
-            await asyncio.sleep(0.3)
+    if reglages.sequence("assistance_sc"):
+        if not await _jouer_sequence("assistance_sc", dire):
+            return
         await fermer_panneaux()
         await logs.annoncer("Autopilote : assistance de supercroisière demandée")
     else:
@@ -1266,14 +1465,13 @@ async def _services(dire, poli=False):
         return await logs.annoncer("Services de la station déjà ouverts")
     if not await fermer_panneaux():
         return await refuser(dire, "macro_echec", "Services : un menu reste ouvert")
-    for touche in macros.SEQUENCE_OUVRIR_SERVICES:
-        await appuyer(touche)
-        await asyncio.sleep(0.15)
+    if not await _jouer_sequence("services", dire):
+        return
     if await attendre(lambda: _focus() == 5, 5):
         await logs.annoncer("Services de la station ouverts")
     else:
         await logs.annoncer("Services : l'écran ne s'est pas ouvert "
-                            "(SEQUENCE_OUVRIR_SERVICES dans macros.py)", "alerte")
+                            "(séquence à vérifier dans Réglages > Commandes)", "alerte")
         await dire("macro_echec", "refus")
 
 
@@ -1332,19 +1530,19 @@ async def _ravitaillement(dire, poli=False):
             return await refuser(dire, "macro_echec",
                                  "Ravitaillement : un menu reste ouvert, ferme-le et réessaie")
 
-        for touche in macros.SEQUENCE_OUVRIR_SERVICES:
-            await appuyer(touche)
-            await asyncio.sleep(0.15)
+        if not await _jouer_sequence("services", dire):
+            await fermer_panneaux()
+            return
         if not await attendre(lambda: _focus() == 5, 5):     # 5 = services de la station
             await fermer_panneaux()
             return await refuser(dire, "macro_echec",
                                  "Ravitaillement : les services de la station ne se sont pas ouverts "
-                                 "(SEQUENCE_OUVRIR_SERVICES dans macros.py)")
+                                 "(séquence à vérifier dans Réglages > Commandes)")
 
         await asyncio.sleep(macros.ATTENTE_ECRAN)
-        for touche in macros.SEQUENCE_RAVITAILLEMENT:
-            await appuyer(touche)
-            await asyncio.sleep(0.25)
+        if not await _jouer_sequence("ravitaillement", dire):
+            await fermer_panneaux()
+            return
 
         # Le jeu écrit chaque achat dans le journal : on attend de les voir passer
         def termine():
@@ -1376,7 +1574,7 @@ async def _ravitaillement(dire, poli=False):
         await dire("ravitaillement_termine")
     elif besoin_carburant or besoin_reparation:
         await logs.annoncer("Ravitaillement : rien n'a été acheté. Crédits insuffisants, ou boutons "
-                            "à un autre endroit (SEQUENCE_RAVITAILLEMENT dans macros.py)", "alerte")
+                            "à un autre endroit (séquence à vérifier dans Réglages > Commandes)", "alerte")
         await dire("macro_echec", "refus")
     else:
         await logs.annoncer("Rien à faire : réservoir plein, vaisseau intact, munitions au maximum")

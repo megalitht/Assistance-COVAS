@@ -31,6 +31,8 @@
         .outils { display: flex; gap: 0.4rem; flex-wrap: wrap; }
         .outils button { cursor: pointer; border: 1px solid var(--trait); background: var(--accent-doux); padding: 0.3rem 0.7rem; color: var(--creme); font-size: 0.82rem; }
         .outils button[aria-pressed="true"] { background: var(--accent); color: var(--noir); }
+        /* Dans l'onglet Hangar des réglages : pas de navigation entre les pages */
+        body[data-integre] .marque, body[data-integre] .bandeau-droite { display: none; }
         @media (max-width: 1000px) {
             body.hangar { height: auto; overflow: auto; display: block; }
             .hangar-vue { display: flex; flex-direction: column; }
@@ -39,6 +41,7 @@
     </style>
 </head>
 <body class="hangar" data-mode="nav" data-liaison="simulation">
+    <script>if (new URLSearchParams(location.search).has('integre')) document.body.dataset.integre = '';</script>
     <header class="bandeau">
         <div class="marque">
             <strong>COVAS</strong>

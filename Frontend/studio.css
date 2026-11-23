@@ -49,6 +49,9 @@ body[data-enregistre="oui"] {
     --trait: rgba(255, 58, 28, 0.42);
 }
 
+/* Dans l'onglet Studio des réglages : le titre est déjà dans la fenêtre */
+body[data-integre] .marque { display: none; }
+
 /* Trame holographique, comme l'interface de bord */
 body::after {
     content: "";

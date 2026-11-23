@@ -59,6 +59,20 @@ window.COVAS_DEMO = (() => {
 
     // Noms des modules que le scénario abîme (le vrai rapport vient de Backend/module/avaries.py)
     const NOMS = { MediumHardpoint2: 'Laser à impulsions tourelle', MainEngines: 'Propulseurs', Slot04_Size5: 'Cellules de bouclier', PowerPlant: 'Générateur', Radar: 'Capteurs', ShipCockpit: 'Verrière' };
+    // Mêmes valeurs de départ que Backend/module/reglages.py
+    const mode = (id, nom, declencheur, applicable = true) => ({ id, nom, base: true, declencheur, applicable });
+    const REGLAGES = {
+        pips: {
+            modes: [mode('mode_combat', 'Combat', '« mode combat »'), mode('mode_esquive', 'Esquive', '« mode esquive »'),
+                mode('mode_croisiere', 'Croisière', '« mode croisière »'), mode('mode_recuperation', 'Récupération', '« récupération »'),
+                mode('pips_defense', 'Défense', 'Fuite et interdiction'), mode('fsd', 'Saut FSD', 'Au lancement du FSD', false)],
+            defaut: { mode_combat: [4, 0, 8], mode_esquive: [6, 6, 0], mode_croisiere: [4, 8, 0], mode_recuperation: [8, 4, 0], pips_defense: [8, 4, 0], fsd: [4, 8, 0] },
+            vaisseaux: { python_nx: { mode_combat: [6, 0, 6] } },
+        },
+    };
+    // interface.html?demo=vrs ou ?demo=pied : aperçu de la vue de surface
+    const SCENE = ['vrs', 'pied'].find(s => s === new URLSearchParams(location.search).get('demo')) || null;
+    const BASCULES_VRS = { vrs_frein: 1 << 12, vrs_assistance: 1 << 15, vrs_phares: 1 << 8, vrs_tourelle: 1 << 13, vrs_soute: 1 << 9 };
     let actionCourante = null;       // réponse de la simulation aux boutons de l'interface
     let questionCourante = null;     // réponse de la simulation aux phrases écrites au COVAS
 
@@ -104,11 +118,51 @@ window.COVAS_DEMO = (() => {
             ligne('COVAS', 'Simulation : je vous répondrai quand le backend sera lancé, commandant.', 'Backend/main.py');
         };
         actionCourante = nom => {
+            const pips = window.COVAS_REGLAGES?.pipsPour(nom);
+            if (pips) { majStatus({ pips }); return; }           // mode d'énergie : aucune touche, juste l'affichage
             if (nom !== 'rapport_avarie') return;               // les autres boutons n'ont rien à simuler
             const r = rapportAvarie();
             note('COVAS', 'vaisseau', r.texte, r.gravite);
             recevoir({ type: 'rapport_avarie', rapport: r });
         };
+
+        /** Le commandant s'éloigne du vaisseau en tournant : la boussole et les distances vivent. */
+        function scenarioSurface() {
+            const enVrs = SCENE === 'vrs';
+            Object.assign(status, {
+                flags: enVrs ? (1 << 26) | (1 << 21) | (1 << 15) | (1 << 8) : 1 << 21,
+                flags2: enVrs ? 0 : 1 | (1 << 4) | (1 << 15),
+                pips: enVrs ? [4, 6, 2] : [0, 0, 0], groupe_tir: 0, carburant: 0, reserve: 0.41,
+                corps: 'Alpha Centauri A 2 b', latitude: -20.6143, longitude: 102.1771, altitude: 0, cap: 40, rayon: 1800000,
+                ...(enVrs ? {} : { oxygene: 0.82, sante: 1, temperature: 214, gravite: 0.31, arme: 'Échantillonneur génétique' }),
+            });
+            etat.position.corps = status.corps;
+            etat.sol = {
+                vaisseau: { etat: 'pose', latitude: -20.6, longitude: 102.17, corps: status.corps, distance: 412, cap: 118 },
+                vrs: enVrs ? { modele: 'Scarabée VRS' } : null,
+                combinaison: enVrs ? null : { nom: 'Combinaison Artemis', chargement: 'ANALYSE', armes: ['Karma AR-50', 'Karma P-15'] },
+                exobio: enVrs ? null : { id: 'demo', espece: 'Stratum Tectonicas', genre: 'Stratum', variante: 'Stratum Tectonicas - Vert', portee: 500, echantillons: 1, termine: false, points: [[-20.6, 102.17]], corps: status.corps, distance: 312, libre: false },
+            };
+            recevoir({ type: 'etat', etat, historique: [] });
+            note('LoadGame', 'systeme', 'Session ouverte — CMDR Démo', 'succes');
+            note(enVrs ? 'LaunchSRV' : 'Disembark', 'vaisseau', enVrs ? 'VRS déployé' : 'Débarquement à pied');
+            if (!enVrs) note('ScanOrganic', 'exploration', 'Prélèvement 1/3 — Stratum Tectonicas');
+
+            actionCourante = action => {
+                if (BASCULES_VRS[action]) majStatus({ flags: status.flags ^ BASCULES_VRS[action] });
+                note('COVAS', 'covas', `Simulation : ${action} (aucune touche envoyée)`);
+            };
+            let tours = 0;
+            minuteries = [setInterval(() => {
+                tours++;
+                const sol = etat.sol, exo = sol.exobio;
+                sol.vaisseau.distance = 412 + tours * 9;
+                sol.vaisseau.cap = (118 + tours) % 360;
+                if (exo && !exo.libre) { exo.distance += 15; exo.libre = exo.distance >= exo.portee; }
+                recevoir({ type: 'maj', section: 'sol', donnees: sol });
+                majStatus({ cap: (status.cap + 6) % 360, latitude: status.latitude + 0.0002 });
+            }, 1500)];
+        }
 
         function scenario() {
             const [type, modele, nom, immat] = VITRINE[rang % VITRINE.length];
@@ -127,6 +181,7 @@ window.COVAS_DEMO = (() => {
                 missions: { liste: [{ id: 1, nom: 'Livrer 8 unités d\'or', systeme: 'Sirius', station: 'Patterson Enterprise' }], anterieures: 2 },
                 proches: { etat: 'ok', systeme: 'Sol', rayon: 31.42, total: 7, liste: [['Alpha Centauri', 'G', 4.38], ['Barnard\'s Star', 'M', 5.95], ['Luhman 16', 'L', 6.57], ['Wolf 359', 'M', 7.78], ['Lalande 21185', 'M', 8.29], ['Sirius', 'A', 8.59], ['Duamta', 'M', 9.88]].map(([nom, classe, distance]) => ({ nom, classe, distance, ravitaillable: 'KGBFOAM'.includes(classe) })) },
             };
+            if (SCENE) { scenarioSurface(); return; }
             recevoir({ type: 'etat', etat, historique: [] });
             note('LoadGame', 'systeme', 'Session ouverte — CMDR Démo', 'succes');
             note('ReceiveText', 'comms', 'Contrôle de Mars High : Bon vol, commandant.');
@@ -185,6 +240,7 @@ window.COVAS_DEMO = (() => {
             minuteries = etapesScenario.map(([secondes, action]) => setTimeout(action, secondes * 1000));
         }
 
+        recevoir({ type: 'reglages', reglages: JSON.parse(JSON.stringify(REGLAGES)) });
         scenario();
         return () => { minuteries.forEach(clearTimeout); actionCourante = null; questionCourante = null; };
     }

@@ -1081,5 +1081,49 @@
         "reponses": [
             "data/son/Manuel/ModeCombat.mp3"
         ]
+    },
+    "vrs_frein": {
+        "mots_cles": ["frein à main", "frein", "handbrake"],
+        "reponses": []
+    },
+    "vrs_assistance": {
+        "mots_cles": ["assistance de conduite", "aide à la conduite", "assistance conduite"],
+        "reponses": []
+    },
+    "vrs_tourelle": {
+        "mots_cles": ["tourelle", "vue tourelle"],
+        "reponses": []
+    },
+    "vrs_vaisseau": {
+        "mots_cles": ["rappelle le vaisseau", "rappel du vaisseau", "rappeler le vaisseau", "fais revenir le vaisseau", "renvoie le vaisseau", "renvoyer le vaisseau", "congédie le vaisseau"],
+        "reponses": []
+    },
+    "pied_lampe": {
+        "mots_cles": ["lampe", "lampe torche"],
+        "reponses": []
+    },
+    "pied_recharger": {
+        "mots_cles": ["recharge l'arme", "recharge mon arme", "recharger l'arme", "change de chargeur"],
+        "reponses": []
+    },
+    "pied_grenade": {
+        "mots_cles": ["grenade suivante", "change de grenade"],
+        "reponses": []
+    },
+    "pied_soin": {
+        "mots_cles": ["trousse de soin", "trousse de soins", "kit de soin", "medkit", "soigne-moi"],
+        "reponses": []
+    },
+    "pied_cellule": {
+        "mots_cles": ["cellule d'énergie", "cellule énergie", "batterie de combinaison"],
+        "reponses": []
+    },
+    "pied_echantillonneur": {
+        "mots_cles": ["échantillonneur", "échantillonneur génétique", "outil de combinaison", "sampler"],
+        "reponses": []
+    },
+    "pied_analyseur": {
+        "mots_cles": ["analyseur de profil", "scanner de profil"],
+        "reponses": []
     }
 }
