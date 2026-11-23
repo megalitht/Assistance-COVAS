@@ -13,9 +13,9 @@ import unicodedata
 
 import numpy as np
 
-from module import sons
+from module.son import sons
 
-DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHEMIN_SCRIPT = os.path.join(DOSSIER_BACKEND, "data", "SCRIPT_VOIX.md")
 CHEMIN_REGISTRE = os.path.join(DOSSIER_BACKEND, "data", "son", "repliques_synthese.json")
 # | `cle` | `data/son/Dossier/Fichier.mp3` | Phrase à dire |

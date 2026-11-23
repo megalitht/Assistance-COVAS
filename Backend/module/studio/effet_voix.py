@@ -1,6 +1,6 @@
 """
 effet_voix.py — La voix du COVAS : la voix du commandant enregistrée au micro, transformée
-(studio vocal, module/studio.py).
+(studio vocal, module/studio/studio.py).
 
     voix_covas = robotiser(voix_mono, taux, reglages, egalisation)   -> tableau stéréo n × 2
 

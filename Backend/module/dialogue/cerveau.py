@@ -1,11 +1,11 @@
-# module/cerveau.py
+# module/dialogue/cerveau.py
 import json
 import os
 import random
 
-from module import sons
+from module.son import sons
 
-DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHEMIN_BARKS = os.path.join(DOSSIER_BACKEND, "data", "barks.json")
 CHEMIN_SVP = os.path.join(DOSSIER_BACKEND, "data", "son", "Easter-egg", "SVP.mp3")
 

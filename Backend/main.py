@@ -3,7 +3,7 @@ import sys
 
 # Le terminal est habillé AVANT les autres imports : certains modules affichent
 # déjà des messages au chargement.
-from module import terminal as t
+from module.interface import terminal as t
 t.activer()
 t.banniere("COVAS // ASSISTANCE DE BORD")
 t.ligne("SYSTEM", "Initialisation du noyau COVAS...")
@@ -26,20 +26,20 @@ import winsound
 
 
 # Importation de nos modules personnalisés situés dans le sous-dossier 'module'
-from module.actions import executer_commande, surveiller_reactions, programme_en_cours
-from module.cerveau import obtenir_chemin_audio
-from module import audio
-from module import touches
-from module import lecteur_logs as logs
-from module.lecteur_logs import DOSSIER_ED, surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
-from module.voix import generer_et_jouer_voix
-from module import sons
-from module import conversation
-from module import ecoute as pause_ecoute
-from module import reglages
-from module import serveur_ws
-from module.serveur_ws import demarrer_serveur_web
-from module.comprehension import trouver_action, contient_reveil, est_reveil_seul, vocabulaire_pour_whisper
+from module.pilotage.actions import executer_commande, surveiller_reactions, programme_en_cours
+from module.dialogue.cerveau import obtenir_chemin_audio
+from module.son import audio
+from module.pilotage import touches
+from module.jeu import lecteur_logs as logs
+from module.jeu.lecteur_logs import DOSSIER_ED, surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
+from module.son.voix import generer_et_jouer_voix
+from module.son import sons
+from module.dialogue import conversation
+from module.son import ecoute as pause_ecoute
+from module.interface import reglages
+from module.interface import serveur_ws
+from module.interface.serveur_ws import demarrer_serveur_web
+from module.dialogue.comprehension import trouver_action, contient_reveil, est_reveil_seul, vocabulaire_pour_whisper
 t.ok("Modules de bord chargés.", t.CYAN)
 
 # Dossier Backend/ : les chemins ne dépendent plus de la lettre du disque
@@ -83,7 +83,7 @@ def separer_politesse(texte):
 
 
 def detecter_action(texte_entendu):
-    """Trouve l'action demandée (correspondance exacte, puis approchée) : voir module/comprehension.py."""
+    """Trouve l'action demandée (correspondance exacte, puis approchée) : voir module/dialogue/comprehension.py."""
     return trouver_action(texte_entendu, barks, CLES_IGNOREES)
 
 TITRE = "COVAS — Assistance de bord"      # titre de la fenêtre (voir macros.TITRE_INTERFACE)
@@ -462,7 +462,7 @@ class CovasBackend:
                         t.etat("ÉCOUTE", "VEILLE", t.CYAN)
                         continue
 
-                # Commande ou conversation (voir module/conversation.py). La politesse est
+                # Commande ou conversation (voir module/dialogue/conversation.py). La politesse est
                 # notée puis retirée : la commande est toujours exécutée.
                 await self.traiter_phrase(text, debut_ecoute=debut_ecoute)
                 t.etat("ÉCOUTE", "VEILLE", t.CYAN)

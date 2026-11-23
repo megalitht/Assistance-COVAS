@@ -222,5 +222,5 @@ def activer():
     _couleurs = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
     _sortie = sys.stdout
     sys.stdout = _SortieStylisee(_sortie)
-    # Masque le message d'accueil de pygame (importé par module/voix.py)
+    # Masque le message d'accueil de pygame (importé par module/son/voix.py)
     os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")

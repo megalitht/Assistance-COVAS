@@ -1,5 +1,5 @@
 """
-audio_sortie.py — Petit programme à part pour les sorties audio (lancé par module/audio.py).
+audio_sortie.py — Petit programme à part pour les sorties audio (lancé par module/son/audio.py).
 
 Il passe par la même bibliothèque que la voix du COVAS (pygame), donc voit les mêmes noms de
 périphériques. Dans son propre processus, il ne dérange jamais une réplique en cours.
@@ -16,7 +16,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 
 import pygame  # noqa: E402
 
-FREQUENCE = 16000           # comme module/voix.py
+FREQUENCE = 16000           # comme module/son/voix.py
 
 
 def lister():

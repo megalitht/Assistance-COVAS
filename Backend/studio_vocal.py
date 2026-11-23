@@ -7,10 +7,10 @@ charge ni le modèle vocal au démarrage, ni les touches, ni le jeu. Le COVAS pe
 
 Lancement : « STUDIO VOCAL.bat » (sans console)
         ou  .venv\\Scripts\\python.exe Backend\\studio_vocal.py   (journal dans la console)
-        ou  depuis l'onglet Studio des réglages du COVAS (option --service, voir module/pont_studio.py)
+        ou  depuis l'onglet Studio des réglages du COVAS (option --service, voir module/studio/pont_studio.py)
 Variable COVAS_DEBUG=1 : ouvre les outils de développement de la fenêtre.
 
-Le travail (nettoyage, effet, rangement, étalonnage) est dans module/studio.py et module/effet_voix.py ;
+Le travail (nettoyage, effet, rangement, étalonnage) est dans module/studio/studio.py et module/studio/effet_voix.py ;
 ici seulement le micro, le haut-parleur et le lien avec la page.
 """
 import collections
@@ -36,7 +36,8 @@ sys.path.insert(0, DOSSIER_BACKEND)
 import numpy as np  # noqa: E402
 import sounddevice as sd  # noqa: E402
 
-from module import effet_voix, sons, studio  # noqa: E402
+from module.studio import effet_voix, studio  # noqa: E402
+from module.son import sons  # noqa: E402
 
 
 def _propre(objet):

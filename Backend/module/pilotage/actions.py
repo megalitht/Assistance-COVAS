@@ -23,27 +23,27 @@ import os
 import time
 import traceback
 
-from module import annonces
-from module import avaries
-from module import commandes
-from module import ecran
-from module import lecteur_logs as logs
-from module import macros
-from module import morceaux
-from module import pips
-from module import reglages
-from module import serveur_ws
-from module import sol
-from module import touches
-from module.comprehension import intention, ordre_nie
+from module.pilotage import annonces
+from module.jeu import avaries
+from module.pilotage import commandes
+from module.pilotage import ecran
+from module.jeu import lecteur_logs as logs
+from module.pilotage import macros
+from module.dialogue import morceaux
+from module.pilotage import pips
+from module.interface import reglages
+from module.interface import serveur_ws
+from module.jeu import sol
+from module.pilotage import touches
+from module.dialogue.comprehension import intention, ordre_nie
 
 # Page de l'interface (le « panel »), ouverte par la commande vocale « ouvre le panel »
-CHEMIN_INTERFACE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__)))), "Frontend", "interface.html")
+CHEMIN_INTERFACE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))), "Frontend", "interface.html")
 # True quand le COVAS tourne dans l'application (Backend/app.py) : l'interface est alors
 # sa propre fenêtre, on ne lance jamais de navigateur.
 MODE_APPLICATION = False
-from module.macros import normaliser
+from module.pilotage.macros import normaliser
 
 # Bits de Status.json utilisés ici
 BIT = {"amarre": 0, "pose": 1, "train": 2, "boucliers": 3, "supercroisiere": 4,
@@ -1678,7 +1678,7 @@ async def _ravitaillement(dire, poli=False):
 
 
 # =====================================================================
-#  RAPPORT D'AVARIE (aucune touche : on lit l'état du vaisseau, voir module/avaries.py)
+#  RAPPORT D'AVARIE (aucune touche : on lit l'état du vaisseau, voir module/jeu/avaries.py)
 # =====================================================================
 async def _rapport_avarie(action, texte, dire, poli):
     """Coque, boucliers, modules endommagés : affiché dans l'interface et dit avec les morceaux

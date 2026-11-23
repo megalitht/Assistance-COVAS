@@ -8,8 +8,8 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import module  # noqa: E402
-from module import chasse, exploration, morceaux  # noqa: E402
+from module.jeu import chasse, exploration  # noqa: E402
+from module.dialogue import morceaux  # noqa: E402
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOSSIER_DATA = os.path.join(DOSSIER_BACKEND, "data")
@@ -19,14 +19,15 @@ def _lecteur_prive():
     """Copie du lecteur de journal propre à ce fichier : test_sens.py remplace le module partagé
     par un faux, et une version déjà importée prendrait sa place."""
     avant = set(sys.modules)
-    chemin = os.path.join(DOSSIER_BACKEND, "module", "lecteur_logs.py")
+    chemin = os.path.join(DOSSIER_BACKEND, "module", "jeu", "lecteur_logs.py")
     spec = importlib.util.spec_from_file_location("covas_lecteur_logs_test", chemin)
     copie = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(copie)
-    for nom in ("module.serveur_ws", "module.edsm"):
+    for nom in ("module.interface.serveur_ws", "module.jeu.edsm"):
         if nom in sys.modules and nom not in avant:
             del sys.modules[nom]
-            delattr(module, nom.split(".")[1])
+            paquet, _, enfant = nom.rpartition(".")
+            delattr(sys.modules[paquet], enfant)
     return copie
 
 

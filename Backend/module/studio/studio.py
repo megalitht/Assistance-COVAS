@@ -8,8 +8,8 @@ Ce module fait le travail sans micro ni fenêtre (il reçoit des échantillons, 
   inventaire()          toutes les répliques à dire : data/SCRIPT_VOIX.md (alertes, commandes...),
                         les enregistrements d'origine (data/studio/originaux.json) et les
                         conversations (data/conversations.json) et morceaux des phrases qui
-                        changent : rapport d'avarie, heure, date, position (module/morceaux.py)
-  Studio.traiter()      prise du micro -> voix nettoyée -> voix du COVAS (module/effet_voix.py)
+                        changent : rapport d'avarie, heure, date, position (module/dialogue/morceaux.py)
+  Studio.traiter()      prise du micro -> voix nettoyée -> voix du COVAS (module/studio/effet_voix.py)
   Studio.garder()       range la réplique là où le COVAS la cherche (data/son/..., en .mp3)
   Studio.etalonner()    égalisation calculée sur TA voix pour retrouver le timbre des
                         enregistrements d'origine (et ta hauteur habituelle)
@@ -36,9 +36,10 @@ from datetime import datetime
 
 import numpy as np
 
-from module import effet_voix, sons
+from module.studio import effet_voix
+from module.son import sons
 
-DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DOSSIER_STUDIO = os.path.join(DOSSIER_BACKEND, "data", "studio")
 CHEMIN_REGLAGES = os.path.join(DOSSIER_STUDIO, "reglages.json")
 CHEMIN_PRISES = os.path.join(DOSSIER_STUDIO, "prises.json")
@@ -162,12 +163,12 @@ def lire_prises():
 
 
 def _lire_registre_synthese():
-    from module import repliques
+    from module.studio import repliques
     return repliques.lire_registre()
 
 
 def _ecrire_registre_synthese(registre):
-    from module import repliques
+    from module.studio import repliques
     repliques.ecrire_registre(registre)
 
 
@@ -190,7 +191,7 @@ def chemin_prise(ident):
 #  INVENTAIRE DES RÉPLIQUES
 # =====================================================================
 def _lignes_script():
-    from module import repliques
+    from module.studio import repliques
     lignes, section = [], "Répliques"
     with open(repliques.CHEMIN_SCRIPT, encoding="utf-8") as f:
         for ligne in f:
@@ -229,7 +230,7 @@ def _reponse_attendue(branche):
 
 
 def _lignes_conversations():
-    from module import conversation
+    from module.dialogue import conversation
     conversation.charger()
     contenu = conversation._contenu
     lignes, vues, suites_vues = [], set(), set()
@@ -263,7 +264,7 @@ def _lignes_conversations():
 
 
 def _lignes_morceaux():
-    from module import morceaux
+    from module.dialogue import morceaux
     return [{**m, "source": "morceaux"} for m in morceaux.catalogue()]
 
 
@@ -537,7 +538,7 @@ class Studio:
     def _script_conversations():
         """SCRIPT_CONVERSATIONS.md coche ce qui est enregistré : on le tient à jour."""
         try:
-            from module import conversation
+            from module.dialogue import conversation
             conversation.ecrire_script()
         except Exception as erreur:            # le script n'est qu'un aide-mémoire
             print(f"[Studio] Script des conversations non mis à jour : {erreur!r}")
@@ -645,7 +646,7 @@ class Studio:
     def verifier(self, texte, covas, taux):
         """(ressemblance 0 à 1 ou None, ce que Whisper entend). Bloquant : charge Whisper la
         première fois (carte graphique si possible)."""
-        from module import repliques
+        from module.studio import repliques
         chemin = os.path.join(tempfile.gettempdir(), f"covas_studio_{next(self._compteur) % 4}.wav")
         sons.ecrire_wav(chemin, covas, taux)
         if texte:

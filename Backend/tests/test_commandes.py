@@ -10,7 +10,8 @@ from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from module import commandes, reglages, touches  # noqa: E402
+from module.pilotage import commandes, touches  # noqa: E402
+from module.interface import reglages  # noqa: E402
 
 BINDS = """<?xml version="1.0" encoding="UTF-8" ?>
 <Root PresetName="Custom">

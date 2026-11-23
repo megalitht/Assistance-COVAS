@@ -5,7 +5,7 @@ Au lancement, la fenêtre affiche l'écran d'accueil (Frontend/interface.html?ap
 n'est PAS encore actif (ni modèle vocal, ni micro, ni touches). Le bouton central appelle
 Api.activer() : main.demarrer() tourne alors dans un thread, chaque étape du démarrage est
 affichée à l'écran, puis l'interface devient le panneau de contrôle (liaison WebSocket
-habituelle, voir module/serveur_ws.py).
+habituelle, voir module/interface/serveur_ws.py).
 
 Lancement : COVAS.bat (sans console) ou  .venv\\Scripts\\python.exe Backend\\app.py
 Variable COVAS_DEBUG=1 : ouvre les outils de développement de la fenêtre.
@@ -22,7 +22,7 @@ import traceback
 DOSSIER_BACKEND = os.path.dirname(os.path.abspath(__file__))
 DOSSIER_FRONTEND = os.path.join(os.path.dirname(DOSSIER_BACKEND), "Frontend")
 TITRE = "COVAS — Assistance de bord"      # même titre que main.TITRE / macros.TITRE_INTERFACE
-PORT_WS = 8765                            # liaison du panneau (module/serveur_ws.py)
+PORT_WS = 8765                            # liaison du panneau (module/interface/serveur_ws.py)
 PORT_PAGE = 8766                          # serveur local de la page
 DOSSIER_PROFIL = os.path.join(DOSSIER_BACKEND, "data", "fenetre")   # profil WebView2 (préférences)
 DELAI_FERMETURE = 5                       # secondes au plus pour fermer proprement
@@ -38,8 +38,9 @@ sys.path.insert(0, DOSSIER_BACKEND)
 
 import webview  # noqa: E402
 
-from module import audio, ecoute, plans, reglages  # noqa: E402  (légers : ni micro, ni touches)
-from module.pont_studio import PontStudio  # noqa: E402
+from module.son import audio, ecoute  # noqa: E402  (légers : ni micro, ni touches)
+from module.interface import plans, reglages  # noqa: E402
+from module.studio.pont_studio import PontStudio  # noqa: E402
 
 DOSSIER_PLANS = os.path.join(DOSSIER_FRONTEND, "vaisseaux")
 TITRE_STUDIO = "COVAS — Studio vocal"     # fenêtre de STUDIO VOCAL.bat
@@ -75,7 +76,7 @@ class Api:
                                    "Ferme-le, puis réessaie.")
             self._pousser("Chargement des modules de bord")
             import main                             # importe macros, actions... (pas avant le clic)
-            from module import actions
+            from module.pilotage import actions
             actions.MODE_APPLICATION = True
             main.demarrer(progression=self._pousser)     # ne rend la main qu'à l'arrêt
         except BaseException as erreur:            # SystemExit compris : la fenêtre doit le dire
@@ -203,7 +204,7 @@ def _nettoyer(api):
         audio.TEST_MICRO.arreter()
     except Exception:
         traceback.print_exc()
-    macros = sys.modules.get("module.macros")
+    macros = sys.modules.get("module.pilotage.macros")
     if macros:
         try:
             macros.STOP.set()           # un appui en cours se termine et relâche sa touche

@@ -5,7 +5,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from module.annonces import DetecteurManuel  # noqa: E402
+from module.pilotage.annonces import DetecteurManuel  # noqa: E402
 
 AMARRE, POSE, TRAIN, SC, ARMES, ECOPE = 1 << 0, 1 << 1, 1 << 2, 1 << 4, 1 << 6, 1 << 9
 CHARGE, VAISSEAU, ANALYSE, SAUT = 1 << 17, 1 << 24, 1 << 27, 1 << 30

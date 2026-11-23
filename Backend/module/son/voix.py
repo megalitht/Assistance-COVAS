@@ -1,7 +1,7 @@
 import asyncio
 import pygame
 
-from module import audio, sons
+from module.son import audio, sons
 
 FREQUENCE = 16000
 _sortie_ouverte = False      # False : rien d'ouvert ; None : la sortie de Windows ; sinon son nom

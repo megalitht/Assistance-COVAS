@@ -12,7 +12,7 @@ Module pur : ni touches, ni micro. Il se teste sans importer macros.py.
 import json
 import os
 
-DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHEMIN_EXOBIO = os.path.join(DOSSIER_BACKEND, "data", "exobiologie.json")
 
 GRAVITE = 9.797759              # m/s² pour 1 g, valeur utilisée par les règles d'apparition

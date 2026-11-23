@@ -5,10 +5,10 @@
 
    Énergie : répartition de chaque mode, par défaut ou par vaisseau. Les valeurs sont en
    demi-pips, comme dans le jeu : [SYS, MOT, ARM], total 12. Chaque changement est enregistré
-   tout seul par le backend (module/reglages.py).
+   tout seul par le backend (module/interface/reglages.py).
 
    Studio, hangar et atelier affichent les pages existantes (?integre) dans un cadre. Le studio
-   tourne dans son propre processus (module/pont_studio.py) : son micro n'est ouvert que tant
+   tourne dans son propre processus (module/studio/pont_studio.py) : son micro n'est ouvert que tant
    que son onglet est affiché, et l'écoute du COVAS est en pause pendant ce temps.
    ===================================================================== */
 window.COVAS_REGLAGES = (() => {

@@ -24,13 +24,13 @@ import time
 from collections import deque
 from datetime import datetime, timezone
 
-from module import chasse
-from module import edsm
-from module import exploration
-from module import morceaux
-from module import sol
-from module.avaries import nommer
-from module.serveur_ws import definir_instantane, envoyer_donnees_web
+from module.jeu import chasse
+from module.jeu import edsm
+from module.jeu import exploration
+from module.dialogue import morceaux
+from module.jeu import sol
+from module.jeu.avaries import nommer
+from module.interface.serveur_ws import definir_instantane, envoyer_donnees_web
 
 # --- CHEMINS D'ACCÈS ---
 # Dossier standard du jeu. S'il a été déplacé, indique le bon chemin dans la
@@ -120,9 +120,9 @@ def _reinitialiser_etat():
         "combat": _combat_vierge(),
         "missions": {"liste": [], "anterieures": 0},
         "proches": {"etat": "attente", "systeme": None, "rayon": None, "total": 0, "liste": []},
-        "sol": sol.vierge(),      # VRS et pied à terre : voir module/sol.py
-        "chasse": chasse.vierge(),            # mode chasseur de primes : voir module/chasse.py
-        "exploration": _carnet.vue(),         # valeur des corps : voir module/exploration.py
+        "sol": sol.vierge(),      # VRS et pied à terre : voir module/jeu/sol.py
+        "chasse": chasse.vierge(),            # mode chasseur de primes : voir module/jeu/chasse.py
+        "exploration": _carnet.vue(),         # valeur des corps : voir module/jeu/exploration.py
         "pilotage": _pilotage_vierge(),
     })
 

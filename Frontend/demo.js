@@ -57,9 +57,9 @@ window.COVAS_DEMO = (() => {
     const depart = new URLSearchParams(location.search).get('vaisseau');
     let rang = Math.max(0, VITRINE.findIndex(v => v[0] === depart));
 
-    // Noms des modules que le scénario abîme (le vrai rapport vient de Backend/module/avaries.py)
+    // Noms des modules que le scénario abîme (le vrai rapport vient de Backend/module/jeu/avaries.py)
     const NOMS = { MediumHardpoint2: 'Laser à impulsions tourelle', MainEngines: 'Propulseurs', Slot04_Size5: 'Cellules de bouclier', PowerPlant: 'Générateur', Radar: 'Capteurs', ShipCockpit: 'Verrière' };
-    // Mêmes valeurs de départ que Backend/module/reglages.py
+    // Mêmes valeurs de départ que Backend/module/interface/reglages.py
     const mode = (id, nom, declencheur, applicable = true) => ({ id, nom, base: true, declencheur, applicable });
     const REGLAGES = {
         pips: {

@@ -14,10 +14,10 @@ import sys
 import threading
 import time
 
-from module import reglages
+from module.interface import reglages
 
-DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROGRAMME_SORTIE = os.path.join(DOSSIER_BACKEND, "module", "audio_sortie.py")
+DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PROGRAMME_SORTIE = os.path.join(DOSSIER_BACKEND, "module", "son", "audio_sortie.py")
 SONS_ESSAI = ("data/son/Demarrage/Système COVAS opérationnel.mp3",
               "data/son/Demarrage/SysCOVASOp.mp3")
 VALIDITE_INDEX = 10         # secondes : retrouver le micro par son nom à chaque phrase serait lent
@@ -153,7 +153,7 @@ def micro_en_echec():
 # ---------- Boutons d'essai ----------
 def tester_sortie(nom=None, niveau=100):
     """Joue une réplique sur ce périphérique, sans toucher à la voix du COVAS."""
-    from module import sons
+    from module.son import sons
     son = next((c for c in (sons.trouver(os.path.join(DOSSIER_BACKEND, s)) for s in SONS_ESSAI) if c), None)
     if not son:
         return {"erreur": "Son d'essai introuvable"}

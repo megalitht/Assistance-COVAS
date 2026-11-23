@@ -2,11 +2,11 @@
 morceaux.py — Phrases qui changent à chaque fois, dites avec des morceaux enregistrés.
 
 Le rapport d'avarie, l'heure, la date et la position ne peuvent pas tenir dans une seule prise.
-Le studio vocal (module/studio.py) propose donc ces morceaux à enregistrer : « Coque à »,
+Le studio vocal (module/studio/studio.py) propose donc ces morceaux à enregistrer : « Coque à »,
 « quarante », « pour cent »... Le COVAS les met bout à bout au moment de parler.
 
     catalogue()             tous les morceaux à enregistrer
-    pour_rapport(rapport)   morceaux d'un rapport d'avarie (module/avaries.py)
+    pour_rapport(rapport)   morceaux d'un rapport d'avarie (module/jeu/avaries.py)
     recette(nom, instant)   morceaux d'une réplique « morceaux » de data/conversations.json
     assembler(ids)          fichier .wav prêt à jouer, ou None s'il manque un seul morceau :
                             jamais de phrase à trous, le texte reste à l'écran
@@ -23,9 +23,10 @@ from itertools import count
 
 import numpy as np
 
-from module import avaries, sons
+from module.jeu import avaries
+from module.son import sons
 
-DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DOSSIER = "data/son/Morceaux"
 
 TAUX = 48000

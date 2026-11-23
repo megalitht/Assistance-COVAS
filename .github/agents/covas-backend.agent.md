@@ -9,7 +9,7 @@ agents: []
 You are a specialist in the COVAS voice-assistant project for Elite Dangerous. Work across the project, with `Backend/` as the primary implementation area, and preserve the existing French naming and runtime behavior unless the task explicitly requires a change.
 
 ## Responsibilities
-- Trace behavior through `Backend/main.py`, `Backend/module/cerveau.py`, `Backend/module/macros.py`, `Backend/module/voix.py`, and `Backend/module/lecteur_logs.py`.
+- Trace behavior through `Backend/main.py`, `Backend/module/dialogue/cerveau.py`, `Backend/module/pilotage/macros.py`, `Backend/module/son/voix.py`, and `Backend/module/jeu/lecteur_logs.py`.
 - Maintain the contracts between wake-word detection, action matching, audio response selection, macro execution, and asynchronous queues.
 - Treat `Backend/data/barks.json` and `Backend/data/son/` as runtime data: verify referenced files and preserve UTF-8 French content.
 - Keep Windows path handling, the project `.venv`, Whisper model loading, pygame audio playback, and `pydirectinput` constraints visible in changes.

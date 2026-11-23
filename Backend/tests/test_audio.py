@@ -13,7 +13,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy  # noqa: E402,F401  (chargé une seule fois : les faux modules ci-dessous ne doivent pas le retirer)
 
-from module import audio, ecoute, reglages, sons  # noqa: E402,F401
+from module.son import audio, ecoute, sons  # noqa: E402,F401
+from module.interface import reglages  # noqa: E402,F401
 
 
 def appareil(index, nom, api=0, entrees=1, sorties=0, taux=44100.0):
@@ -178,7 +179,7 @@ class TestMicro(BaseAudio):
 
 
 class TestVoix(BaseAudio):
-    """module.voix avec un faux pygame : aucun son n'est joué."""
+    """module.son.voix avec un faux pygame : aucun son n'est joué."""
 
     def charger_voix(self):
         mixer = mock.MagicMock()
@@ -188,9 +189,9 @@ class TestVoix(BaseAudio):
         patcheur = mock.patch.dict(sys.modules, {"pygame": faux})
         patcheur.start()
         self.addCleanup(patcheur.stop)
-        sys.modules.pop("module.voix", None)
-        self.addCleanup(sys.modules.pop, "module.voix", None)
-        return importlib.import_module("module.voix"), mixer
+        sys.modules.pop("module.son.voix", None)
+        self.addCleanup(sys.modules.pop, "module.son.voix", None)
+        return importlib.import_module("module.son.voix"), mixer
 
     def test_sortie_et_volume(self):
         self.choisir(sortie="Casque", volume=40)
@@ -215,9 +216,9 @@ class TestVoix(BaseAudio):
         mixer.init.side_effect = [RuntimeError("absent"), None]
         faux = types.SimpleNamespace(mixer=mixer, error=RuntimeError)
         with mock.patch.dict(sys.modules, {"pygame": faux}):
-            sys.modules.pop("module.voix", None)
-            importlib.import_module("module.voix")
-            sys.modules.pop("module.voix", None)
+            sys.modules.pop("module.son.voix", None)
+            importlib.import_module("module.son.voix")
+            sys.modules.pop("module.son.voix", None)
         self.assertEqual(mixer.init.call_args_list[-1], mock.call(frequency=16000))
 
 

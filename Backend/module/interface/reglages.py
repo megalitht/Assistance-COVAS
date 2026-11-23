@@ -19,10 +19,10 @@ import math
 import os
 import re
 
-from module import commandes as clavier
-from module import pips as moteur
+from module.pilotage import commandes as clavier
+from module.pilotage import pips as moteur
 
-DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHEMIN = os.path.join(DOSSIER_BACKEND, "data", "reglages.json")
 
 # Valeurs de départ : ce que donnaient les anciennes macros à partir d'une répartition équilibrée.

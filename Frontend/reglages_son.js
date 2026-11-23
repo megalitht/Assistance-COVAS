@@ -1,6 +1,6 @@
 /* =====================================================================
    COVAS — Réglages > Son : sortie (casque, haut-parleurs), volume, micro.
-   Le choix est enregistré avec les autres réglages (module/reglages.py) et s'applique
+   Le choix est enregistré avec les autres réglages (module/interface/reglages.py) et s'applique
    dès la prochaine réplique ou la prochaine écoute. Les listes de périphériques et les
    essais passent par l'application (window.pywebview.api.audio_*).
    ===================================================================== */

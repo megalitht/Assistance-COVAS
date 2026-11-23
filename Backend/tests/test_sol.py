@@ -10,7 +10,9 @@ from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from module import commandes, comprehension, sol, touches  # noqa: E402
+from module.pilotage import commandes, touches  # noqa: E402
+from module.dialogue import comprehension  # noqa: E402
+from module.jeu import sol  # noqa: E402
 
 VRS, VAISSEAU, A_PIED = 1 << 26, 1 << 24, 1
 

@@ -1,6 +1,6 @@
 /* =====================================================================
    COVAS — Interface de bord
-   Reçoit l'état du vaisseau par WebSocket (Backend/module/serveur_ws.py)
+   Reçoit l'état du vaisseau par WebSocket (Backend/module/interface/serveur_ws.py)
    et l'affiche. Aucune logique de jeu ici, sauf le choix de la vue :
    navigation par défaut, combat dès qu'un événement hostile arrive.
    ===================================================================== */

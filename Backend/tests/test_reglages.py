@@ -7,8 +7,9 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from module import pips, reglages  # noqa: E402
-from module.comprehension import trouver_action  # noqa: E402
+from module.pilotage import pips  # noqa: E402
+from module.interface import reglages  # noqa: E402
+from module.dialogue.comprehension import trouver_action  # noqa: E402
 
 TOUTES = [(s, m, a) for s in range(9) for m in range(9) for a in range(9) if s + m + a == 12]
 

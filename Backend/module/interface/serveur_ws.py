@@ -16,7 +16,7 @@ import json
 
 import websockets
 
-from module import reglages
+from module.interface import reglages
 
 # Ce PC seulement (IPv4 et IPv6). L'interface peut appuyer sur les touches du jeu : None
 # l'ouvrirait à tout le réseau local (une tablette... mais aussi n'importe quel appareil).

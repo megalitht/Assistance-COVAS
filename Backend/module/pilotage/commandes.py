@@ -14,7 +14,7 @@ import re
 import time
 import xml.etree.ElementTree as ET
 
-from module import touches
+from module.pilotage import touches
 
 # Utilisé pour les commandes que le fichier du jeu ne donne pas.
 # None = pas de touche connue : le COVAS refusera la commande en expliquant quoi régler.

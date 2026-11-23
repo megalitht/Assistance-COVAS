@@ -1,5 +1,5 @@
 """
-Tests du studio vocal (module/effet_voix.py, module/studio.py).
+Tests du studio vocal (module/studio/effet_voix.py, module/studio/studio.py).
 
 Lancer depuis Backend/ :
     ..\\.venv\\Scripts\\python.exe -m unittest tests.test_studio -v
@@ -20,7 +20,8 @@ import numpy as np
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DOSSIER_BACKEND)
 
-from module import effet_voix, repliques, sons, studio  # noqa: E402
+from module.studio import effet_voix, repliques, studio  # noqa: E402
+from module.son import sons  # noqa: E402
 
 TAUX = 48000
 

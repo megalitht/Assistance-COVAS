@@ -5,7 +5,7 @@
    Une touche choisie ici ne change que ce que le COVAS envoie : le fichier de commandes du jeu
    n'est jamais écrit. Les noms de touches sont ceux de pydirectinput, c'est-à-dire un emplacement
    physique : event.code donne le bon résultat sur un clavier AZERTY comme QWERTY.
-   Tout est revérifié par le backend (module/commandes.py).
+   Tout est revérifié par le backend (module/pilotage/commandes.py).
    ===================================================================== */
 window.COVAS_COMMANDES = (() => {
     'use strict';

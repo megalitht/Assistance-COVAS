@@ -9,8 +9,9 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from module import ecoute, plans  # noqa: E402
-from module.pont_studio import PontStudio  # noqa: E402
+from module.son import ecoute  # noqa: E402
+from module.interface import plans  # noqa: E402
+from module.studio.pont_studio import PontStudio  # noqa: E402
 
 ENTETE = "window.COVAS_HOLOGRAMMES && window.COVAS_HOLOGRAMMES.enregistrer("
 

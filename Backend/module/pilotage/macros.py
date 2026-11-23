@@ -14,10 +14,10 @@ from datetime import datetime
 
 import pydirectinput
 
-from module import commandes
-from module import pips
-from module import reglages
-from module import touches
+from module.pilotage import commandes
+from module.pilotage import pips
+from module.interface import reglages
+from module.pilotage import touches
 
 pydirectinput.PAUSE = 0.05
 
@@ -66,8 +66,8 @@ VOYAGE_ATTENTE_ALIGNEMENT = 40  # secondes après l'appui sur le FSD (la charge 
                                 # sans saut d'ici là, le COVAS te demande de t'aligner
 VOYAGE_CARBURANT_MIN = 0.25     # sous cette part du réservoir, le voyage s'arrête
 
-# Détection de l'étoile à l'écran (module/ecran.py ; jeu en plein écran fenêtré).
-# Calibrage : `python -m module.ecran` depuis Backend/, le jeu au premier plan.
+# Détection de l'étoile à l'écran (module/pilotage/ecran.py ; jeu en plein écran fenêtré).
+# Calibrage : `python -m module.pilotage.ecran` depuis Backend/, le jeu au premier plan.
 ETOILE_ZONE = 0.20              # côté du carré central analysé (part de la hauteur d'écran)
 ETOILE_SEUIL_LUMIERE = 235      # un pixel compte comme « étoile » si R, G et B dépassent ça
 ETOILE_PART_OBSTRUCTION = 0.02  # au-delà de cette part de pixels blancs : étoile devant

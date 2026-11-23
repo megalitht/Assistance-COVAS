@@ -9,7 +9,7 @@ Capture GDI de Windows (aucune dépendance en plus de numpy). Le jeu doit être 
 « plein écran fenêtré » (borderless) ou fenêtré : en plein écran exclusif, Windows
 renvoie souvent une image noire.
 
-Calibrage : lance `python -m module.ecran` depuis Backend/, le jeu au premier plan,
+Calibrage : lance `python -m module.pilotage.ecran` depuis Backend/, le jeu au premier plan,
 et regarde la part affichée face à une étoile puis face au vide.
 """
 import ctypes
@@ -18,7 +18,7 @@ import time
 
 import numpy as np
 
-from module import macros
+from module.pilotage import macros
 
 _PRET = os.name == "nt"
 if _PRET:

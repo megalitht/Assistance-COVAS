@@ -1,5 +1,5 @@
 """
-Tests des phrases assemblées (module/morceaux.py) : rapport d'avarie, heure, date, position.
+Tests des phrases assemblées (module/dialogue/morceaux.py) : rapport d'avarie, heure, date, position.
 
 Lancer depuis Backend/ :
     ..\\.venv\\Scripts\\python.exe -m unittest tests.test_morceaux -v
@@ -19,7 +19,10 @@ import numpy as np
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DOSSIER_BACKEND)
 
-from module import avaries, conversation, morceaux, sons, studio  # noqa: E402
+from module.jeu import avaries  # noqa: E402
+from module.dialogue import conversation, morceaux  # noqa: E402
+from module.son import sons  # noqa: E402
+from module.studio import studio  # noqa: E402
 
 
 def module(objet, sante):

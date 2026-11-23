@@ -1,4 +1,4 @@
-# module/comprehension.py
+# module/dialogue/comprehension.py
 """
 Rend la reconnaissance vocale plus tolérante.
 

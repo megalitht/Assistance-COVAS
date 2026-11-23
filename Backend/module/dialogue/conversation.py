@@ -20,15 +20,15 @@ Trois mécanismes :
 
 Enregistrement des voix : data/SCRIPT_CONVERSATIONS.md liste chaque fichier et sa phrase.
 Il est régénéré par (depuis Backend/) :
-    python -m module.conversation --script
+    python -m module.dialogue.conversation --script
 Tant qu'un fichier n'existe pas, la réplique est seulement affichée. Les répliques
-« voix: aucune » (heure, position...) sont affichées, et dites si leurs « morceaux » (module/morceaux.py)
+« voix: aucune » (heure, position...) sont affichées, et dites si leurs « morceaux » (module/dialogue/morceaux.py)
 sont tous enregistrés : leur texte change
 à chaque fois.
 
 Essais sans micro ni jeu (depuis Backend/) :
-    python -m module.conversation --verifier
-    python -m module.conversation "comment va le vaisseau"
+    python -m module.dialogue.conversation --verifier
+    python -m module.dialogue.conversation "comment va le vaisseau"
 
 Ce module ne touche ni au clavier ni au micro : il décide QUOI dire, main.py le joue.
 """
@@ -43,11 +43,12 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 
-from module import morceaux, sons
-from module.comprehension import (SEUIL_APPROCHE, meilleure_approche, normaliser, present,
+from module.dialogue import morceaux
+from module.son import sons
+from module.dialogue.comprehension import (SEUIL_APPROCHE, meilleure_approche, normaliser, present,
                                   similarite, trouver_action_detail)
 
-DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHEMIN_CONVERSATIONS = os.path.join(DOSSIER_BACKEND, "data", "conversations.json")
 CHEMIN_SCRIPT = os.path.join(DOSSIER_BACKEND, "data", "SCRIPT_CONVERSATIONS.md")
 DOSSIER_SONS = "data/son/Conversations"          # relatif à Backend/
@@ -1106,7 +1107,7 @@ def ecrire_script(chemin=CHEMIN_SCRIPT):
     entete = [
         "# Script des conversations à enregistrer",
         "",
-        "*Fichier généré par `python -m module.conversation --script` (depuis `Backend/`) à partir "
+        "*Fichier généré par `python -m module.dialogue.conversation --script` (depuis `Backend/`) à partir "
         "de `data/conversations.json` : modifie le JSON, pas ce fichier.*",
         "",
         f"**{len(fichiers)} fichiers à enregistrer** — {faits} déjà faits ✅, "

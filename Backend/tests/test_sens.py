@@ -11,8 +11,9 @@ from unittest import mock
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, RACINE)
 
-from module import annonces, comprehension  # noqa: E402
-from module.comprehension import intention, ordre_nie, trouver_action  # noqa: E402
+from module.pilotage import annonces  # noqa: E402
+from module.dialogue import comprehension  # noqa: E402
+from module.dialogue.comprehension import intention, ordre_nie, trouver_action  # noqa: E402
 
 with open(os.path.join(RACINE, "data", "barks.json"), encoding="utf-8") as f:
     BARKS = json.load(f)
@@ -114,7 +115,7 @@ class Execution(unittest.TestCase):
 
     def setUp(self):
         self.appuis, self.dits = [], []
-        faux = types.ModuleType("module.macros")
+        faux = types.ModuleType("module.pilotage.macros")
         faux.normaliser = lambda n: comprehension.sans_accents(n or "").lower().strip()
         faux.REACTIONS_AU_DEMARRAGE = False
         faux.MACROS = {"reset": [("pips_equilibre", 1)]}
@@ -134,30 +135,32 @@ class Execution(unittest.TestCase):
         faux.appuyer = appuyer
         faux.executer_touches = lambda cle: self.appuis.append(cle) or True
 
-        self.logs = types.ModuleType("module.lecteur_logs")
+        self.logs = types.ModuleType("module.jeu.lecteur_logs")
         self.logs.ETAT = {"status": {"flags": self.VAISSEAU, "flags2": 0}, "vaisseau": {},
                           "modules": {"liste": []}, "cible": {}, "sol": {"vaisseau": {"etat": None}}}
         self.logs.CHEMIN_STATUS = ""
         self.logs.annoncer = mock.AsyncMock()
-        ws = types.ModuleType("module.serveur_ws")
+        ws = types.ModuleType("module.interface.serveur_ws")
         ws.signaler_programme = lambda nom: None
-        ecran = types.ModuleType("module.ecran")
+        ecran = types.ModuleType("module.pilotage.ecran")
 
         self.modules = mock.patch.dict(sys.modules, {
-            "module.macros": faux, "module.lecteur_logs": self.logs, "module.serveur_ws": ws,
-            "module.ecran": ecran})
+            "module.pilotage.macros": faux, "module.jeu.lecteur_logs": self.logs, "module.interface.serveur_ws": ws,
+            "module.pilotage.ecran": ecran})
         self.modules.start()
-        sys.modules.pop("module.actions", None)
-        self.actions = importlib.import_module("module.actions")
+        sys.modules.pop("module.pilotage.actions", None)
+        self.actions = importlib.import_module("module.pilotage.actions")
 
     def tearDown(self):
-        sys.modules.pop("module.actions", None)
+        sys.modules.pop("module.pilotage.actions", None)
         self.modules.stop()
-        sys.modules.pop("module.actions", None)
-        paquet = sys.modules["module"]
-        for nom in ("actions", "macros", "lecteur_logs", "serveur_ws", "ecran"):
-            if getattr(getattr(paquet, nom, None), "__file__", None) is None:
-                paquet.__dict__.pop(nom, None)
+        sys.modules.pop("module.pilotage.actions", None)
+        for nom in ("pilotage.actions", "pilotage.macros", "jeu.lecteur_logs",
+                    "interface.serveur_ws", "pilotage.ecran"):
+            groupe, enfant = nom.split(".")
+            paquet = sys.modules.get(f"module.{groupe}")
+            if paquet and getattr(getattr(paquet, enfant, None), "__file__", None) is None:
+                paquet.__dict__.pop(enfant, None)
 
     def ordre(self, action, phrase):
         async def dire(*cles, poli=False):

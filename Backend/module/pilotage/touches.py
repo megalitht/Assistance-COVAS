@@ -17,7 +17,7 @@ peux pas les déclencher par erreur. Elles sont
 prend en compte à son prochain lancement. Une manette ou une souris déjà assignée
 reste en place : la touche virtuelle va dans l'emplacement libre.
 
-Diagnostic : lance   python module/touches.py   pour voir ce qui a été lu
+Diagnostic : lance   python module/pilotage/touches.py   pour voir ce qui a été lu
              (ajoute  --assigner  pour écrire aussi les touches virtuelles).
 
 Si le dossier est ailleurs, indique-le dans la variable d'environnement COVAS_DOSSIER_BINDS.
@@ -270,7 +270,7 @@ def pourquoi_sans_effet(nom):
     integre = profil_integre()
     if integre:
         return (f"le vaisseau utilise le profil intégré « {integre} », qui ne contient pas les "
-                "touches virtuelles : jeu fermé, lance « python module/touches.py --profil-perso »")
+                "touches virtuelles : jeu fermé, lance « python module/pilotage/touches.py --profil-perso »")
     if ETAT["ecrit_jeu_lance"]:
         return "touche virtuelle ajoutée pendant que le jeu tournait : redémarre le jeu"
     return None
@@ -518,7 +518,7 @@ def charger(assigner=False, sauf=()):
     if integre and any(est_virtuelle(n) for n in ETAT["lues"]):
         print(f"[Touches] ATTENTION : pour le vaisseau, le jeu utilise son profil intégré "
               f"« {integre} », pas {os.path.basename(fichier)} : il ne voit pas les touches "
-              "virtuelles (F13-F20). Jeu fermé, lance   python module/touches.py --profil-perso"
+              "virtuelles (F13-F20). Jeu fermé, lance   python module/pilotage/touches.py --profil-perso"
               "   ou choisis le profil « Custom » dans Options > Commandes.")
     return dict(ETAT["lues"])
 
