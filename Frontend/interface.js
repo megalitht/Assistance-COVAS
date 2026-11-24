@@ -179,7 +179,7 @@
         cible: {}, combat: {}, missions: { liste: [] }, proches: { liste: [] },
         sol: { vaisseau: {} }, pilotage: {},
         chasse: { profil: {}, a_encaisser: {} }, exploration: { corps: [], session: {} },
-        carburant: {}, donnees_explo: {}, commerce: {}, minage: {}, materiaux: {},
+        carburant: {}, donnees_explo: {}, commerce: {}, minage: {}, materiaux: {}, externe: {},
     };
     let journal = [];                 // lignes du journal de bord, la plus récente en premier
     let filtreJournal = 'tous';
@@ -411,7 +411,7 @@
             ok: `${nombre(p.total)} systèmes dans un rayon de ${p.rayon?.toFixed(1)} al` + (p.total > p.liste.length ? ` (${p.liste.length} plus proches affichés)` : ''),
             recherche: 'Recherche en cours auprès d\'EDSM…',
             erreur: 'EDSM ne répond pas. Nouvelle tentative au prochain saut.',
-            desactive: 'Recherche désactivée dans lecteur_logs.py.',
+            desactive: 'Recherche désactivée (Backend/data/config.toml, section [externe]).',
         }[p.etat] || 'En attente de la position et de la portée de saut.';
         ecrire('proches-resume', resume);
         remplir($('liste-proches'), (p.liste || []).map(s => ligneEtoile(s.nom, s.classe, s.distance, s.ravitaillable)));
@@ -674,6 +674,11 @@
             li.append(tete, pastilles);
             return li;
         }), 'Aucun astéroïde prospecté.');
+    }
+
+    /** EDSM, Spansh, Inara (externe.js). */
+    function rendreExterne() {
+        window.COVAS_EXTERNE?.rendre(etat.externe, etat.position.systeme, etat.exploration);
     }
 
     /** Matériaux d'ingénieur par catégorie, avec le filtre « presque pleins » (Backend/module/jeu/materiaux.py). */
@@ -1119,7 +1124,7 @@
         session: [rendrePosition],
         commandant: [rendreEntete, rendreCommandant],
         vaisseau: [rendreEntete, rendreVaisseau],
-        position: [rendreEntete, rendrePosition, rendreSurface, rendreExploration],
+        position: [rendreEntete, rendrePosition, rendreSurface, rendreExploration, rendreExterne],
         sol: [rendreSurface],
         chasse: [rendreChasse],
         pilotage: [rendrePilotage],
@@ -1137,6 +1142,7 @@
         commerce: [rendreCommerce],
         minage: [rendreMinage],
         materiaux: [rendreMateriaux],
+        externe: [rendreExterne],
     };
 
     function rendreTout() {
@@ -1365,6 +1371,17 @@
 
     /** Commande depuis un autre appareil sans code (PIN) : la fenêtre du code s'ouvre à la place. */
     const autorise = () => simulation || !window.COVAS_SECOND_ECRAN || window.COVAS_SECOND_ECRAN.autoriser();
+
+    /** Données externes (route Spansh, profil Inara, fiche EDSM) : le backend interroge Internet. */
+    function envoyerDemande(demande) {
+        if (simulation) {
+            window.COVAS_DEMO?.demande?.(demande);
+            return true;
+        }
+        if (!socket || socket.readyState !== WebSocket.OPEN || !autorise()) return false;
+        socket.send(JSON.stringify({ demande }));
+        return true;
+    }
 
     /** Message brut au backend (code du second écran). */
     function envoyerBrut(donnees) {
@@ -1674,6 +1691,8 @@
         setInterval(tic, 1000);
 
         window.COVAS_SECOND_ECRAN?.installer({ envoyer: envoyerBrut });
+        window.COVAS_EXTERNE?.installer({ creer, ecrire, remplir, creditsCourts, nombre, envoyerDemande,
+            lire: cle => document.querySelector(`[data-v="${cle}"]`)?.textContent || '' });
         rendreTout();
         if (MODE_APP) installerAccueil();
         else if (new URLSearchParams(location.search).has('demo') || location.protocol === 'https:') lancerSimulation();

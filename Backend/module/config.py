@@ -108,6 +108,19 @@ bromellite = 15
 # 1 = 300, 2 = 250, 3 = 200, 4 = 150, 5 = 100.
 seuil_presque_plein = 90  # % de la limite : annonce « stock presque plein » (puis « stock plein »)
 """,
+    "externe": """\
+[externe]
+# Données venues d'Internet. Le COVAS fonctionne sans : false coupe tout.
+actif = true
+edsm = true               # fiche du système (stations, corps, valeur) et systèmes à portée de saut
+spansh = true             # tracé de route neutron ou « galaxy plotter » depuis l'interface
+delai_secondes = 5        # attente maximale d'une réponse
+cache_heures = 12         # durée pendant laquelle une fiche EDSM est gardée sur le disque
+# Inara : seulement si tu mets ta clé (inara.cz > Settings > API key). Seul ton profil est lu,
+# 2 requêtes par minute au plus, jamais les prix du marché.
+inara_cle = ""
+inara_commandant = ""     # vide : le nom du commandant du jeu
+""",
 }
 
 DEFAUTS = {}

@@ -79,6 +79,11 @@
                     <p class="sous-titre" data-v="station-detail"></p>
                     <ul class="pastilles" id="pastilles-services"></ul>
                 </div>
+                <!-- Fiche EDSM du système (Backend/module/externe/edsm.py, externe.js) -->
+                <div class="fiche-edsm">
+                    <h3>EDSM <button type="button" class="petit" id="bouton-fiche-systeme" title="Stations, corps et valeur du système (EDSM)" aria-haspopup="dialog">Fiche</button></h3>
+                    <p class="sous-titre" data-v="edsm-resume">—</p>
+                </div>
             </section>
 
             <section data-mobile="navigation exploration" class="panneau grandit">
@@ -99,6 +104,11 @@
                         <p class="sous-titre"><span data-v="route-destination"></span><b data-v="route-pourcent"></b></p>
                         <div class="jauge" data-j="route"><i></i></div>
                         <p class="discret" data-v="route-detail"></p>
+                    </div>
+                    <!-- Route Spansh (Backend/module/externe/spansh.py, externe.js) -->
+                    <div class="ligne-spansh">
+                        <button type="button" class="petit" id="bouton-spansh" title="Route neutron ou galaxy plotter de Spansh" aria-haspopup="dialog">Spansh…</button>
+                        <span id="spansh-ligne" hidden>Prochain : <b data-v="spansh-prochain"></b> <button type="button" class="petit" id="spansh-copier" title="À coller dans la carte de la galaxie">Copier</button></span>
                     </div>
                     <ol class="liste defile etapes" id="liste-route"></ol>
                 </div>
@@ -131,6 +141,7 @@
             <section data-mobile="vaisseau" class="panneau">
                 <h2>Commandant</h2>
                 <dl class="fiche trois-colonnes" id="fiche-rangs"></dl>
+                <p class="sous-titre ligne-inara" id="ligne-inara" hidden><span data-v="inara-resume"></span> <a id="inara-lien" target="_blank" rel="noopener noreferrer" hidden>profil</a> <button type="button" class="petit" id="inara-actualiser" title="Relire le profil Inara (2 fois par minute au plus)">Actualiser</button></p>
                 <h3>Missions <span data-v="missions-nombre"></span></h3>
                 <ul class="liste defile courte" id="liste-missions"></ul>
             </section>
@@ -895,6 +906,46 @@
         <div class="reglages-panneau" data-panneau="atelier" role="tabpanel" hidden></div>
     </dialog>
 
+    <!-- ================= DONNÉES EXTERNES (externe.js) ================= -->
+    <dialog class="fenetre-info" id="fenetre-systeme" aria-labelledby="systeme-titre">
+        <header class="second-tete">
+            <h2 id="systeme-titre">Fiche EDSM <small data-v="edsm-systeme"></small></h2>
+            <div class="boutons-tete">
+                <button type="button" class="selecteur-mode" id="systeme-actualiser">Actualiser</button>
+                <button type="button" class="selecteur-mode" id="systeme-fermer">Fermer</button>
+            </div>
+        </header>
+        <p class="sous-titre" data-v="edsm-resume"></p>
+        <h3>Stations</h3>
+        <ul class="liste defile stations-edsm" id="edsm-stations"></ul>
+        <h3>Corps</h3>
+        <p data-v="edsm-corps"></p>
+        <h3>Valeur estimée</h3>
+        <p data-v="edsm-valeur"></p>
+    </dialog>
+
+    <dialog class="fenetre-info" id="fenetre-spansh" aria-labelledby="spansh-titre">
+        <header class="second-tete">
+            <h2 id="spansh-titre">Route Spansh</h2>
+            <button type="button" class="selecteur-mode" id="spansh-fermer">Fermer</button>
+        </header>
+        <form class="form-spansh" id="form-spansh" autocomplete="off">
+            <label>Destination <input id="spansh-destination" maxlength="80" placeholder="Nom du système" required></label>
+            <label>Tracé
+                <select id="spansh-type">
+                    <option value="neutron">Route neutron</option>
+                    <option value="galaxie">Galaxy plotter (carburant compris)</option>
+                </select>
+            </label>
+            <label id="spansh-efficacite-bloc" title="100 : le moins de sauts possible ; plus bas : moins de détours par les étoiles à neutrons">Efficacité <input id="spansh-efficacite" type="number" min="1" max="100" value="60"></label>
+            <button type="submit">Tracer</button>
+        </form>
+        <p class="sous-titre">Départ : le système actuel. Portée : celle du vaisseau, calculée d'après son FSD. Copie chaque système pour le coller dans la carte de la galaxie.</p>
+        <p data-v="spansh-statut"></p>
+        <ol class="liste defile etapes etapes-spansh" id="spansh-etapes"></ol>
+        <button type="button" class="selecteur-mode" id="spansh-effacer">Effacer la route</button>
+    </dialog>
+
     <!-- ================= SECOND ÉCRAN (second_ecran.js) =================
          Téléphone en portrait : une colonne, et ces onglets en bas de l'écran. Un onglet sans
          panneau (data-mobile) reste caché. -->
@@ -954,6 +1005,7 @@
     <script src="reglages_son.js"></script>
     <script src="reglages.js"></script>
     <script src="second_ecran.js"></script>
+    <script src="externe.js"></script>
     <script src="interface.js"></script>
 </body>
 </html>

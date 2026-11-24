@@ -131,7 +131,10 @@ window.COVAS_DEMO = (() => {
     let actionCourante = null;       // réponse de la simulation aux boutons de l'interface
     let questionCourante = null;     // réponse de la simulation aux phrases écrites au COVAS
 
+    let recevoirDemo = null;
+    let externeDemo = null;          // état externe de la démo (la fiche EDSM reste quand on trace une route)
     function demarrer(recevoir) {
+        recevoirDemo = recevoir;
         let identifiant = 0, minuteries = [], derniere = null;
         let etat, status;
 
@@ -304,6 +307,17 @@ window.COVAS_DEMO = (() => {
             };
             etat.exploration = explorationDemo();
             etat.carburant = carburantDemo(24.3, 7);
+            // Données externes (même forme que Backend/module/externe/service.py)
+            etat.externe = {
+                systeme: { etat: 'ok', systeme: 'Sol', connu: true, erreurs: [],
+                    stations: [{ nom: 'Abraham Lincoln', type: 'Orbis', plateforme: 'L', distance_ls: 497, services: ['Marché', 'Chantier naval', 'Équipement', 'Carburant', 'Réparation', 'Cartographie'] },
+                        { nom: 'Mars High', type: 'Orbis', plateforme: 'L', distance_ls: 723, services: ['Marché', 'Carburant', 'Réparation', 'Vista Genomics'] },
+                        { nom: 'Furukawa Enterprise', type: 'Avant-poste planétaire', plateforme: 'L', distance_ls: 157, services: ['Marché', 'Carburant'] }],
+                    corps: { total: 40, connus: 41, etoiles: 1, planetes: 9, posables: 21, terraformables: 1, notables: [{ nom: 'Earth', type: 'Earth-like world', distance_ls: 507 }] },
+                    valeur: { estimation: 1024710, estimation_carto: 3896040, precieux: [] } },
+                route: null, inara: null,
+            };
+            externeDemo = etat.externe;
             // Matériaux (même forme que Backend/module/jeu/materiaux.py, vue())
             const LIMITE = { 1: 300, 2: 250, 3: 200, 4: 150, 5: 100 };
             const mat = (nom, grade, quantite) => { const part = quantite / LIMITE[grade]; return { cle: nom, nom, grade, quantite, limite: LIMITE[grade], part, etat: part >= 1 ? 'plein' : part >= 0.9 ? 'presque' : 'ok' }; };
@@ -416,8 +430,16 @@ window.COVAS_DEMO = (() => {
 
     /** Bouton de l'interface pendant la simulation (aucune touche n'est envoyée). */
     const action = nom => actionCourante?.(nom);
+    /** Demande de données externes pendant la simulation : une route fictive, sans Internet. */
+    const demande = d => {
+        if (d.type !== 'spansh') return;
+        const etapesDemo = [['Sol', 0, 0, false], ["Joseph's Lighthouse", 696.7, 16, true], ['Synuefe XR-H d11-102', 432.1, 1, true], [d.destination || 'Colonia', 512.3, 9, false]]
+            .map(([systeme, distance, sauts, neutron]) => ({ systeme, distance, sauts, neutron, ravitaillable: null, ravitailler: false, carburant: null }));
+        recevoirDemo?.({ type: 'maj', section: 'externe', donnees: { ...(externeDemo || { systeme: { etat: 'attente' }, inara: null }),
+            route: { etat: 'ok', type: d.route || 'neutron', depart: 'Sol', arrivee: d.destination || 'Colonia', etapes: etapesDemo, sauts: 26, distance: 1641, portee: 31.42 } } });
+    };
     /** Phrase écrite au COVAS pendant la simulation. */
     const question = texte => questionCourante?.(texte);
 
-    return { demarrer, action, question };
+    return { demarrer, action, question, demande };
 })();

@@ -9,6 +9,7 @@ serveur_ws.py — Pont WebSocket entre le backend COVAS et l'interface web, et p
                            {"reglages": {...}, "rev": n} -> enregistré (reglages.py), puis
                            renvoyé à toutes les interfaces
                            {"pin": "4821"} -> autorise les commandes d'un autre appareil
+                           {"demande": {"type": "spansh", ...}} -> données externes (definir_demandes)
 
 Second écran (téléphone, tablette : voir second_ecran.py et data/config.toml [second_ecran]) :
 le serveur écoute alors sur toutes les cartes réseau, et le même port sert aussi les pages de
@@ -44,6 +45,7 @@ _garde = second_ecran.GardePin()
 _instantane = None     # fonction qui renvoie l'état complet, envoyé à chaque nouvelle interface
 _file_actions = None   # file asyncio des macros (fournie par main.py)
 _questions = None      # async fonction(texte) : phrase tapée dans l'interface (main.py)
+_demandes = None       # async fonction(demande) : route Spansh, profil Inara... (lecteur_logs.py)
 _taches = set()
 _programme = None      # nom du programme en cours (décollage, voyage...), None sinon
 _reseau = {"actif": False, "port": PORT, "adresses": []}    # second écran tel qu'il a démarré
@@ -54,6 +56,12 @@ def definir_questions(fonction):
     """Enregistre la fonction qui traite une phrase tapée dans l'interface."""
     global _questions
     _questions = fonction
+
+
+def definir_demandes(fonction):
+    """Enregistre la fonction qui traite {"demande": {...}} (données externes : Spansh, Inara...)."""
+    global _demandes
+    _demandes = fonction
 
 
 def definir_instantane(fonction):
@@ -231,6 +239,12 @@ async def _traiter_message(message, websocket=None):
         document, erreur = reglages.enregistrer(donnees["reglages"])
         await envoyer_donnees_web({"type": "reglages", "reglages": document,
                                    "rev": donnees.get("rev"), "erreur": erreur})
+        return
+    demande = donnees.get("demande")
+    if isinstance(demande, dict) and _demandes is not None:
+        tache = asyncio.create_task(_demandes(demande))      # Internet : jamais dans la réception
+        _taches.add(tache)
+        tache.add_done_callback(_taches.discard)
         return
     question = donnees.get("question")
     if isinstance(question, str) and question.strip() and _questions is not None:

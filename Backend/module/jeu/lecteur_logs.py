@@ -26,7 +26,8 @@ from datetime import datetime, timezone
 
 from module import config
 from module.jeu import chasse
-from module.jeu import edsm
+from module.externe import edsm
+from module.externe.service import ServiceExterne, etat_vierge as externe_vierge
 from module.jeu import exploration
 from module.jeu import route as navigation
 from module.dialogue import morceaux
@@ -38,7 +39,7 @@ from module.jeu.suivi_exploration import SuiviExploration
 from module.jeu.commerce import SuiviCommerce
 from module.jeu.prospection import Prospection
 from module.jeu.materiaux import SuiviMateriaux
-from module.interface.serveur_ws import definir_instantane, envoyer_donnees_web, programme_actuel
+from module.interface.serveur_ws import definir_demandes, definir_instantane, envoyer_donnees_web, programme_actuel
 
 # --- CHEMINS D'ACCÈS ---
 # Dossier standard du jeu. S'il a été déplacé, indique le bon chemin dans la
@@ -156,6 +157,7 @@ def _reinitialiser_etat():
         "commerce": _commerce.vue(),          # trajets et soute : module/jeu/commerce.py
         "minage": _prospection.vue(),         # prospecteurs : module/jeu/prospection.py
         "materiaux": _materiaux.vue(),        # matériaux d'ingénieur : module/jeu/materiaux.py
+        "externe": externe_vierge(),          # EDSM, Spansh, Inara : module/externe/
     })
 
 
@@ -455,6 +457,8 @@ def _equipement(e):
             if ingenierie else None,
         })
     ETAT["modules"] = {"liste": liste, "releve": e.get("timestamp")}
+    _dernier_loadout.clear()
+    _dernier_loadout.update(e)           # caractéristiques du FSD pour Spansh
     ETAT["chasse"]["profil"] = chasse.profil(liste)
     _reservoir.equipement(e)             # capacité, FSD et collecteur pour les alertes carburant
     _vue_carburant()
@@ -1542,6 +1546,50 @@ def _message_envoye(e):
 
 
 # =====================================================================
+#  DONNÉES EXTERNES (module/externe/) : EDSM, Spansh, Inara
+# =====================================================================
+_dernier_loadout = {}
+
+
+async def _publier_externe(etat):
+    ETAT["externe"] = etat
+    await _publier("externe")
+
+
+_externe = ServiceExterne(reglages=lambda: config.section("externe"), publier=_publier_externe)
+_derniere_fiche = {"systeme": None}
+
+
+def _edsm_actif():
+    reglages = config.section("externe")
+    return SYSTEMES_PROCHES_ACTIF and reglages["actif"] and reglages["edsm"]
+
+
+def _demander_fiche_systeme():
+    """Arrivée dans un système : sa fiche EDSM, en tâche de fond (une fois par système)."""
+    systeme = ETAT["position"]["systeme"]
+    if not systeme or systeme == _derniere_fiche["systeme"] or not SYSTEMES_PROCHES_ACTIF:
+        return
+    _derniere_fiche["systeme"] = systeme
+    _externe.lancer(_externe.systeme(systeme))
+
+
+async def demande_interface(demande):
+    """Demande venue de l'interface ({"demande": {...}}, voir serveur_ws.py)."""
+    genre = demande.get("type")
+    if genre == "spansh":
+        await _externe.tracer(demande, ETAT["position"]["systeme"], dict(_dernier_loadout))
+    elif genre == "spansh_effacer":
+        _externe.oublier_route()
+        await _publier_externe(_externe.etat)
+    elif genre == "inara":
+        await _externe.inara(ETAT["commandant"]["nom"], forcer=True)
+    elif genre == "edsm":
+        _derniere_fiche["systeme"] = None
+        _demander_fiche_systeme()
+
+
+# =====================================================================
 #  SYSTÈMES À PORTÉE DE SAUT (EDSM)
 # =====================================================================
 _taches = set()
@@ -1551,7 +1599,7 @@ _derniere_recherche_proches = None
 def _demander_systemes_proches():
     global _derniere_recherche_proches
     systeme, portee = ETAT["position"]["systeme"], ETAT["vaisseau"]["portee_saut"]
-    if not SYSTEMES_PROCHES_ACTIF:
+    if not _edsm_actif():
         ETAT["proches"]["etat"] = "desactive"
         return
     if not systeme or not portee or (systeme, round(portee)) == _derniere_recherche_proches:
@@ -1567,7 +1615,9 @@ async def _chercher_systemes_proches(systeme, portee):
                        "total": 0, "liste": []}
     await _publier("proches")
     try:
-        trouves = await asyncio.to_thread(edsm.systemes_dans_un_rayon, systeme, portee)
+        delai = config.valeur("externe", "delai_secondes")
+        trouves = await asyncio.wait_for(asyncio.to_thread(edsm.systemes_dans_un_rayon, systeme, portee, delai),
+                                         delai * 2 + 2)
         resultat = {"etat": "ok", "total": len(trouves), "liste": trouves[:SYSTEMES_PROCHES_MAX]}
     except Exception as erreur:
         print(f"[EDSM] Systèmes proches indisponibles : {erreur!r}")
@@ -1644,6 +1694,9 @@ async def _traiter_ligne(ligne, en_direct):
         await _dire(cle)
     if sections & {"position", "vaisseau"}:
         _demander_systemes_proches()
+        _demander_fiche_systeme()
+    if evenement.get("event") == "LoadGame":
+        _externe.lancer(_externe.inara(ETAT["commandant"]["nom"]))
 
 
 # =====================================================================
@@ -1750,6 +1803,7 @@ async def _relire_journaux_precedents(dernier, combien=2):
 async def surveiller_logs(tts_queue, generer_replique_func):
     _voix["file"], _voix["generer"] = tts_queue, generer_replique_func
     definir_instantane(_instantane)
+    definir_demandes(demande_interface)
     try:
         await _ouvrir_suivis()
     except Exception as erreur:
@@ -1781,6 +1835,8 @@ async def surveiller_logs(tts_queue, generer_replique_func):
                           f"({len(HISTORIQUE)} événements en mémoire).")
                     await envoyer_donnees_web(_instantane())
                     _demander_systemes_proches()
+                    _demander_fiche_systeme()
+                    _externe.lancer(_externe.inara(ETAT["commandant"]["nom"]))
 
             # Rien de neuf : le jeu a-t-il ouvert un journal plus récent ?
             # (jeu lancé après le COVAS, nouvelle session, ou journal scindé en plusieurs parties)

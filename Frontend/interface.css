@@ -417,6 +417,34 @@ h3 span { color: var(--creme); text-transform: none; letter-spacing: 0; }
 .progression-route .sous-titre b { font-weight: 400; color: var(--creme); }
 .progression-route .discret { margin: 0.25rem 0 0; color: var(--marron-3); font-size: 0.8rem; }
 .progression-route[data-etat="arrivee"] .jauge i { background: var(--jaune); }
+/* Données externes : fiche EDSM, route Spansh, profil Inara */
+.petit { padding: 0.1rem 0.5rem; font: inherit; font-size: 0.76rem; letter-spacing: 0.04em; text-transform: none; color: var(--creme); background: var(--accent-doux); border: 1px solid var(--trait); cursor: pointer; }
+.petit:hover { background: var(--accent); color: var(--noir); }
+.fiche-edsm h3, .ligne-spansh { display: flex; align-items: center; gap: 0.6rem; }
+.fiche-edsm .sous-titre { margin: 0.2rem 0 0; }
+.ligne-spansh { margin: 0.1rem 0 0.4rem; flex-wrap: wrap; }
+.ligne-spansh b { color: var(--creme); font-weight: 400; }
+.ligne-inara a { color: var(--ambre); }
+.fenetre-info { width: min(52rem, 94vw); max-height: 88vh; padding: 1.2rem 1.4rem 1.3rem; color: var(--ambre); background: var(--fond); border: 1px solid var(--trait); border-left: 3px solid var(--accent); font-family: var(--police); overflow: auto; }
+.fenetre-info::backdrop { background: rgba(7, 4, 3, 0.8); }
+.fenetre-info h2 { margin: 0; font-size: 1.15rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); }
+.fenetre-info h2 small { letter-spacing: 0.05em; text-transform: none; color: var(--creme); }
+.fenetre-info h3 { margin: 0.9rem 0 0.3rem; font-size: 0.85rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+.fenetre-info .boutons-tete { display: flex; gap: 0.5rem; }
+.fenetre-info .liste { max-height: 40vh; }
+.stations-edsm li { display: block; padding: 0.3rem 0.2rem; }
+.stations-edsm .tete { display: flex; gap: 0.5rem; align-items: baseline; }
+.stations-edsm .tete .nom { flex: 1; }
+.stations-edsm .plateforme { width: 1.4rem; text-align: center; font-weight: 600; color: var(--noir); background: var(--ambre); }
+.stations-edsm .pastilles { margin-top: 0.2rem; }
+.form-spansh { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: end; }
+.form-spansh label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.82rem; }
+.form-spansh :is(input, select, button) { min-height: 2.4rem; padding: 0 0.6rem; font: inherit; color: var(--creme); background: var(--noir); border: 1px solid var(--trait); }
+.form-spansh #spansh-destination { min-width: 16rem; }
+.form-spansh #spansh-efficacite { width: 5rem; }
+.form-spansh button { cursor: pointer; background: var(--accent); color: var(--noir); }
+.etapes-spansh li { align-items: center; }
+
 /* Commerce : profit en vert pâle, perte en rouge */
 [data-signe="positif"] { color: #b9e07a !important; }
 [data-signe="negatif"] { color: var(--rouge) !important; }
