@@ -1,6 +1,6 @@
 # Script des répliques du COVAS
 
-**156 répliques** au total.
+**161 répliques** au total.
 
 Chaque ligne = un fichier.
 
@@ -146,6 +146,20 @@ un, le rapport reste à l'écran et la réplique ci-dessus l'annonce.
 | `kill_confirme` | `data/son/Alertes/Kill1.mp3` | Cible détruite. |
 | `kill_confirme` | `data/son/Alertes/Kill2.mp3` | Ennemi éliminé. Joli tir, commandant. |
 | `kill_confirme` | `data/son/Alertes/Kill3.mp3` | Une menace de moins. |
+
+## Voyage (route tracée)
+
+Le COVAS dit d'abord la phrase avec le nombre de sauts, assemblée avec les morceaux du studio
+(groupe « Route » : « Route tracée : » + douze + « sauts. »). Ces répliques fixes, sans nombre,
+la remplacent tant qu'un morceau manque, et pour le dernier saut et l'arrivée.
+
+| Quand | Fichier | Phrase à dire |
+|---|---|---|
+| `route_tracee` | `data/son/Route/RouteTracee.mp3` | Route tracée, commandant. |
+| `route_mi_parcours` | `data/son/Route/MiParcours.mp3` | Nous sommes à mi-parcours, commandant. |
+| `route_sauts_restants` | `data/son/Route/PlusQueQuelques.mp3` | Plus que quelques sauts avant la destination. |
+| `route_dernier_saut` | `data/son/Route/DernierSaut.mp3` | Dernier saut avant la destination, commandant. |
+| `route_arrivee` | `data/son/Route/Arrivee.mp3` | Nous sommes arrivés à destination, commandant. |
 
 ## Refus et erreurs
 

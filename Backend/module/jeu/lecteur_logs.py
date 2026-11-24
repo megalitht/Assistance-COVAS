@@ -19,7 +19,6 @@ import asyncio
 import glob
 import itertools
 import json
-import math
 import os
 import time
 from collections import deque
@@ -29,11 +28,12 @@ from module import config
 from module.jeu import chasse
 from module.jeu import edsm
 from module.jeu import exploration
+from module.jeu import route as navigation
 from module.dialogue import morceaux
 from module.jeu import sol
 from module.jeu.avaries import nommer
 from module.jeu.carburant import Reservoir
-from module.interface.serveur_ws import definir_instantane, envoyer_donnees_web
+from module.interface.serveur_ws import definir_instantane, envoyer_donnees_web, programme_actuel
 
 # --- CHEMINS D'ACCÈS ---
 # Dossier standard du jeu. S'il a été déplacé, indique le bon chemin dans la
@@ -66,7 +66,6 @@ DRAPEAU_BOUCLIERS = 1 << 3
 DRAPEAU_SURCHAUFFE = 1 << 20
 DRAPEAU_DANS_LE_VAISSEAU = 1 << 24
 
-CLASSES_RAVITAILLABLES = set("KGBFOAM")
 EMPLACEMENTS_COSMETIQUES = ("paintjob", "decal", "shipname", "shipid", "shipkit", "bobble",
                             "weaponcolour", "enginecolour", "vesselvoice", "stringlights")
 
@@ -85,10 +84,21 @@ _identifiants = itertools.count(1)
 _carnet = exploration.Carnet()   # corps du système et données à vendre
 _veille = chasse.Veille()        # pilotes déjà annoncés
 _reservoir = Reservoir()         # carburant : sauts possibles et alertes (module/jeu/carburant.py)
+_annonceur = navigation.Annonceur()   # annonces du voyage (module/jeu/route.py)
+_saut_en_cours = {"vers": None}  # système visé par le saut hyperespace en cours (StartJump)
+PROGRAMME_VOYAGE = "Voyage automatique"   # actions.py annonce lui-même l'arrivée de ce programme
 _corps_annonces = set()          # (système, corps, "valeur" ou "bio") déjà dits à voix haute
 # en_direct : le journal existant a été relu, ce qui arrive maintenant se passe sous nos yeux.
 # Avant, les modules de suivi mettent leur état à jour sans rien annoncer.
 _suivi = {"en_direct": False}
+
+
+def _route_vierge():
+    """Route tracée : étapes (NavRoute.json), position dans la liste, dernier FSDTarget (prochain)
+    et le résumé de module/jeu/route.py (sauts et distance restants, progression)."""
+    return {"etapes": [], "distance_totale": 0, "indice_actuel": None, "prochain": None,
+            "sauts_restants": None, "nombre_sauts": 0, "distance_restante": None,
+            "distance_parcourue": None, "progression": None, "destination": None, "source": None}
 
 
 def _combat_vierge():
@@ -114,12 +124,12 @@ def _reinitialiser_etat():
                      "boucliers": None, "portee_saut": None, "soute_max": None,
                      "carburant_max": None, "reserve_max": None, "rachat": None, "masse": None,
                      "verriere_brisee": False, "chasseur": None},
-        "position": {"systeme": None, "coordonnees": None, "corps": None, "allegeance": None,
+        "position": {"systeme": None, "adresse": None, "coordonnees": None, "corps": None, "allegeance": None,
                      "economie": None, "gouvernement": None, "securite": None,
                      "population": None, "faction": None, "amarre": False, "station": None,
                      "corps_total": None, "corps_scannes": 0, "dernier_saut": None},
         "status": {},
-        "route": {"etapes": [], "distance_totale": 0, "indice_actuel": None, "prochain": None},
+        "route": _route_vierge(),
         "modules": {"liste": [], "releve": None},
         "soute": {"total": 0, "inventaire": []},
         "cible": {"verrouillee": False},
@@ -253,11 +263,7 @@ def _loc(e, cle):
 
 
 def _ravitaillable(classe):
-    return (classe or "").split("_")[0] in CLASSES_RAVITAILLABLES
-
-
-def _distance(a, b):
-    return math.dist(a, b) if a and b else 0.0
+    return navigation.ravitaillable(classe)
 
 
 # =====================================================================
@@ -929,7 +935,7 @@ def _maj_systeme(e):
     faction = e.get("SystemFaction") or {}
     ancien = ETAT["position"]["systeme"]
     ETAT["position"].update(
-        systeme=e.get("StarSystem"), coordonnees=e.get("StarPos"),
+        systeme=e.get("StarSystem"), adresse=e.get("SystemAddress"), coordonnees=e.get("StarPos"),
         allegeance=e.get("SystemAllegiance") or None, economie=_loc(e, "SystemEconomy"),
         gouvernement=_loc(e, "SystemGovernment"), securite=_loc(e, "SystemSecurity"),
         population=e.get("Population"), faction=faction.get("Name"),
@@ -953,10 +959,15 @@ def _fiche_station(e, plateforme=None):
 
 
 def _maj_progression_route():
+    """Position dans la route, sauts et distance restants (module/jeu/route.py)."""
     route = ETAT["route"]
-    noms = [etape["systeme"] for etape in route["etapes"]]
-    systeme = ETAT["position"]["systeme"]
-    route["indice_actuel"] = noms.index(systeme) if systeme in noms else None
+    position = ETAT["position"]
+    route["indice_actuel"] = navigation.indice(route["etapes"], position["systeme"], position["adresse"])
+    resume = navigation.resume(route["etapes"], route["indice_actuel"], route["prochain"])
+    if resume is None:
+        resume = {k: v for k, v in _route_vierge().items()
+                  if k not in ("etapes", "distance_totale", "indice_actuel", "prochain")}
+    route.update(resume)
 
 
 @_sur("Location")
@@ -979,11 +990,59 @@ def _saut(e):
         ETAT["position"]["station"] = _fiche_station(e)
     distance = f" — {e['JumpDist']:.1f} al" if e.get("JumpDist") else ""
     _note(e, "navigation", f"Arrivée dans {e.get('StarSystem', '?')}{distance}", "succes")
+    if e.get("event") == "FSDJump":
+        _saut_en_cours["vers"] = None
+        _annoncer_voyage(e)
+
+
+# Annonce du voyage -> (réplique fixe : sans nombre, ou dite s'il manque un morceau ; texte affiché)
+ANNONCES_ROUTE = {
+    "route_tracee": ("route_tracee", "Route tracée vers {destination} — {sauts}, {distance}"),
+    "mi_parcours": ("route_mi_parcours", "Mi-parcours — encore {sauts}, {distance}"),
+    "sauts_restants": ("route_sauts_restants", "Plus que {sauts} avant {destination} ({distance})"),
+    "dernier_saut": ("route_dernier_saut", "Dernier saut avant {destination}"),
+    "arrivee": ("route_arrivee", "Destination atteinte : {destination}"),
+}
+
+
+def _texte_voyage(annonce, sauts, destination, distance):
+    pluriel = "s" if sauts > 1 else ""
+    return ANNONCES_ROUTE[annonce][1].format(
+        destination=destination or "la destination", sauts=f"{sauts} saut{pluriel}",
+        distance=f"{distance:.1f} al" if distance is not None else "distance inconnue")
+
+
+def _voix_voyage(annonce, sauts):
+    """Phrase assemblée (« Il reste » + nombre + « sauts ») ; sans nombre, la réplique fixe."""
+    secours = ANNONCES_ROUTE[annonce][0]
+    ids = morceaux.pour_route(annonce, sauts)
+    return {"morceaux": ids, "secours": secours} if ids else secours
+
+
+def _annoncer_voyage(e):
+    """Après un saut : mi-parcours, N sauts restants, dernier saut, arrivée (une fois chacun)."""
+    route = ETAT["route"]
+    reglages = config.section("route")
+    destination = route["destination"] or _annonceur.arrivee_attendue
+    for annonce, sauts in _annonceur.arrivee(route, reglages, systeme=e.get("StarSystem")):
+        restante = 0.0 if annonce == "arrivee" else route["distance_restante"]
+        _note(e, "navigation", _texte_voyage(annonce, sauts, destination, restante),
+              "succes" if annonce == "arrivee" else "info")
+        if not reglages["annonces"]:
+            continue
+        if annonce == "arrivee" and programme_actuel() == PROGRAMME_VOYAGE:
+            continue                  # le voyage automatique annonce déjà son arrivée
+        voix = _voix_voyage(annonce, sauts)
+        if isinstance(voix, dict):
+            _parle_morceaux(voix["morceaux"], voix["secours"])
+        else:
+            _parle(voix)
 
 
 @_sur("StartJump")
 def _depart_saut(e):
     if e.get("JumpType") == "Hyperspace":
+        _saut_en_cours["vers"] = e.get("StarSystem")
         classe = f" (classe {e['StarClass']})" if e.get("StarClass") else ""
         _note(e, "navigation", f"Saut hyperespace vers {e.get('StarSystem', '?')}{classe}")
     else:
@@ -996,12 +1055,15 @@ def _cible_fsd(e):
         "systeme": e.get("Name"), "classe": e.get("StarClass"),
         "ravitaillable": _ravitaillable(e.get("StarClass")),
         "sauts_restants": e.get("RemainingJumpsInRoute")}
+    _maj_progression_route()          # le décompte du jeu recoupe celui de la route
     _touche("route")
 
 
 @_sur("NavRouteClear")
 def _route_effacee(e):
-    ETAT["route"] = {"etapes": [], "distance_totale": 0, "indice_actuel": None, "prochain": None}
+    # Le jeu efface la route au départ du dernier saut : l'arrivée sera annoncée au FSDJump
+    _annonceur.route_effacee(_saut_en_cours["vers"])
+    ETAT["route"] = _route_vierge()
     _vue_carburant()
     _touche("route")
     _note(e, "navigation", "Route effacée")
@@ -1081,9 +1143,10 @@ _ALERTES_URGENTES = {"route", "etoile"}
 def _etapes_a_venir():
     """Étapes de la route encore à atteindre (la première est le prochain saut)."""
     route = ETAT["route"]
-    if not route["etapes"] or route["indice_actuel"] is None:
+    sauts = route.get("sauts_restants")
+    if not route["etapes"] or not sauts:
         return []
-    return route["etapes"][route["indice_actuel"] + 1:]
+    return route["etapes"][-sauts:]
 
 
 def _vue_carburant(signaler=True):
@@ -1642,19 +1705,29 @@ class _FichierSurveille:
 #  TÂCHE 2 — FICHIERS AUXILIAIRES
 # =====================================================================
 def _maj_route(donnees):
-    etapes, precedent, total = [], None, 0.0
-    for saut in donnees.get("Route") or []:
-        position = saut.get("StarPos")
-        distance = _distance(precedent, position)
-        total += distance
-        etapes.append({"systeme": saut.get("StarSystem"), "classe": saut.get("StarClass"),
-                       "distance": round(distance, 2),
-                       "ravitaillable": _ravitaillable(saut.get("StarClass"))})
-        precedent = position
-    ETAT["route"].update(etapes=etapes, distance_totale=round(total, 2))
+    """NavRoute.json réécrit par le jeu (route tracée, recalculée ou effacée)."""
+    etapes = navigation.lire_navroute(donnees)
+    ETAT["route"].update(etapes=etapes, distance_totale=round(sum(e["distance"] for e in etapes), 2))
     if not etapes:
         ETAT["route"]["prochain"] = None
     _maj_progression_route()
+
+
+async def _annoncer_route_tracee():
+    """Après une lecture de NavRoute.json : une nouvelle destination est annoncée (une fois)."""
+    route = ETAT["route"]
+    if _annonceur.nouvelle_route(route["etapes"], parler=_suivi["en_direct"]) != "route_tracee":
+        return
+    sauts = route["sauts_restants"] or route["nombre_sauts"]
+    await annoncer(_texte_voyage("route_tracee", sauts, route["destination"], route["distance_restante"]),
+                   categorie="navigation")
+    if not config.valeur("route", "annonces"):
+        return
+    voix = _voix_voyage("route_tracee", sauts)
+    if isinstance(voix, dict):
+        await _dire_morceaux(voix["morceaux"], voix["secours"])
+    else:
+        await _dire(voix)
 
 
 def _maj_puissances(donnees):
@@ -1684,7 +1757,8 @@ async def surveiller_fichiers_auxiliaires():
                     continue
                 mettre_a_jour(donnees)
                 await _publier(section)
-                if section == "route":          # nouvelle route : le carburant suffit-il ?
+                if section == "route":          # nouvelle route : annonce, et le carburant suffit-il ?
+                    await _annoncer_route_tracee()
                     await _controler_carburant()
             except Exception as erreur:
                 print(f"[Logs] Erreur sur {os.path.basename(fichier.chemin)} : {erreur!r}")

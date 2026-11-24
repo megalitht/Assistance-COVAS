@@ -81,10 +81,14 @@ _FIXES = {
         ("AnalyseTerminee", "Analyse terminée."), ("ValeurDe", "Valeur :"),
         ("AvecBonus", "avec le bonus du premier pas."),
     ],
+    "Route": [
+        ("RouteTracee", "Route tracée :"), ("MiParcours", "Mi-parcours."), ("IlReste", "Il reste"),
+        ("Saut", "saut."), ("Sauts", "sauts."),
+    ],
 }
 _GROUPES = {"Rapport": "Rapport d'avarie", "Modules": "Noms des modules", "Nombres": "Nombres",
             "Heure": "Heure", "Date": "Date", "Position": "Position",
-            "Valeurs": "Primes et valeurs"}
+            "Valeurs": "Primes et valeurs", "Route": "Route"}
 
 
 def nombre(n, feminin=False):
@@ -167,6 +171,8 @@ def catalogue():
         ajouter("Position", _ident("Position", nom), texte, "le nom exact reste à l'écran")
     for nom, texte in _FIXES["Valeurs"]:
         ajouter("Valeurs", _ident("Valeurs", nom), texte, "primes, valeur des planètes et de la vie")
+    for nom, texte in _FIXES["Route"]:
+        ajouter("Route", _ident("Route", nom), texte, "« Route tracée : douze sauts. », « Il reste cinq sauts. »")
     return lignes
 
 
@@ -254,6 +260,20 @@ def pour_bio(bio):
     v = lambda nom: _ident("Valeurs", nom)
     ids = [v("VieDetectee"), *montant(bio["max_bonus"])]
     return ids + ([PAUSE, v("PremierPas")] if bio.get("bonus") else [])
+
+
+def pour_route(annonce, sauts):
+    """« Route tracée : douze sauts. », « Mi-parcours. Il reste six sauts. », « Il reste cinq sauts. »
+    None pour une annonce sans nombre (dernier saut, arrivée) : la réplique fixe est dite."""
+    r = lambda nom: _ident("Route", nom)
+    if annonce not in ("route_tracee", "mi_parcours", "sauts_restants") or not 0 < sauts <= 999:
+        return None
+    nombre = [*_entier(sauts), r("Saut" if sauts == 1 else "Sauts")]
+    if annonce == "route_tracee":
+        return [r("RouteTracee"), *nombre]
+    if annonce == "mi_parcours":
+        return [r("MiParcours"), PAUSE, r("IlReste"), *nombre]
+    return [r("IlReste"), *nombre]
 
 
 def pour_analyse(total, bonus):

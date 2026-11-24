@@ -53,6 +53,14 @@ secours_par_saut = 5.0
 # étoile récupérable si le vaisseau a un collecteur). Besoin estimé multiplié par cette marge.
 marge_route = 1.1         # 1.1 = 10 % de sécurité
 """,
+    "route": """\
+[route]
+# Annonces pendant un voyage tracé dans la carte de la galaxie :
+# route tracée, mi-parcours, sauts restants, dernier saut, arrivée.
+annonces = true           # false : la route reste à l'écran, sans annonce vocale
+sauts_restants = 5        # « Il reste 5 sauts » quand il en reste ce nombre (0 : jamais)
+sauts_min_mi_parcours = 6 # pas d'annonce de mi-parcours pour une route plus courte
+""",
 }
 
 DEFAUTS = {}
@@ -97,23 +105,26 @@ def _fusionner(lu, erreurs):
     for section, contenu in lu.items():
         if section not in DEFAUTS:
             erreurs.append(f"section [{section}] inconnue, ignorée")
-            continue
-        if not isinstance(contenu, dict):
+        elif not isinstance(contenu, dict):
             erreurs.append(f"[{section}] n'est pas une section, ignorée")
-            continue
-        for cle, valeur in contenu.items():
-            if cle not in DEFAUTS[section]:
-                erreurs.append(f"{section}.{cle} : réglage inconnu, ignoré")
-                continue
-            defaut = DEFAUTS[section][cle]
-            if (section, cle) in LIBRES and isinstance(valeur, dict):
-                valeurs[section][cle] = _table_libre(defaut, valeur, f"{section}.{cle}", erreurs)
-            elif _meme_type(defaut, valeur):
-                valeurs[section][cle] = float(valeur) if isinstance(defaut, float) else valeur
-            else:
-                erreurs.append(f"{section}.{cle} : valeur invalide ({valeur!r}), "
-                               f"valeur par défaut utilisée ({defaut!r})")
+        else:
+            _fusionner_section(section, contenu, valeurs[section], erreurs)
     return valeurs
+
+
+def _fusionner_section(section, contenu, valeurs, erreurs):
+    for cle, valeur in contenu.items():
+        if cle not in DEFAUTS[section]:
+            erreurs.append(f"{section}.{cle} : réglage inconnu, ignoré")
+            continue
+        defaut = DEFAUTS[section][cle]
+        if (section, cle) in LIBRES and isinstance(valeur, dict):
+            valeurs[cle] = _table_libre(defaut, valeur, f"{section}.{cle}", erreurs)
+        elif _meme_type(defaut, valeur):
+            valeurs[cle] = float(valeur) if isinstance(defaut, float) else valeur
+        else:
+            erreurs.append(f"{section}.{cle} : valeur invalide ({valeur!r}), "
+                           f"valeur par défaut utilisée ({defaut!r})")
 
 
 def _lire():

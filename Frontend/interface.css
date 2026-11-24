@@ -409,6 +409,14 @@ h3 span { color: var(--creme); text-transform: none; letter-spacing: 0; }
 .etoile[data-classe="K"] { background: #ff9d3c; }
 .etoile[data-classe="M"] { background: #ff6034; }
 .plein { color: var(--jaune); font-size: 0.74rem; }
+/* Étoile récupérable (KGBFOAM) : une goutte de carburant */
+.icone-plein { flex: none; width: 0.85rem; height: 0.85rem; fill: var(--jaune); align-self: center; filter: drop-shadow(0 0 3px rgba(255, 210, 63, 0.45)); }
+.progression-route { margin: 0.6rem 0 0.5rem; }
+.progression-route .sous-titre { display: flex; justify-content: space-between; gap: 0.6rem; margin: 0 0 0.25rem; }
+.progression-route .sous-titre span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.progression-route .sous-titre b { font-weight: 400; color: var(--creme); }
+.progression-route .discret { margin: 0.25rem 0 0; color: var(--marron-3); font-size: 0.8rem; }
+.progression-route[data-etat="arrivee"] .jauge i { background: var(--jaune); }
 
 .onglets, .filtres { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .onglets button, .filtres button { padding: 0.2rem 0.65rem; font-size: 0.82rem; color: var(--ambre); }

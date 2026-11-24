@@ -158,6 +158,14 @@
     const DOMAINES = { Combat: 'Combat', Trade: 'Commerce', Explore: 'Exploration', Exobiologist: 'Exobiologie', Soldier: 'Mercenaire', Federation: 'Fédération', Empire: 'Empire' };
     const CATEGORIES = { tous: 'Tout', covas: 'COVAS', navigation: 'Navigation', combat: 'Combat', station: 'Station', exploration: 'Exploration', soute: 'Soute', vaisseau: 'Vaisseau', systeme: 'Système' };
     const CHASSEUR = { deploye: 'Déployé', a_bord: 'À bord', detruit: 'Détruit' };
+    const TYPES_ETOILES = {
+        O: 'Étoile bleue (O)', B: 'Étoile bleu-blanc (B)', A: 'Étoile blanche (A)', F: 'Étoile jaune-blanc (F)',
+        G: 'Étoile jaune (G)', K: 'Étoile orange (K)', M: 'Naine rouge (M)', L: 'Naine brune (L)', T: 'Naine brune (T)',
+        Y: 'Naine brune (Y)', TTS: 'Étoile T Tauri', AeBe: 'Étoile de Herbig Ae/Be', N: 'Étoile à neutrons',
+        H: 'Trou noir', SupermassiveBlackHole: 'Trou noir supermassif', X: 'Exotique',
+        A_BlueWhiteSuperGiant: 'Supergéante blanche (A)', F_WhiteSuperGiant: 'Supergéante blanche (F)',
+        M_RedSuperGiant: 'Supergéante rouge (M)', M_RedGiant: 'Géante rouge (M)', K_OrangeGiant: 'Géante orange (K)',
+    };
 
     // ----------------------------------------------------------------
     //  ÉTAT
@@ -204,6 +212,7 @@
         }
         return credits(n);
     };
+    const decimales = (x, n) => x.toLocaleString('fr-FR', { minimumFractionDigits: n, maximumFractionDigits: n });
     const fourchette = (a, b) => (a === b ? creditsCourts(b) : `${creditsCourts(a).replace(/ cr$/, '')} à ${creditsCourts(b)}`);
 
     function ecrire(cle, texte) {
@@ -322,24 +331,67 @@
         }
     }
 
+    /** Type d'étoile en clair (classe de NavRoute.json, FSDTarget ou EDSM). */
+    function typeEtoile(classe) {
+        const c = (classe || '').split('_')[0];
+        if (!c || c === '?') return 'Étoile inconnue';
+        const nom = TYPES_ETOILES[classe] || TYPES_ETOILES[c];
+        if (nom) return nom;
+        if (c.startsWith('D')) return `Naine blanche (${c})`;
+        if (c.startsWith('W')) return `Wolf-Rayet (${c})`;
+        if (c.startsWith('C') || c === 'MS' || c === 'S') return `Étoile carbonée (${c})`;
+        return `Étoile de classe ${c}`;
+    }
+
+    function iconePlein() {
+        const ns = 'http://www.w3.org/2000/svg', texte = 'Étoile récupérable : on peut y écoper du carburant';
+        const svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('class', 'icone-plein');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', texte);
+        const titre = document.createElementNS(ns, 'title');
+        titre.textContent = texte;
+        const usage = document.createElementNS(ns, 'use');
+        usage.setAttribute('href', '#icone-carburant');
+        svg.append(titre, usage);
+        return svg;
+    }
+
     function ligneEtoile(nom, classe, distance, ravitaillable) {
         const li = creer('li');
         const pastille = creer('span', 'etoile', (classe || '?').split('_')[0].slice(0, 3));
         pastille.dataset.classe = (classe || '?')[0];
+        pastille.title = typeEtoile(classe);
         li.append(pastille, creer('span', 'nom', nom));
-        if (ravitaillable) li.append(creer('span', 'plein', 'carburant'));
+        if (ravitaillable) li.append(iconePlein());
         li.append(creer('span', 'valeur', distance != null ? distance.toFixed(1) + ' al' : ''));
         return li;
     }
 
     function rendreRoute() {
-        const { etapes = [], indice_actuel: indice, prochain } = etat.route;
-        const depuis = indice ?? 0;
-        const restantes = etapes.slice(depuis + 1);
+        const r = etat.route, { etapes = [], indice_actuel: indice, prochain } = r;
+        // Sauts et distance restants : calculés par Backend/module/jeu/route.py (décompte du jeu compris)
+        const sauts = r.sauts_restants ?? (etapes.length ? etapes.length - 1 - (indice ?? 0) : prochain?.sauts_restants);
+        const restantes = sauts ? etapes.slice(-sauts) : [];
         const suivant = restantes[0] || (prochain && { systeme: prochain.systeme, classe: prochain.classe });
-        ecrire('prochain-saut', suivant ? suivant.systeme : '—');
-        ecrire('sauts-restants', etapes.length ? String(restantes.length) : (prochain?.sauts_restants != null ? String(prochain.sauts_restants) : '—'));
-        ecrire('distance-restante', etapes.length ? restantes.reduce((t, e) => t + (e.distance || 0), 0).toFixed(1) + ' al' : '—');
+        const restante = r.distance_restante ?? (etapes.length ? restantes.reduce((t, e) => t + (e.distance || 0), 0) : null);
+        ecrire('prochain-saut', sauts === 0 ? 'Arrivé' : suivant ? suivant.systeme : '—');
+        ecrire('sauts-restants', sauts != null ? String(sauts) : '—');
+        ecrire('distance-restante', restante != null ? decimales(restante, 1) + ' al' : '—');
+
+        // Barre de progression (distance parcourue sur la distance totale)
+        const bloc = $('progression-route');
+        bloc.hidden = etapes.length < 2 || r.progression == null;
+        if (!bloc.hidden) {
+            bloc.dataset.etat = sauts === 0 ? 'arrivee' : '';
+            ecrire('route-destination', `→ ${r.destination || etapes[etapes.length - 1].systeme}`);
+            ecrire('route-pourcent', Math.round(r.progression * 100) + ' %');
+            jauge('route', r.progression, 'ok');
+            const total = r.nombre_sauts ?? etapes.length - 1;
+            ecrire('route-detail', `${decimales(r.distance_parcourue ?? 0, 1)} / ${decimales(r.distance_totale ?? 0, 1)} al · saut ${total - (sauts ?? total)} sur ${total}`
+                + (r.source === 'jeu' ? ' · décompte du jeu' : ''));
+        }
 
         remplir($('liste-route'), etapes.map((e, i) => {
             const li = ligneEtoile(e.systeme, e.classe, i ? e.distance : null, e.ravitaillable);
@@ -804,7 +856,6 @@
     // ----------------------------------------------------------------
     const distanceLisible = m => (m == null ? '—' : m >= 1000
         ? (m / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' km' : Math.round(m) + ' m');
-    const decimales = (x, n) => x.toLocaleString('fr-FR', { minimumFractionDigits: n, maximumFractionDigits: n });
     const angle = x => (x == null ? '—' : decimales(x, 4) + '°');
 
     /** Où se trouve le cap visé par rapport au regard du commandant. */

@@ -244,7 +244,7 @@ class Configuration(unittest.TestCase):
 
     def test_section_manquante_ajoutee_sans_toucher_au_reste(self):
         self.ecrire("# mon commentaire\n[autre]\nx = 1\n")
-        self.assertEqual(config.preparer(), ["carburant"])
+        self.assertEqual(config.preparer(), list(config.SECTIONS))
         with open(config.CHEMIN, encoding="utf-8") as f:
             texte = f.read()
         self.assertTrue(texte.startswith("# mon commentaire\n[autre]\nx = 1\n"))

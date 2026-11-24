@@ -44,6 +44,16 @@ window.COVAS_DEMO = (() => {
         ['Ross 128', 'M', 8.71], ['Procyon', 'F', 9.93], ['Luyten\'s Star', 'M', 1.2], ['Sirius', 'A', 6.5]];
 
     const etapes = () => ROUTE.map(([systeme, classe, distance]) => ({ systeme, classe, distance, ravitaillable: 'KGBFOAM'.includes(classe) }));
+    // Même résumé que Backend/module/jeu/route.py (sauts et distance restants, progression)
+    const routeDemo = indice => {
+        const liste = etapes(), total = liste.reduce((t, e) => t + e.distance, 0);
+        const restante = liste.slice(indice + 1).reduce((t, e) => t + e.distance, 0);
+        return {
+            etapes: liste, distance_totale: total, indice_actuel: indice, sauts_restants: liste.length - 1 - indice,
+            nombre_sauts: liste.length - 1, distance_restante: restante, distance_parcourue: total - restante,
+            progression: (total - restante) / total, destination: liste[liste.length - 1].systeme, source: 'route',
+        };
+    };
 
     // Vaisseaux présentés à tour de rôle : un changement au chantier naval à chaque fin de boucle
     const VITRINE = [
@@ -284,7 +294,7 @@ window.COVAS_DEMO = (() => {
                 vaisseau: { type, modele, nom, immat, coque: 1, boucliers: true, portee_saut: 31.42, soute_max: 32, carburant_max: 32, reserve_max: 0.63, rachat: 6234110, verriere_brisee: false, chasseur: null },
                 position: { systeme: 'Sol', corps: 'Mars', allegeance: 'Federation', economie: 'Raffinerie', gouvernement: 'Démocratie', securite: 'Sécurité haute', population: 22780919531, faction: 'Mother Gaia', amarre: false, station: null, corps_total: 40, corps_scannes: 12 },
                 status,
-                route: { etapes: etapes(), distance_totale: 43.1, indice_actuel: 0, prochain: { systeme: 'Alpha Centauri', classe: 'G', ravitaillable: true, sauts_restants: 7 } },
+                route: { ...routeDemo(0), prochain: { systeme: 'Alpha Centauri', classe: 'G', ravitaillable: true, sauts_restants: 6 } },
                 modules: { liste: MODULES(), releve: new Date().toISOString() },
                 soute: { total: 14, inventaire: [{ nom: 'Or', quantite: 8, vole: false }, { nom: 'Painite', quantite: 4, vole: false }, { nom: 'Générateurs', quantite: 2, vole: true }] },
                 cible: { verrouillee: false },
@@ -310,7 +320,7 @@ window.COVAS_DEMO = (() => {
                 [7, () => majStatus({ flags: D.vaisseau | D.boucliers | D.saut })],
                 [10, () => {
                     maj('position', { systeme: 'Alpha Centauri', corps: 'Alpha Centauri A', allegeance: 'Federation', economie: 'Industrie', gouvernement: 'Corporation', securite: 'Sécurité moyenne', population: 825000, faction: 'Hutton Truckers', corps_total: 17, corps_scannes: 0 });
-                    maj('route', { indice_actuel: 1, prochain: { systeme: 'Wolf 359', classe: 'M', ravitaillable: true, sauts_restants: 6 } });
+                    maj('route', { ...routeDemo(1), prochain: { systeme: 'Wolf 359', classe: 'M', ravitaillable: true, sauts_restants: 5 } });
                     majStatus({ flags: D.vaisseau | D.boucliers | D.supercroisiere | D.fsdRefroid, carburant: 21.9, destination: 'Wolf 359' });
                     maj('carburant', carburantDemo(21.9, 6));
                     note('FSDJump', 'navigation', 'Arrivée dans Alpha Centauri — 4,4 al', 'succes');

@@ -281,6 +281,26 @@
         "mots_cles": [],
         "reponses": ["data/son/Alertes/CarburantEtoile.mp3"]
     },
+    "route_tracee": {
+        "mots_cles": [],
+        "reponses": ["data/son/Route/RouteTracee.mp3"]
+    },
+    "route_mi_parcours": {
+        "mots_cles": [],
+        "reponses": ["data/son/Route/MiParcours.mp3"]
+    },
+    "route_sauts_restants": {
+        "mots_cles": [],
+        "reponses": ["data/son/Route/PlusQueQuelques.mp3"]
+    },
+    "route_dernier_saut": {
+        "mots_cles": [],
+        "reponses": ["data/son/Route/DernierSaut.mp3"]
+    },
+    "route_arrivee": {
+        "mots_cles": [],
+        "reponses": ["data/son/Route/Arrivee.mp3"]
+    },
     "verriere_brisee": {
         "mots_cles": [],
         "reponses": [

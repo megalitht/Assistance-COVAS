@@ -59,6 +59,11 @@ async def envoyer_donnees_web(donnees: dict):
                          return_exceptions=True)
 
 
+def programme_actuel():
+    """Nom du programme en cours (décollage, voyage...), None sinon."""
+    return _programme
+
+
 def signaler_programme(nom):
     """Programme en cours (son nom, ou None) : l'interface n'affiche Stop que dans ce cas.
     À appeler depuis la boucle asyncio. Gardé ici pour le renvoyer à chaque nouvelle interface."""
