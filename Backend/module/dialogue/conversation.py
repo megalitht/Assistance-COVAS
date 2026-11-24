@@ -43,6 +43,7 @@ from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 
+from module import config
 from module.dialogue import morceaux
 from module.son import sons
 from module.dialogue.comprehension import (SEUIL_APPROCHE, meilleure_approche, normaliser, present,
@@ -236,10 +237,13 @@ CONDITIONS = {
     "coque_critique": (lambda e, p: _coque(e) is not None and _coque(e) <= 0.4,
                        "coque sous 40 %"),
     "carburant_plein": (lambda e, p: (_part_carburant(e) or 0) >= 0.95, "réservoir plein"),
-    "carburant_bas": (lambda e, p: _part_carburant(e) is not None and _part_carburant(e) < 0.25,
-                      "carburant sous 25 %"),
+    # Mêmes seuils que les alertes (data/config.toml, section [carburant])
+    "carburant_bas": (lambda e, p: _part_carburant(e) is not None
+                      and _part_carburant(e) < config.valeur("carburant", "seuil_bas") / 100,
+                      "carburant sous le seuil bas"),
     "carburant_critique": (lambda e, p: _part_carburant(e) is not None
-                           and _part_carburant(e) < 0.10, "carburant sous 10 %"),
+                           and _part_carburant(e) < config.valeur("carburant", "seuil_critique") / 100,
+                           "carburant sous le seuil critique"),
     "besoin_ravitaillement": (lambda e, p: _besoin_ravitaillement(e),
                               "carburant ou réparations à faire"),
     "services_ravitaillement": (lambda e, p: _services_ravitaillement(e),

@@ -71,7 +71,7 @@ window.COVAS_DEMO = (() => {
         },
     };
     // interface.html?demo=vrs ou ?demo=pied : aperçu de la vue de surface
-    const SCENE = ['vrs', 'pied', 'nomade', 'chasseur', 'chasse', 'explo'].find(s => s === new URLSearchParams(location.search).get('demo')) || null;
+    const SCENE = ['vrs', 'pied', 'nomade', 'chasseur', 'chasse', 'explo', 'carburant'].find(s => s === new URLSearchParams(location.search).get('demo')) || null;
 
     // Corps d'exemple pour les vues exploration, Nomad et pied à terre
     const biologie = (signaux, lignes, bonus) => {
@@ -99,6 +99,15 @@ window.COVAS_DEMO = (() => {
             systeme: 'Alpha Centauri', corps, dernier: 7, total: corps.reduce((t, c) => t + c.valeur, 0), total_carto: corps.reduce((t, c) => t + c.valeur_carto, 0),
             bio_min: corps.reduce((t, c) => t + (c.bio?.min_bonus || 0), 0), bio_max: corps.reduce((t, c) => t + (c.bio?.max_bonus || 0), 0), premieres: 2,
             session: { a_vendre: 8420300, corps: 23, exo: 9245000, exo_especes: 1, vendu: 0, exo_vendu: 0 },
+        };
+    };
+    // Réservoir (même forme que Backend/module/jeu/carburant.py, Reservoir.vue)
+    const carburantDemo = (niveau, restants = 6, capacite = 32, conso = 2.4) => {
+        const part = niveau / capacite, besoin = restants * conso;
+        return {
+            niveau, capacite, part, etat: part < 0.1 ? 'critique' : part < 0.25 ? 'bas' : 'ok', seuil_bas: 0.25, seuil_critique: 0.1,
+            conso, source: 'historique', historique: 10, sauts: Math.floor(niveau / conso), fsd_max: 5.2, collecteur: true,
+            route: restants ? { cible: 'destination', sauts: restants, besoin: Math.round(besoin * 10) / 10, suffisant: niveau >= besoin * 1.1 } : null,
         };
     };
     const verdictDemo = (code, libelle, tirer, conseil, prime = 0, extra = {}) => ({ code, libelle, tirer, conseil, prime, joueur: false, dangereux: false, gros: prime >= 500000, ...extra });
@@ -238,6 +247,19 @@ window.COVAS_DEMO = (() => {
             minuteries = [setInterval(() => majStatus({ cap: (status.cap + 4) % 360, altitude: Math.max(40, status.altitude - 25) }), 1200)];
         }
 
+        /** ?demo=carburant : le réservoir se vide (orange sous 25 %, rouge clignotant sous 10 %), puis le plein. */
+        function scenarioCarburant() {
+            Object.assign(status, { flags: D.vaisseau | D.boucliers | D.supercroisiere, carburant: 12 });
+            etat.carburant = carburantDemo(12);
+            recevoir({ type: 'etat', etat, historique: [] });
+            minuteries = [setInterval(() => {
+                const niveau = status.carburant <= 1 ? 32 : Math.round((status.carburant - 1.5) * 10) / 10;
+                majStatus({ carburant: niveau });
+                recevoir({ type: 'maj', section: 'carburant', donnees: (etat.carburant = carburantDemo(niveau)) });
+                if (niveau === 32) note('RefuelAll', 'station', 'Ravitaillement +31,0 t — 1 550 cr');
+            }, 1500)];
+        }
+
         function scenarioExplo() {
             Object.assign(status, { flags: D.vaisseau | D.boucliers | D.supercroisiere });
             recevoir({ type: 'etat', etat, historique: [] });
@@ -271,11 +293,13 @@ window.COVAS_DEMO = (() => {
                 proches: { etat: 'ok', systeme: 'Sol', rayon: 31.42, total: 7, liste: [['Alpha Centauri', 'G', 4.38], ['Barnard\'s Star', 'M', 5.95], ['Luhman 16', 'L', 6.57], ['Wolf 359', 'M', 7.78], ['Lalande 21185', 'M', 8.29], ['Sirius', 'A', 8.59], ['Duamta', 'M', 9.88]].map(([nom, classe, distance]) => ({ nom, classe, distance, ravitaillable: 'KGBFOAM'.includes(classe) })) },
             };
             etat.exploration = explorationDemo();
+            etat.carburant = carburantDemo(24.3, 7);
             etat.chasse = { actif: false, profil: { armes: 6, scanner: true, pret: true }, eliminations: 0, gains: 0, meilleure: 0, a_encaisser: {}, a_encaisser_total: 0 };
             etat.pilotage = { genre: null, modele: null, coque: null };
             if (SCENE === 'chasse' || SCENE === 'chasseur') { scenarioChasse(); return; }
             if (SCENE === 'nomade') { scenarioNomade(); return; }
             if (SCENE === 'explo') { scenarioExplo(); return; }
+            if (SCENE === 'carburant') { scenarioCarburant(); return; }
             if (SCENE) { scenarioSurface(); return; }
             recevoir({ type: 'etat', etat, historique: [] });
             note('LoadGame', 'systeme', 'Session ouverte — CMDR Démo', 'succes');
@@ -288,6 +312,7 @@ window.COVAS_DEMO = (() => {
                     maj('position', { systeme: 'Alpha Centauri', corps: 'Alpha Centauri A', allegeance: 'Federation', economie: 'Industrie', gouvernement: 'Corporation', securite: 'Sécurité moyenne', population: 825000, faction: 'Hutton Truckers', corps_total: 17, corps_scannes: 0 });
                     maj('route', { indice_actuel: 1, prochain: { systeme: 'Wolf 359', classe: 'M', ravitaillable: true, sauts_restants: 6 } });
                     majStatus({ flags: D.vaisseau | D.boucliers | D.supercroisiere | D.fsdRefroid, carburant: 21.9, destination: 'Wolf 359' });
+                    maj('carburant', carburantDemo(21.9, 6));
                     note('FSDJump', 'navigation', 'Arrivée dans Alpha Centauri — 4,4 al', 'succes');
                     note('FSSDiscoveryScan', 'exploration', 'Balayage du système — 17 corps détectés');
                 }],

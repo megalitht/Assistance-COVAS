@@ -36,6 +36,7 @@ from module.son.voix import generer_et_jouer_voix
 from module.son import sons
 from module.dialogue import conversation
 from module.son import ecoute as pause_ecoute
+from module import config
 from module.interface import reglages
 from module.interface import serveur_ws
 from module.interface.serveur_ws import demarrer_serveur_web
@@ -111,6 +112,11 @@ def initialiser(progression=None):
     """Charge les répliques, le modèle vocal (GPU) et calibre le micro.
     `progression(texte, etat)` : rappel facultatif pour l'écran d'accueil."""
     global barks, MOTS_REVEIL, PROMPT_WHISPER, modele_vocal, reconnaisseur, micro_calibre
+
+    # --- CONFIGURATION (data/config.toml, modifiable à la main) ---
+    ecrites = config.preparer()
+    if ecrites:
+        t.ok(f"Configuration : {', '.join(ecrites)} ajouté(s) à {config.CHEMIN}")
 
     # --- CHARGEMENT DES RÉPLIQUES ET PARAMÈTRES (BARKS) ---
     _signaler(progression, "Indexation des répliques")

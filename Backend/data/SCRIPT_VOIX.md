@@ -1,6 +1,6 @@
 # Script des répliques du COVAS
 
-**153 répliques** au total.
+**156 répliques** au total.
 
 Chaque ligne = un fichier.
 
@@ -139,6 +139,9 @@ un, le rapport reste à l'écran et la réplique ci-dessus l'annonce.
 | `alerte_surchauffe` | `data/son/Alertes/Surchauffe2.mp3` | Température critique, commandant. |
 | `alerte_carburant` | `data/son/Alertes/Carburant1.mp3` | Niveau de carburant bas. |
 | `alerte_carburant` | `data/son/Alertes/Carburant2.mp3` | Commandant, il faut faire le plein rapidement. |
+| `alerte_carburant_critique` | `data/son/Alertes/CarburantCritique.mp3` | Carburant critique, commandant ! Il faut écoper ou ravitailler sans attendre. |
+| `alerte_carburant_route` | `data/son/Alertes/CarburantRoute.mp3` | Commandant, le carburant ne suffira pas pour finir la route. |
+| `alerte_carburant_etoile` | `data/son/Alertes/CarburantEtoile.mp3` | Attention, nous n'atteindrons pas la prochaine étoile écopable avec ce carburant. |
 | `verriere_brisee` | `data/son/Alertes/VerriereBrisee.mp3` | Verrière brisée ! Oxygène de secours activé. |
 | `kill_confirme` | `data/son/Alertes/Kill1.mp3` | Cible détruite. |
 | `kill_confirme` | `data/son/Alertes/Kill2.mp3` | Ennemi éliminé. Joli tir, commandant. |

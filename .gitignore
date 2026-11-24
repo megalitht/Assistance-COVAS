@@ -15,3 +15,8 @@ Backend/tests/_script_essai.md
 Backend/data/covas.log
 Backend/data/fenetre/
 Backend/data/studio.log
+
+# Réglages et données personnels (PIN, clé Inara, historique de jeu)
+Backend/data/config.toml
+Backend/data/config.toml.tmp
+Backend/data/suivi/

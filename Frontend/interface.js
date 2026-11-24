@@ -168,6 +168,7 @@
         cible: {}, combat: {}, missions: { liste: [] }, proches: { liste: [] },
         sol: { vaisseau: {} }, pilotage: {},
         chasse: { profil: {}, a_encaisser: {} }, exploration: { corps: [], session: {} },
+        carburant: {},
     };
     let journal = [];                 // lignes du journal de bord, la plus récente en premier
     let filtreJournal = 'tous';
@@ -374,8 +375,7 @@
         window.COVAS_REGLAGES?.majVaisseau(v.type);
         tous('.vital:not([data-libre])').forEach(el => { el.dataset.etat = el.classList.contains('bouclier') ? (boucliers === false ? 'critique' : '') : palier(v.coque); });
 
-        ecrire('carburant', s.carburant != null ? `${s.carburant.toFixed(1)}${v.carburant_max ? ' / ' + v.carburant_max : ''} t` : '—');
-        jauge('carburant', v.carburant_max ? s.carburant / v.carburant_max : 0, s.carburant != null && v.carburant_max && s.carburant / v.carburant_max < 0.25 ? 'critique' : 'ok');
+        rendreCarburant();
         const charge = s.soute ?? etat.soute.total;
         ecrire('soute-charge', v.soute_max != null ? `${nombre(charge || 0)} / ${v.soute_max} t` : '—');
         jauge('soute', v.soute_max ? (charge || 0) / v.soute_max : 0, 'ok');
@@ -387,6 +387,29 @@
         ecrire('groupe-tir', s.groupe_tir != null ? String.fromCharCode(65 + s.groupe_tir) : '—');
         ecrire('verriere', v.verriere_brisee ? 'Brisée' : 'Intacte');
         ecrire('chasseur', CHASSEUR[v.chasseur] || 'Aucun');
+    }
+
+    /** Réservoir : orange sous le seuil bas, rouge clignotant sous le seuil critique (seuils de
+        Backend/data/config.toml, envoyés par le backend), et le nombre de sauts estimé. */
+    function rendreCarburant() {
+        const c = etat.carburant || {}, s = etat.status, v = etat.vaisseau;
+        const niveau = s.carburant ?? c.niveau, capacite = c.capacite ?? v.carburant_max;
+        const part = niveau != null && capacite ? niveau / capacite : null;
+        const bas = c.seuil_bas ?? 0.25, critique = c.seuil_critique ?? 0.1;
+        const etatJauge = part == null ? 'ok' : part < critique ? 'alarme' : part < bas ? 'attention' : 'ok';
+        ecrire('carburant', niveau != null ? `${niveau.toFixed(1)}${capacite ? ' / ' + capacite : ''} t` : '—');
+        jauge('carburant', part ?? 0, etatJauge);
+        tous('[data-bloc="carburant"]').forEach(el => { el.dataset.etat = etatJauge; });
+
+        let note = c.sauts != null ? `≈ ${nombre(c.sauts)} saut${c.sauts > 1 ? 's' : ''}` : '';
+        if (c.sauts != null && c.source === 'fsd') note += ' (au pire)';
+        if (c.route && !c.route.suffisant) note = c.route.cible === 'etoile' ? 'Trop juste : étoile' : 'Trop juste : route';
+        ecrire('carburant-sauts', note);
+        tous('[data-v="carburant-sauts"]').forEach(el => {
+            el.dataset.alerte = c.route && !c.route.suffisant ? 'oui' : '';
+            el.title = c.conso ? `Consommation ≈ ${c.conso.toLocaleString('fr-FR')} t par saut (${{ historique: `moyenne des ${c.historique} derniers sauts`, fsd: 'maximum du FSD, faute d\'historique', config: 'valeur de secours de config.toml' }[c.source] || ''})`
+                + (c.route ? ` · route : ≈ ${c.route.besoin.toLocaleString('fr-FR')} t pour ${c.route.sauts} saut(s)` : '') : '';
+        });
     }
 
     function rendreStatus() {
@@ -938,6 +961,7 @@
         combat: [rendreCombat],
         missions: [rendreMissions],
         proches: [rendreProches],
+        carburant: [rendreCarburant],
     };
 
     function rendreTout() {

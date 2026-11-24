@@ -4,6 +4,7 @@ lecteur_logs.py — Lecture des fichiers écrits par Elite Dangerous.
 Trois tâches asynchrones, lancées par main.py :
   - surveiller_logs()                 : Journal.*.log (événements : sauts, dégâts, kills...)
   - surveiller_status_json()          : Status.json   (instantané : pips, carburant, drapeaux)
+                                        + alertes carburant (module/jeu/carburant.py)
   - surveiller_fichiers_auxiliaires() : NavRoute.json, ModulesInfo.json, Cargo.json
 
 Chaque tâche met à jour ETAT (dernier état connu, rangé par sections) et prévient
@@ -24,12 +25,14 @@ import time
 from collections import deque
 from datetime import datetime, timezone
 
+from module import config
 from module.jeu import chasse
 from module.jeu import edsm
 from module.jeu import exploration
 from module.dialogue import morceaux
 from module.jeu import sol
 from module.jeu.avaries import nommer
+from module.jeu.carburant import Reservoir
 from module.interface.serveur_ws import definir_instantane, envoyer_donnees_web
 
 # --- CHEMINS D'ACCÈS ---
@@ -60,7 +63,6 @@ DELAIS_REPLIQUES = {"chasse_recherchee": 2, "chasse_clean": 2, "chasse_autorite"
 
 # Drapeaux de Status.json utilisés ici (la liste complète est décodée par l'interface)
 DRAPEAU_BOUCLIERS = 1 << 3
-DRAPEAU_CARBURANT_BAS = 1 << 19
 DRAPEAU_SURCHAUFFE = 1 << 20
 DRAPEAU_DANS_LE_VAISSEAU = 1 << 24
 
@@ -82,7 +84,11 @@ HISTORIQUE = deque(maxlen=TAILLE_HISTORIQUE)
 _identifiants = itertools.count(1)
 _carnet = exploration.Carnet()   # corps du système et données à vendre
 _veille = chasse.Veille()        # pilotes déjà annoncés
+_reservoir = Reservoir()         # carburant : sauts possibles et alertes (module/jeu/carburant.py)
 _corps_annonces = set()          # (système, corps, "valeur" ou "bio") déjà dits à voix haute
+# en_direct : le journal existant a été relu, ce qui arrive maintenant se passe sous nos yeux.
+# Avant, les modules de suivi mettent leur état à jour sans rien annoncer.
+_suivi = {"en_direct": False}
 
 
 def _combat_vierge():
@@ -124,6 +130,7 @@ def _reinitialiser_etat():
         "chasse": chasse.vierge(),            # mode chasseur de primes : voir module/jeu/chasse.py
         "exploration": _carnet.vue(),         # valeur des corps : voir module/jeu/exploration.py
         "pilotage": _pilotage_vierge(),
+        "carburant": _reservoir.vue([], config.section("carburant")),   # voir module/jeu/carburant.py
     })
 
 
@@ -262,18 +269,32 @@ _dernier_son = {}
 _cles_sans_son = set()
 
 
-async def _dire(cle):
+def _devant(file, element):
+    """Met une annonce en tête de la file vocale : elle sera dite juste après la phrase en cours.
+    asyncio.Queue n'a pas d'ajout en tête : on ajoute normalement (compteurs et réveil du lecteur
+    corrects), puis on fait tourner sa liste interne d'un cran."""
+    file.put_nowait(element)
+    attente = getattr(file, "_queue", None)
+    if hasattr(attente, "rotate"):
+        attente.rotate(1)
+
+
+async def _dire(cle, urgent=False, secours=None):
+    """Dit une réplique de barks.json. urgent : passe devant les annonces en attente et n'est
+    jamais écartée quand la file est chargée. secours : clé jouée si `cle` n'a pas encore de son."""
     if not _voix["generer"]:
         return
     maintenant = time.monotonic()
     delai = DELAIS_REPLIQUES.get(cle, DELAI_ENTRE_REPLIQUES)
     if maintenant - _derniere_replique.get(cle, -1e9) < delai:
         return
-    if cle in DELAIS_REPLIQUES and _voix["file"].qsize() >= FILE_MAX_ANNONCES:
+    if not urgent and cle in DELAIS_REPLIQUES and _voix["file"].qsize() >= FILE_MAX_ANNONCES:
         return
     _derniere_replique[cle] = maintenant
 
     chemin_audio = await _voix["generer"](cle)
+    if not chemin_audio and secours:
+        chemin_audio = await _voix["generer"](secours)
     if not chemin_audio:
         if cle not in _cles_sans_son:
             _cles_sans_son.add(cle)
@@ -282,7 +303,10 @@ async def _dire(cle):
     if maintenant - _dernier_son.get(chemin_audio, -1e9) < min(delai, DELAI_MEME_SON):
         return
     _dernier_son[chemin_audio] = maintenant
-    await _voix["file"].put(chemin_audio)
+    if urgent:
+        _devant(_voix["file"], chemin_audio)
+    else:
+        await _voix["file"].put(chemin_audio)
 
 
 async def _dire_morceaux(ids, secours):
@@ -411,6 +435,8 @@ def _equipement(e):
         })
     ETAT["modules"] = {"liste": liste, "releve": e.get("timestamp")}
     ETAT["chasse"]["profil"] = chasse.profil(liste)
+    _reservoir.equipement(e)             # capacité, FSD et collecteur pour les alertes carburant
+    _vue_carburant()
     _touche("vaisseau", "modules", "chasse")
 
 
@@ -945,7 +971,9 @@ def _saut(e):
     if e.get("event") == "FSDJump":
         _fin_chasse(e)
         _piloter(None)
+        _reservoir.saut(e)               # carburant consommé : moyenne des derniers sauts
     _maj_systeme(e)
+    _vue_carburant()
     ETAT["position"]["dernier_saut"] = e.get("JumpDist")
     if e.get("Docked"):
         ETAT["position"]["station"] = _fiche_station(e)
@@ -974,6 +1002,7 @@ def _cible_fsd(e):
 @_sur("NavRouteClear")
 def _route_effacee(e):
     ETAT["route"] = {"etapes": [], "distance_totale": 0, "indice_actuel": None, "prochain": None}
+    _vue_carburant()
     _touche("route")
     _note(e, "navigation", "Route effacée")
 
@@ -1032,8 +1061,64 @@ def _surcharge_fsd(e):
 
 @_sur("FuelScoop")
 def _collecte_carburant(e):
+    _reservoir.mesurer(e.get("Total"))
+    _vue_carburant()
     _note(e, "navigation", f"Carburant collecté — réservoir à {e.get('Total', 0):.1f} t",
           fusion=True)
+
+
+# ---------- Carburant (module/jeu/carburant.py) ----------
+# Annonce -> (réplique, gravité dans le journal de bord). « route » et « etoile » sont urgentes.
+ALERTES_CARBURANT = {
+    "route": ("alerte_carburant_route", "alerte"),
+    "etoile": ("alerte_carburant_etoile", "alerte"),
+    "critique": ("alerte_carburant_critique", "alerte"),
+    "bas": ("alerte_carburant", "attention"),
+}
+_ALERTES_URGENTES = {"route", "etoile"}
+
+
+def _etapes_a_venir():
+    """Étapes de la route encore à atteindre (la première est le prochain saut)."""
+    route = ETAT["route"]
+    if not route["etapes"] or route["indice_actuel"] is None:
+        return []
+    return route["etapes"][route["indice_actuel"] + 1:]
+
+
+def _vue_carburant(signaler=True):
+    """Recalcule ce que l'interface affiche ; True si quelque chose a changé.
+    signaler : la section part avec l'événement du journal en cours (gestionnaires @_sur)."""
+    vue = _reservoir.vue(_etapes_a_venir(), config.section("carburant"))
+    if vue == ETAT["carburant"]:
+        return False
+    ETAT["carburant"] = vue
+    if signaler:
+        _touche("carburant")
+    return True
+
+
+def _texte_alerte_carburant(nom, vue):
+    niveau, route = vue["niveau"] or 0, vue["route"] or {}
+    if nom in ("route", "etoile"):
+        but = "finir la route" if nom == "route" else "atteindre la prochaine étoile récupérable"
+        return (f"Carburant insuffisant pour {but} : ≈ {route.get('besoin', 0):.1f} t pour "
+                f"{route.get('sauts', '?')} saut(s), {niveau:.1f} t à bord")
+    sauts = f" (≈ {vue['sauts']} saut(s))" if vue["sauts"] is not None else ""
+    return f"Carburant {'critique' if nom == 'critique' else 'bas'} — {_pourcent(vue['part'])}{sauts}"
+
+
+async def _controler_carburant():
+    """Après chaque relevé du réservoir ou changement de route : interface, puis alertes."""
+    reglages = config.section("carburant")
+    _reservoir.nombre_sauts = reglages["sauts_moyenne"]
+    annonces = _reservoir.controler(_etapes_a_venir(), reglages, parler=_suivi["en_direct"])
+    if _vue_carburant(signaler=False):
+        await _publier("carburant")
+    for nom in annonces:
+        cle, gravite = ALERTES_CARBURANT[nom]
+        await annoncer(_texte_alerte_carburant(nom, ETAT["carburant"]), gravite, categorie="navigation")
+        await _dire(cle, urgent=nom in _ALERTES_URGENTES, secours="alerte_carburant")
 
 
 # ---------- Stations ----------
@@ -1493,6 +1578,7 @@ async def surveiller_logs(tts_queue, generer_replique_func):
                     continue
                 if rattrapage:
                     rattrapage = False
+                    _suivi["en_direct"] = True
                     print(f"[Logs] État du vaisseau reconstruit, suivi en direct "
                           f"({len(HISTORIQUE)} événements en mémoire).")
                     await envoyer_donnees_web(_instantane())
@@ -1517,6 +1603,7 @@ async def surveiller_logs(tts_queue, generer_replique_func):
                 if not plus_recent and not attente_signalee:
                     attente_signalee = True
                     premiere_ouverture = False     # le prochain journal sera lu en direct
+                    _suivi["en_direct"] = True
                     print("[Logs] Aucun journal Elite Dangerous trouvé : en attente du jeu...")
 
             await asyncio.sleep(0.5)   # Polling léger, zéro impact CPU
@@ -1597,6 +1684,8 @@ async def surveiller_fichiers_auxiliaires():
                     continue
                 mettre_a_jour(donnees)
                 await _publier(section)
+                if section == "route":          # nouvelle route : le carburant suffit-il ?
+                    await _controler_carburant()
             except Exception as erreur:
                 print(f"[Logs] Erreur sur {os.path.basename(fichier.chemin)} : {erreur!r}")
         await asyncio.sleep(1.0)   # Check toutes les secondes, très léger
@@ -1652,11 +1741,16 @@ async def surveiller_status_json():
                     if exo and etait_libre is False and exo["libre"]:   # assez loin : prélèvement possible
                         await _dire("exo_distance_ok")
 
+                # Carburant : relevé seulement à bord du vaisseau (en VRS, Status.json donne
+                # le réservoir du VRS). Les seuils de config.toml remplacent le voyant
+                # « carburant bas » du jeu, qui ferait une seconde annonce.
+                if drapeaux & DRAPEAU_DANS_LE_VAISSEAU:
+                    _reservoir.mesurer(carburant.get("FuelMain"))
+                await _controler_carburant()
+
                 # Alertes vocales : seulement quand le drapeau vient de s'allumer sous nos yeux
                 if drapeaux_precedents is not None:
                     apparus = drapeaux & ~drapeaux_precedents
-                    if apparus & DRAPEAU_CARBURANT_BAS:
-                        await _dire("alerte_carburant")
                     if apparus & DRAPEAU_SURCHAUFFE:
                         await _dire("alerte_surchauffe")
                 drapeaux_precedents = drapeaux

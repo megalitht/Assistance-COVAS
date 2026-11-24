@@ -269,6 +269,18 @@
             "data/son/Alertes/Carburant1.mp3"
         ]
     },
+    "alerte_carburant_critique": {
+        "mots_cles": [],
+        "reponses": ["data/son/Alertes/CarburantCritique.mp3"]
+    },
+    "alerte_carburant_route": {
+        "mots_cles": [],
+        "reponses": ["data/son/Alertes/CarburantRoute.mp3"]
+    },
+    "alerte_carburant_etoile": {
+        "mots_cles": [],
+        "reponses": ["data/son/Alertes/CarburantEtoile.mp3"]
+    },
     "verriere_brisee": {
         "mots_cles": [],
         "reponses": [

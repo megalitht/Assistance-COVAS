@@ -607,6 +607,16 @@ body[data-mode="combat"] .holo-legende span { color: #9c4a36; }
 .jauge i { display: block; height: 100%; width: 0; background: var(--orange); box-shadow: 0 0 0.6rem var(--lueur); transition: width 0.5s; }
 .jauge[data-etat="attention"] i { background: var(--jaune); }
 .jauge[data-etat="critique"] i { background: var(--rouge); }
+/* Carburant : ambre au repos, orange sous le seuil bas, rouge clignotant sous le seuil critique */
+[data-bloc="carburant"] .jauge i { background: var(--ambre); box-shadow: 0 0 0.6rem rgba(255, 177, 99, 0.45); }
+[data-bloc="carburant"][data-etat="attention"] .jauge i { background: var(--orange); box-shadow: 0 0 0.8rem var(--lueur); }
+[data-bloc="carburant"][data-etat="attention"] b { color: var(--orange); }
+[data-bloc="carburant"][data-etat="alarme"] .jauge i { background: var(--rouge); box-shadow: 0 0 0.8rem rgba(255, 58, 28, 0.7); animation: clignote 0.8s steps(2) infinite; }
+[data-bloc="carburant"][data-etat="alarme"] b { color: var(--rouge); animation: clignote 0.8s steps(2) infinite; }
+/* Sous le titre de la jauge (et non sous la barre) : les barres restent alignées */
+.jauge-note { display: block; font-size: 0.78rem; letter-spacing: 0; text-transform: none; color: var(--ambre); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jauge-note:empty { display: none; }
+.jauge-note[data-alerte="oui"] { color: var(--rouge); }
 .bouclier .jauge i { background: var(--glace); box-shadow: 0 0 0.6rem rgba(159, 220, 255, 0.5); }
 #cible-fiche .jauge-bloc { margin: 0.2rem 0; }
 
@@ -963,6 +973,9 @@ body.secoue .vue-combat { animation: secousse 0.3s; }
     .hologramme .bouclier-anneau.effondrement { animation: effondrement-anneau 1.3s ease-out !important; }
     .hologramme.touche .impact circle { animation: onde 0.9s ease-out !important; }
     .hologramme.touche .impact circle + circle { animation-delay: 0.18s !important; }
+    /* Réservoir sous le seuil critique : c'est une alerte, elle clignote toujours */
+    [data-bloc="carburant"][data-etat="alarme"] .jauge i,
+    [data-bloc="carburant"][data-etat="alarme"] b { animation: clignote 0.8s steps(2) infinite !important; }
     /* Écran d'accueil de l'application : l'allumage du COVAS est le moment fort, il joue toujours */
     .anneau-tirets { animation: accueil-rotation 24s linear infinite !important; }
     .accueil[data-etat="activation"] .anneau-tirets { animation-duration: 2.4s !important; }
