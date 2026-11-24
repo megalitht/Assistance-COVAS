@@ -1272,5 +1272,13 @@
     "minage_sans_interet": {
         "mots_cles": [],
         "reponses": ["data/son/Minage/SansInteret.mp3"]
+    },
+    "materiau_presque_plein": {
+        "mots_cles": [],
+        "reponses": ["data/son/Materiaux/PresquePlein.mp3"]
+    },
+    "materiau_plein": {
+        "mots_cles": [],
+        "reponses": ["data/son/Materiaux/Plein.mp3"]
     }
 }

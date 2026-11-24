@@ -304,6 +304,14 @@ window.COVAS_DEMO = (() => {
             };
             etat.exploration = explorationDemo();
             etat.carburant = carburantDemo(24.3, 7);
+            // Matériaux (même forme que Backend/module/jeu/materiaux.py, vue())
+            const LIMITE = { 1: 300, 2: 250, 3: 200, 4: 150, 5: 100 };
+            const mat = (nom, grade, quantite) => { const part = quantite / LIMITE[grade]; return { cle: nom, nom, grade, quantite, limite: LIMITE[grade], part, etat: part >= 1 ? 'plein' : part >= 0.9 ? 'presque' : 'ok' }; };
+            etat.materiaux = { presque_pleins: 3, seuil: 0.9, releve: null, categories: [
+                { cle: 'brut', titre: 'Bruts', materiaux: [mat('Tellure', 4, 51), mat('Germanium', 2, 88), mat('Carbone', 1, 174), mat('Soufre', 1, 111)] },
+                { cle: 'fabrique', titre: 'Fabriqués', materiaux: [mat('Proto-alliages légers', 4, 21), mat('Cristaux de focalisation', 3, 45), mat('Émetteurs de bouclier usés', 1, 63)] },
+                { cle: 'encode', titre: 'Chiffrés', materiaux: [mat('Capture de cryptage évolutif', 5, 100), mat("Données d'émissions décodées", 4, 141), mat('Analyses de bouclier atypiques', 3, 192), mat('Archives cryptées atypiques', 4, 105)] },
+            ] };
             // Prospecteurs (même forme que Backend/module/jeu/prospection.py, vue())
             const roche = (contenu, materiaux, extra = {}) => ({ h: new Date().toISOString(), contenu, niveau: null, noyau: null, restant: 100,
                 materiaux: materiaux.map(([nom, pourcentage, interessant = false]) => ({ cle: nom, nom, pourcentage, interessant })), interessant: materiaux.some(x => x[2]), ...extra });

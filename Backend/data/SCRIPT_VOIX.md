@@ -1,6 +1,6 @@
 # Script des répliques du COVAS
 
-**171 répliques** au total.
+**173 répliques** au total.
 
 Chaque ligne = un fichier.
 
@@ -183,6 +183,17 @@ la remplacent quand le minerai n'a pas de nom enregistré.
 | `minage_riche` | `data/son/Minage/Riche.mp3` | Astéroïde intéressant, commandant. Le détail est à l'écran. |
 | `minage_noyau` | `data/son/Minage/Noyau.mp3` | Noyau détecté ! Cet astéroïde peut être fracturé. |
 | `minage_sans_interet` | `data/son/Minage/SansInteret.mp3` | Rien d'intéressant dans celui-là. |
+
+## Matériaux d'ingénieur
+
+Le COVAS dit d'abord « Stock presque plein : » (ou « Stock plein : ») + le nom du matériau, avec les
+morceaux du studio (groupes « Matériaux » et « Noms des matériaux »). Pour un matériau dont le nom
+n'est pas enregistré, il dit l'une de ces répliques ; le nom exact est à l'écran.
+
+| Quand | Fichier | Phrase à dire |
+|---|---|---|
+| `materiau_presque_plein` | `data/son/Materiaux/PresquePlein.mp3` | Un matériau d'ingénieur est presque au maximum, commandant. |
+| `materiau_plein` | `data/son/Materiaux/Plein.mp3` | Stock plein pour un matériau d'ingénieur. Le surplus sera perdu. |
 
 ## Refus et erreurs
 

@@ -37,6 +37,7 @@ from module.jeu import suivi as suivis
 from module.jeu.suivi_exploration import SuiviExploration
 from module.jeu.commerce import SuiviCommerce
 from module.jeu.prospection import Prospection
+from module.jeu.materiaux import SuiviMateriaux
 from module.interface.serveur_ws import definir_instantane, envoyer_donnees_web, programme_actuel
 
 # --- CHEMINS D'ACCÈS ---
@@ -59,7 +60,7 @@ DELAI_MEME_SON = 8               # secondes avant de rejouer le même fichier au
 TAILLE_HISTORIQUE = 200          # lignes de journal de bord gardées en mémoire
 FILE_MAX_ANNONCES = 2            # annonces en attente : au-delà, une nouvelle serait déjà périmée
 # Annonces de chasse et de scan : elles s'enchaînent bien plus vite que les alertes
-DELAIS_REPLIQUES = {"minage_riche": 2, "minage_noyau": 2, "minage_sans_interet": 2, "chasse_recherchee": 2, "chasse_clean": 2, "chasse_autorite": 2,
+DELAIS_REPLIQUES = {"materiau_plein": 4, "materiau_presque_plein": 4, "minage_riche": 2, "minage_noyau": 2, "minage_sans_interet": 2, "chasse_recherchee": 2, "chasse_clean": 2, "chasse_autorite": 2,
                     "chasse_sans_loi": 2, "chasse_joueur": 4, "chasse_gros_gibier": 4,
                     "chasse_dangereux": 6, "chasse_tir_clean": 8, "scan_valeur": 3, "scan_bio": 3,
                     "scan_premiere": 3, "exo_analyse": 3, "exo_distance_ok": 3}
@@ -92,8 +93,9 @@ _annonceur = navigation.Annonceur()   # annonces du voyage (module/jeu/route.py)
 _explo = SuiviExploration(reglages=lambda: config.section("exploration"))
 _commerce = SuiviCommerce()
 _prospection = Prospection()     # 5 derniers astéroïdes prospectés (module/jeu/prospection.py)
-_SUIVIS = [_explo, _commerce]
-_SECTIONS_SUIVIS = {_explo: "donnees_explo", _commerce: "commerce"}
+_materiaux = SuiviMateriaux(reglages=lambda: config.section("materiaux"))
+_SUIVIS = [_explo, _commerce, _materiaux]
+_SECTIONS_SUIVIS = {_explo: "donnees_explo", _commerce: "commerce", _materiaux: "materiaux"}
 _saut_en_cours = {"vers": None}  # système visé par le saut hyperespace en cours (StartJump)
 PROGRAMME_VOYAGE = "Voyage automatique"   # actions.py annonce lui-même l'arrivée de ce programme
 _corps_annonces = set()          # (système, corps, "valeur" ou "bio") déjà dits à voix haute
@@ -153,6 +155,7 @@ def _reinitialiser_etat():
         "donnees_explo": _explo.vue(),        # données non vendues : module/jeu/suivi_exploration.py
         "commerce": _commerce.vue(),          # trajets et soute : module/jeu/commerce.py
         "minage": _prospection.vue(),         # prospecteurs : module/jeu/prospection.py
+        "materiaux": _materiaux.vue(),        # matériaux d'ingénieur : module/jeu/materiaux.py
     })
 
 
@@ -1686,6 +1689,16 @@ def _annonce_suivi(annonce, e):
         _note(e, "soute", f"{texte} : {_credits(abs(profit))} (recette {_credits(annonce.get('recette'))})",
               "succes" if profit >= 0 else "attention")
         _parle_morceaux(morceaux.pour_bilan(profit), "commerce_benefice" if profit >= 0 else "commerce_perte")
+    elif genre in ("presque", "plein"):
+        texte = "Stock plein" if genre == "plein" else "Stock presque plein"
+        _note(e, "vaisseau", f"{texte} : {annonce['nom']} ({annonce['quantite']}/{annonce['limite']})",
+              "attention")
+        ids = morceaux.pour_materiau(genre, annonce["materiau"])
+        secours = "materiau_plein" if genre == "plein" else "materiau_presque_plein"
+        if ids:
+            _parle_morceaux(ids, secours)
+        else:
+            _parle(secours)
     elif genre == "cargaison_perdue":
         perte = f", {_credits(annonce['pertes'])} d'achats" if annonce.get("pertes") else ""
         _note(e, "soute", f"Cargaison perdue : {annonce.get('unites')} t{perte}", "alerte")
@@ -1722,6 +1735,8 @@ async def _relire_journaux_precedents(dernier, combien=2):
     except OSError:
         return
     for chemin in [j for j in journaux if j != dernier][-combien:]:
+        for suivi in _SUIVIS:
+            suivi.nouvelle_lecture()
         try:
             with open(chemin, "r", encoding="utf-8", errors="replace") as f:
                 for numero, ligne in enumerate(f, 1):
@@ -1778,6 +1793,8 @@ async def surveiller_logs(tts_queue, generer_replique_func):
                     if premiere_ouverture:
                         await _relire_journaux_precedents(plus_recent)
                     journal = open(plus_recent, "r", encoding="utf-8", errors="replace")
+                    for suivi in _SUIVIS:
+                        suivi.nouvelle_lecture()
                     chemin_actuel, reste = plus_recent, ""
                     rattrapage, premiere_ouverture = premiere_ouverture, False
                     ETAT["session"]["journal"] = os.path.basename(plus_recent)

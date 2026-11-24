@@ -25,6 +25,7 @@ import numpy as np
 
 from module.jeu import avaries
 from module.jeu import prospection
+from module.jeu.materiaux_table import MATERIAUX
 from module.son import sons
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -91,6 +92,9 @@ _FIXES = {
     "Minage": [
         ("AsteroideRicheEn", "Astéroïde riche en"), ("NoyauDetecte", "Noyau détecté :"),
     ],
+    "Materiaux": [
+        ("StockPresquePlein", "Stock presque plein :"), ("StockPlein", "Stock plein :"),
+    ],
     "Route": [
         ("RouteTracee", "Route tracée :"), ("MiParcours", "Mi-parcours."), ("IlReste", "Il reste"),
         ("Saut", "saut."), ("Sauts", "sauts."),
@@ -99,7 +103,17 @@ _FIXES = {
 _GROUPES = {"Rapport": "Rapport d'avarie", "Modules": "Noms des modules", "Nombres": "Nombres",
             "Heure": "Heure", "Date": "Date", "Position": "Position",
             "Valeurs": "Primes et valeurs", "Route": "Route", "Minage": "Minage",
-            "Minerais": "Noms des minerais"}
+            "Minerais": "Noms des minerais", "Materiaux": "Matériaux",
+            "NomsMateriaux": "Noms des matériaux"}
+# Matériaux dont le nom est enregistré : ceux qui se remplissent le plus chez le commandant
+# (journaux : données chiffrées des scans de vaisseaux, bruts les plus ramassés). Les autres :
+# réplique fixe, le nom exact reste à l'écran.
+MATERIAUX_VOIX = (
+    "adaptiveencryptors", "shielddensityreports", "decodedemissiondata", "shieldpatternanalysis",
+    "emissiondata", "encryptionarchives", "bulkscandata", "shieldcyclerecordings",
+    "shieldsoakanalysis", "scandatabanks", "carbon", "phosphorus", "sulphur", "iron", "nickel",
+    "tellurium", "ruthenium", "antimony", "wornshieldemitters", "focuscrystals",
+)
 
 
 def nombre(n, feminin=False):
@@ -154,6 +168,10 @@ def _id_minerai(cle):
     return _ident("Minerais", _nom_fichier(prospection.NOMS[cle]))
 
 
+def _id_materiau(cle):
+    return _ident("NomsMateriaux", _nom_fichier(MATERIAUX[cle][2]))
+
+
 def _texte_heure(h):
     return f"{nombre(h, feminin=True)} heure{'s' if h > 1 else ''}"
 
@@ -190,6 +208,10 @@ def catalogue():
         ajouter("Minage", _ident("Minage", nom), texte, "« Astéroïde riche en » + minerai + pourcentage")
     for cle in prospection.VOIX:
         ajouter("Minerais", _id_minerai(cle), prospection.NOMS[cle].lower(), "minerai annoncé par les prospecteurs")
+    for nom, texte in _FIXES["Materiaux"]:
+        ajouter("Materiaux", _ident("Materiaux", nom), texte, "« Stock presque plein : » + nom du matériau")
+    for cle in MATERIAUX_VOIX:
+        ajouter("NomsMateriaux", _id_materiau(cle), MATERIAUX[cle][2].lower(), "matériau d'ingénieur dont le stock se remplit")
     for nom, texte in _FIXES["Route"]:
         ajouter("Route", _ident("Route", nom), texte, "« Route tracée : douze sauts. », « Il reste cinq sauts. »")
     return lignes
@@ -324,6 +346,14 @@ def pour_prospection(annonce):
         if annonce.get("pourcentage") is not None:
             ids += [*_entier(min(100, round(annonce["pourcentage"]))), _ident("Rapport", "PourCent")]
     return ids or None
+
+
+def pour_materiau(niveau, cle):
+    """« Stock presque plein : capture de cryptage évolutif. » None si le nom n'est pas enregistré."""
+    if cle not in MATERIAUX_VOIX:
+        return None
+    debut = "StockPlein" if niveau == "plein" else "StockPresquePlein"
+    return [_ident("Materiaux", debut), _id_materiau(cle)]
 
 
 def pour_bilan(profit):

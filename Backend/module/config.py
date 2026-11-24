@@ -102,6 +102,12 @@ lowtemperaturediamond = 15
 tritium = 15
 bromellite = 15
 """,
+    "materiaux": """\
+[materiaux]
+# Matériaux d'ingénieur (gardés dans data/suivi/materiaux.json). Limites du jeu par grade :
+# 1 = 300, 2 = 250, 3 = 200, 4 = 150, 5 = 100.
+seuil_presque_plein = 90  # % de la limite : annonce « stock presque plein » (puis « stock plein »)
+""",
 }
 
 DEFAUTS = {}

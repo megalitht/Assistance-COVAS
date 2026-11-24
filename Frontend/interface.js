@@ -179,7 +179,7 @@
         cible: {}, combat: {}, missions: { liste: [] }, proches: { liste: [] },
         sol: { vaisseau: {} }, pilotage: {},
         chasse: { profil: {}, a_encaisser: {} }, exploration: { corps: [], session: {} },
-        carburant: {}, donnees_explo: {}, commerce: {}, minage: {},
+        carburant: {}, donnees_explo: {}, commerce: {}, minage: {}, materiaux: {},
     };
     let journal = [];                 // lignes du journal de bord, la plus récente en premier
     let filtreJournal = 'tous';
@@ -676,6 +676,34 @@
         }), 'Aucun astéroïde prospecté.');
     }
 
+    /** Matériaux d'ingénieur par catégorie, avec le filtre « presque pleins » (Backend/module/jeu/materiaux.py). */
+    let filtreMateriaux = lirePreference('covas-filtre-materiaux') || 'tous';
+    function rendreMateriaux() {
+        const m = etat.materiaux || {};
+        ecrire('materiaux-presque', m.presque_pleins ? `(${m.presque_pleins})` : '');
+        tous('[data-filtre-materiaux]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.filtreMateriaux === filtreMateriaux)));
+        const blocs = [];
+        (m.categories || []).forEach(c => {
+            const liste = c.materiaux.filter(x => filtreMateriaux === 'tous' || x.etat !== 'ok');
+            if (!liste.length) return;
+            blocs.push(creer('h3', '', `${c.titre} (${liste.length})`));
+            liste.forEach(x => {
+                const ligne = creer('div', 'ligne-materiau');
+                ligne.dataset.etat = x.etat;
+                ligne.title = `Grade ${x.grade} · limite ${x.limite}`;
+                const barre = creer('span', 'mini-jauge');
+                const remplissage = creer('i');
+                remplissage.style.width = Math.min(100, x.part * 100) + '%';
+                barre.append(remplissage);
+                ligne.append(creer('span', 'grade', 'G' + x.grade), creer('span', 'nom', x.nom), barre, creer('span', 'valeur', `${x.quantite}/${x.limite}`));
+                blocs.push(ligne);
+            });
+        });
+        const conteneur = $('liste-materiaux');
+        conteneur.replaceChildren(...blocs);
+        if (!blocs.length) conteneur.append(creer('p', 'vide', filtreMateriaux === 'tous' ? 'Stock inconnu : il arrive au lancement du jeu.' : 'Aucun matériau presque plein.'));
+    }
+
     function rendreCommandant() {
         const { rangs = {}, progression = {} } = etat.commandant;
         const lignes = Object.keys(DOMAINES).filter(d => rangs[d] != null).map(d => {
@@ -1108,6 +1136,7 @@
         donnees_explo: [rendreDonneesExplo],
         commerce: [rendreCommerce],
         minage: [rendreMinage],
+        materiaux: [rendreMateriaux],
     };
 
     function rendreTout() {
@@ -1595,6 +1624,14 @@
                 const panneau = bouton.closest('.panneau') || document;      // chaque panneau a ses onglets
                 panneau.querySelectorAll('[data-onglet]').forEach(b => b.setAttribute('aria-selected', String(b === bouton)));
                 panneau.querySelectorAll('[data-contenu]').forEach(c => { c.hidden = c.dataset.contenu !== bouton.dataset.onglet; });
+            };
+        });
+
+        tous('[data-filtre-materiaux]').forEach(bouton => {
+            bouton.onclick = () => {
+                filtreMateriaux = bouton.dataset.filtreMateriaux;
+                garderPreference('covas-filtre-materiaux', filtreMateriaux);
+                rendreMateriaux();
             };
         });
 

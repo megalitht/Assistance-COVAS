@@ -429,6 +429,19 @@ h3 span { color: var(--creme); text-transform: none; letter-spacing: 0; }
 .prospections li.a-miner { background: var(--accent-doux); box-shadow: inset 3px 0 #b9e07a; padding-left: 0.5rem; }
 .prospections .pastilles li { display: inline-block; padding: 0.05rem 0.45rem; }
 .prospections .pastilles li.interessant { color: var(--noir); background: #b9e07a; border-color: #b9e07a; font-weight: 600; }
+/* Matériaux : une barre par matériau, orange au seuil « presque plein », rouge quand il est plein */
+.liste.materiaux { max-height: 15rem; display: block; }
+.liste.materiaux h3 { margin: 0.5rem 0 0.2rem; font-size: 0.8rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+.ligne-materiau { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) 4.2rem 4.6rem; gap: 0.4rem; align-items: center; padding: 0.12rem 0; font-size: 0.88rem; }
+.ligne-materiau .grade { color: var(--marron-3); font-size: 0.75rem; }
+.ligne-materiau .nom { color: var(--creme); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ligne-materiau .mini-jauge { height: 0.3rem; background: var(--marron-2); }
+.ligne-materiau .mini-jauge i { display: block; height: 100%; background: var(--ambre); }
+.ligne-materiau .valeur { text-align: right; color: var(--ambre); white-space: nowrap; }
+.ligne-materiau[data-etat="presque"] .mini-jauge i { background: var(--orange); }
+.ligne-materiau[data-etat="presque"] .valeur { color: var(--orange); }
+.ligne-materiau[data-etat="plein"] .mini-jauge i { background: var(--rouge); }
+.ligne-materiau[data-etat="plein"] .valeur, .ligne-materiau[data-etat="plein"] .nom { color: var(--rouge); }
 .prospections .noyau { color: var(--noir); background: var(--jaune); padding: 0 0.4rem; font-size: 0.78rem; font-weight: 600; }
 
 .onglets, .filtres { display: flex; flex-wrap: wrap; gap: 0.3rem; }

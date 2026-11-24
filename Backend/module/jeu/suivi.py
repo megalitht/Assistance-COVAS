@@ -5,8 +5,9 @@ Backend/data/suivi/, et la garantie qu'aucun événement du journal n'est compt�
 Pourquoi c'est nécessaire : au démarrage, le COVAS relit les derniers journaux du jeu pour
 reconstruire son état. Les suivis, eux, sont enregistrés sur le disque : sans précaution, une vente
 ou un scan déjà compté le serait une seconde fois. Chaque fichier retient donc l'horodatage du
-dernier événement compté (et une empreinte des événements de cette seconde-là, le journal n'étant
-précis qu'à la seconde) : tout événement plus ancien est ignoré.
+dernier événement compté, et combien de fois chaque événement de cette seconde-là a été compté : le
+journal n'est précis qu'à la seconde, et deux lignes identiques dans la même seconde sont deux vrais
+événements (vérifié : deux ramassages du même matériau). Tout événement plus ancien est ignoré.
 
 Au tout premier lancement (fichier absent), lecteur_logs.py fait relire TOUS les journaux au suivi :
 il retrouve ainsi, par exemple, les données d'exploration non vendues depuis la dernière vente.
@@ -37,7 +38,8 @@ class Suivi:
         self.chemin = chemin      # None : en mémoire seulement (tests)
         self.donnees = self.vierge()
         self.dernier = ""         # horodatage du dernier événement compté
-        self.empreintes = set()   # événements comptés à cette seconde-là
+        self.empreintes = {}      # empreinte -> nombre de fois comptée, à cette seconde-là
+        self._lecture = ("", {})  # (seconde, {empreinte: occurrences}) de la lecture en cours
         self.modifie = False
         self.ecrit = 0.0
 
@@ -70,7 +72,8 @@ class Suivi:
             return False
         self.donnees = {**self.vierge(), **(brut.get("donnees") or {})}
         self.dernier = brut.get("dernier") or ""
-        self.empreintes = set(brut.get("empreintes") or [])
+        empreintes = brut.get("empreintes") or {}
+        self.empreintes = dict.fromkeys(empreintes, 1) if isinstance(empreintes, list) else dict(empreintes)
         return True
 
     def enregistrer(self, forcer=False):
@@ -84,7 +87,7 @@ class Suivi:
             provisoire = self.chemin + ".tmp"
             with open(provisoire, "w", encoding="utf-8") as f:
                 json.dump({"version": self.VERSION, "dernier": self.dernier,
-                           "empreintes": sorted(self.empreintes), "donnees": self.donnees},
+                           "empreintes": self.empreintes, "donnees": self.donnees},
                           f, ensure_ascii=False, separators=(",", ":"))
             os.replace(provisoire, self.chemin)
             self.modifie, self.ecrit = False, time.monotonic()
@@ -92,21 +95,44 @@ class Suivi:
             print(f"[Suivi] Écriture de {os.path.basename(self.chemin)} impossible : {erreur}")
 
     # ---------- Événements ----------
+    def nouvelle_lecture(self):
+        """Début de la lecture d'un fichier du journal : les occurrences repartent de zéro."""
+        self._lecture = ("", {})
+
+    def _occurrence(self, horodatage, cle):
+        """Rang de cet événement parmi les lignes identiques de la même seconde, dans la lecture en
+        cours (1 pour la première)."""
+        seconde, vues = self._lecture
+        return (vues.get(cle, 0) if seconde == horodatage else 0) + 1
+
     def deja_compte(self, evenement):
+        """True si cet événement (cette occurrence, dans la lecture en cours) a déjà été compté."""
         horodatage = evenement.get("timestamp") or ""
         if not horodatage or horodatage > self.dernier:
             return False
-        return horodatage < self.dernier or empreinte(evenement) in self.empreintes
+        if horodatage < self.dernier:
+            return True
+        cle = empreinte(evenement)
+        return self._occurrence(horodatage, cle) <= self.empreintes.get(cle, 0)
 
     def traiter(self, evenement):
         """Un événement du journal : appliqué une seule fois, même relu. Renvoie les annonces."""
-        if evenement.get("event") not in self.EVENEMENTS or self.deja_compte(evenement):
+        if evenement.get("event") not in self.EVENEMENTS:
             return []
         horodatage = evenement.get("timestamp") or ""
         if horodatage:
+            cle = empreinte(evenement)
+            deja = self.deja_compte(evenement)
+            rang = self._occurrence(horodatage, cle)
+            seconde, vues = self._lecture
+            vues = vues if seconde == horodatage else {}
+            vues[cle] = rang
+            self._lecture = (horodatage, vues)
+            if deja:
+                return []
             if horodatage > self.dernier:
-                self.dernier, self.empreintes = horodatage, set()
-            self.empreintes.add(empreinte(evenement))
+                self.dernier, self.empreintes = horodatage, {}
+            self.empreintes[cle] = rang
         annonces = self._appliquer(evenement) or []
         self.modifie = True
         return annonces
@@ -121,6 +147,8 @@ def reconstruire(suivis, journaux):
     marques = tuple(f'"event":"{nom}"' for nom in noms)
     compte = 0
     for chemin in journaux:
+        for suivi in suivis:
+            suivi.nouvelle_lecture()
         try:
             with open(chemin, encoding="utf-8", errors="replace") as f:
                 for ligne in f:
@@ -136,6 +164,7 @@ def reconstruire(suivis, journaux):
         except OSError:
             continue
     for suivi in suivis:
+        suivi.nouvelle_lecture()
         suivi.modifie = True
         suivi.enregistrer(forcer=True)
     return compte
