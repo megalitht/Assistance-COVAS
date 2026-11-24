@@ -10,7 +10,10 @@
     // ----------------------------------------------------------------
     //  RÉGLAGES
     // ----------------------------------------------------------------
-    const PORT_WS = 8765;
+    // Port de la liaison : ?ws= (fenêtre de l'application, voir app.py), sinon celui de la page quand
+    // le COVAS la sert lui-même (second écran : http://<PC>:<port>/), sinon 8765.
+    const PORT_WS = Number(new URLSearchParams(location.search).get('ws'))
+        || (location.protocol === 'http:' && Number(location.port)) || 8765;
     const DELAI_RETOUR_NAV = 25;      // secondes sans menace avant de quitter la vue combat
     const DELAI_ENGAGEMENT = 75;      // le drapeau « danger » ne prolonge le combat que si on a essuyé un tir depuis ce délai
     const LIGNES_JOURNAL_MAX = 150;
@@ -1110,6 +1113,7 @@
     function appliquerInterface() {
         if (affichee && affichee.mode !== voulue.mode) protectionCommandes = performance.now() + PROTECTION_COMMANDES;
         document.body.dataset.mode = voulue.mode;
+        window.COVAS_SECOND_ECRAN?.mode(voulue.mode);       // téléphone : l'onglet Combat suit la bascule
         if (affichee?.commandes !== voulue.commandes) {
             tous('[data-commandes]').forEach(bloc => { bloc.hidden = bloc.dataset.commandes !== voulue.commandes; });
             ecrire('commandes-contexte', CONTEXTES_COMMANDES[voulue.commandes]);
@@ -1233,7 +1237,19 @@
         } else if (message.type === 'reglages') {
             window.COVAS_REGLAGES?.recevoir(message);
             marquerTouches(message.reglages);
+        } else if (['acces', 'pin', 'refus', 'second_ecran'].includes(message.type)) {
+            window.COVAS_SECOND_ECRAN?.recevoir(message);      // second écran : PIN, adresse du PC
         }
+    }
+
+    /** Commande depuis un autre appareil sans code (PIN) : la fenêtre du code s'ouvre à la place. */
+    const autorise = () => simulation || !window.COVAS_SECOND_ECRAN || window.COVAS_SECOND_ECRAN.autoriser();
+
+    /** Message brut au backend (code du second écran). */
+    function envoyerBrut(donnees) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) return false;
+        socket.send(JSON.stringify(donnees));
+        return true;
     }
 
     /** Réglages modifiés (reglages.js) : le backend les enregistre et les renvoie à toutes les interfaces. */
@@ -1243,6 +1259,7 @@
             return true;
         }
         if (socket && socket.readyState === WebSocket.OPEN) {
+            if (!autorise()) return false;
             socket.send(JSON.stringify({ reglages, rev }));
             return true;
         }
@@ -1264,7 +1281,7 @@
             window.COVAS_DEMO?.action?.(action);       // la simulation répond elle-même (aucune touche)
             return;
         }
-        if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ action }));
+        if (socket && socket.readyState === WebSocket.OPEN && autorise()) socket.send(JSON.stringify({ action }));
     }
 
     /** Phrase écrite au COVAS : le backend la traite comme si elle suivait « Covas ». */
@@ -1273,7 +1290,7 @@
             window.COVAS_DEMO?.question?.(question);
             return true;
         }
-        if (!socket || socket.readyState !== WebSocket.OPEN) return false;
+        if (!socket || socket.readyState !== WebSocket.OPEN || !autorise()) return false;
         socket.send(JSON.stringify({ question }));
         return true;
     }
@@ -1526,6 +1543,7 @@
         tic();
         setInterval(tic, 1000);
 
+        window.COVAS_SECOND_ECRAN?.installer({ envoyer: envoyerBrut });
         rendreTout();
         if (MODE_APP) installerAccueil();
         else if (new URLSearchParams(location.search).has('demo') || location.protocol === 'https:') lancerSimulation();

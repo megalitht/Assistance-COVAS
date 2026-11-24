@@ -384,6 +384,13 @@ class CovasBackend:
         except Exception as erreur:
             problemes.append(f"micro inaccessible ({erreur})")
 
+        reseau = serveur_ws.infos_second_ecran()
+        if reseau["actif"] and not serveur_web.done():
+            for adresse in reseau["adresses"][:1]:
+                t.ok(f"Second écran : {adresse}" + ("" if reseau["pin_regle"] else
+                     " (sans PIN : consultation seulement)"))
+                await logs.annoncer(f"Second écran : ouvre {adresse} sur le téléphone (même Wi-Fi)")
+
         if problemes:
             print("[Démarrage] Systèmes dégradés :")
             for probleme in problemes:

@@ -22,7 +22,7 @@ import traceback
 DOSSIER_BACKEND = os.path.dirname(os.path.abspath(__file__))
 DOSSIER_FRONTEND = os.path.join(os.path.dirname(DOSSIER_BACKEND), "Frontend")
 TITRE = "COVAS — Assistance de bord"      # même titre que main.TITRE / macros.TITRE_INTERFACE
-PORT_WS = 8765                            # liaison du panneau (module/interface/serveur_ws.py)
+# Liaison du panneau (module/interface/serveur_ws.py) : port de data/config.toml [second_ecran]
 PORT_PAGE = 8766                          # serveur local de la page
 DOSSIER_PROFIL = os.path.join(DOSSIER_BACKEND, "data", "fenetre")   # profil WebView2 (préférences)
 DELAI_FERMETURE = 5                       # secondes au plus pour fermer proprement
@@ -40,6 +40,7 @@ import webview  # noqa: E402
 
 from module.son import audio, ecoute  # noqa: E402  (légers : ni micro, ni touches)
 from module.interface import plans, reglages  # noqa: E402
+from module.interface.serveur_ws import port_configure  # noqa: E402
 from module.studio.pont_studio import PontStudio  # noqa: E402
 
 DOSSIER_PLANS = os.path.join(DOSSIER_FRONTEND, "vaisseaux")
@@ -71,8 +72,9 @@ class Api:
         try:
             # Un autre COVAS (main.py en console, autre fenêtre...) tient déjà la liaison :
             # deux COVAS écouteraient le même micro et appuieraient deux fois sur les touches.
-            if not _port_libre(PORT_WS):
-                raise RuntimeError(f"un autre COVAS est déjà lancé (port {PORT_WS} occupé). "
+            port = port_configure()
+            if not _port_libre(port):
+                raise RuntimeError(f"un autre COVAS est déjà lancé (port {port} occupé). "
                                    "Ferme-le, puis réessaie.")
             self._pousser("Chargement des modules de bord")
             import main                             # importe macros, actions... (pas avant le clic)
@@ -295,7 +297,8 @@ def lancer():
     _vider_cache_page()
     api = Api()
     # Servie en http (et non en file://) : WebView2 garde ainsi le « ?app » de l'adresse.
-    page = os.path.join(DOSSIER_FRONTEND, "interface.html") + "?app"
+    # ws= : port de la liaison, réglable dans data/config.toml
+    page = os.path.join(DOSSIER_FRONTEND, "interface.html") + f"?app&ws={port_configure()}"
     # Toujours en plein écran sur l'écran secondaire (le jeu reste sur le principal).
     # La fenêtre est d'abord centrée sur cet écran : le plein écran prend l'écran où elle se trouve.
     ecran = _ecran_secondaire()

@@ -1,0 +1,115 @@
+/* =====================================================================
+   COVAS — Second écran (second_ecran.js)
+   Téléphone en portrait : une seule colonne, des onglets en bas, des boutons au doigt.
+   PC : la fenêtre « Second écran » (adresse à taper, QR code, pare-feu).
+   Fenêtre du code (PIN) demandée avant une commande venue d'un autre appareil.
+   ===================================================================== */
+
+.onglets-telephone { display: none; }
+
+/* ---------- Téléphone (body[data-telephone], posé par second_ecran.js) ---------- */
+body[data-telephone] { padding-bottom: calc(3.6rem + env(safe-area-inset-bottom)); }
+body[data-telephone] .onglets-telephone {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--noir);
+    border-top: 1px solid var(--trait);
+    box-shadow: 0 -0.4rem 1.2rem rgba(0, 0, 0, 0.6);
+}
+body[data-telephone] .onglets-telephone::-webkit-scrollbar { display: none; }
+body[data-telephone] .onglets-telephone button {
+    flex: 1 0 auto;
+    min-width: 5.4rem;
+    min-height: 3.6rem;
+    padding: 0 0.6rem;
+    font: inherit;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ambre);
+    background: none;
+    border: 0;
+    border-top: 3px solid transparent;
+    cursor: pointer;
+}
+body[data-telephone] .onglets-telephone button[aria-selected="true"] { color: var(--creme); background: var(--accent-doux); border-top-color: var(--accent); }
+body[data-telephone] .onglets-telephone button[hidden] { display: none; }
+body[data-telephone][data-mode="combat"] .onglets-telephone button[data-onglet-tel="combat"]:not([aria-selected="true"]) { color: var(--rouge); }
+
+/* Seuls les panneaux de l'onglet choisi restent affichés */
+body[data-telephone] .hors-onglet { display: none !important; }
+body[data-telephone] .vue:not(.hors-onglet) { display: flex !important; flex-direction: column; }
+body[data-telephone] .colonne:not(:has(> :not(.hors-onglet))) { display: none; }
+
+/* Bandeau : le système et l'heure suffisent ; ni réglages, ni changement de vue, ni Quitter */
+body[data-telephone] .identite > div:not(:nth-child(3)) { display: none; }
+body[data-telephone] :is(#selecteur-mode, #bouton-reglages, #bouton-second-ecran, [data-quitter]) { display: none !important; }
+body[data-telephone] .bandeau { gap: 0.6rem 1rem; }
+
+/* Au doigt : 48 px au moins */
+body[data-telephone] :is(.actions button, .selecteur-mode, .onglets button, .filtres button) { min-height: 48px; font-size: 1rem; }
+body[data-telephone] .parler :is(input, button) { min-height: 48px; font-size: 1rem; }
+/* Rien ne doit dépasser la largeur de l'écran */
+body[data-telephone] .vitaux { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+body[data-telephone] .vital b { font-size: 2.1rem; }
+body[data-telephone] .actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ---------- Fenêtres ---------- */
+.fenetre-pin, .fenetre-second-ecran {
+    padding: 1.2rem 1.4rem 1.3rem;
+    color: var(--ambre);
+    background: var(--fond);
+    border: 1px solid var(--trait);
+    border-left: 3px solid var(--accent);
+    font-family: var(--police);
+}
+.fenetre-pin::backdrop, .fenetre-second-ecran::backdrop { background: rgba(7, 4, 3, 0.8); }
+:is(.fenetre-pin, .fenetre-second-ecran) h2 { margin: 0 0 0.5rem; font-size: 1.15rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); }
+:is(.fenetre-pin, .fenetre-second-ecran) button { min-height: 3rem; min-width: 6rem; padding: 0 1rem; font: inherit; color: var(--creme); background: var(--accent-doux); border: 1px solid var(--trait); cursor: pointer; }
+:is(.fenetre-pin, .fenetre-second-ecran) button:hover { background: var(--accent); color: var(--noir); }
+:is(.fenetre-pin, .fenetre-second-ecran) :is(input, button):focus-visible { outline: 2px solid var(--creme); outline-offset: 1px; }
+
+.fenetre-pin { width: min(22rem, 92vw); }
+.fenetre-pin #champ-pin {
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: 0.6rem;
+    padding: 0.5rem;
+    font: inherit;
+    font-size: 1.9rem;
+    letter-spacing: 0.4em;
+    text-align: center;
+    color: var(--creme);
+    background: var(--noir);
+    border: 1px solid var(--trait);
+}
+.pin-memoire { display: flex; align-items: center; gap: 0.6rem; min-height: 3rem; margin-top: 0.4rem; cursor: pointer; }
+.pin-memoire input { width: 1.4rem; height: 1.4rem; accent-color: var(--orange); }
+.pin-message { min-height: 1.3em; margin: 0.3rem 0 0.6rem; color: var(--rouge); }
+.pin-message[data-etat="ok"] { color: var(--jaune); }
+.pin-boutons { display: flex; justify-content: flex-end; gap: 0.6rem; }
+.pin-boutons button[type="submit"] { color: var(--noir); background: var(--accent); }
+
+.fenetre-second-ecran { width: min(48rem, 94vw); }
+.second-tete { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.8rem; }
+.second-tete h2 { margin: 0; }
+.second-corps { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.4rem; align-items: start; }
+.second-qr svg { display: block; width: 14rem; height: 14rem; }
+.second-qr:empty { display: none; }
+.second-texte p { margin: 0 0 0.5rem; }
+.second-texte h3 { margin: 1rem 0 0.3rem; font-size: 0.85rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+.second-adresses { margin: 0.3rem 0 0.8rem; padding: 0; list-style: none; }
+.second-adresses li { font-size: 1.4rem; color: var(--creme); user-select: all; }
+.second-adresses li + li { font-size: 0.95rem; color: var(--ambre); }
+.second-adresses li.vide { font-size: 1rem; color: var(--rouge); user-select: none; }
+.second-commande { margin: 0.3rem 0 0.5rem; padding: 0.6rem; font-size: 0.78rem; white-space: pre-wrap; word-break: break-all; color: var(--creme); background: var(--noir); border: 1px solid var(--trait); user-select: all; }
+@media (max-width: 760px) {
+    .second-corps { grid-template-columns: minmax(0, 1fr); }
+}

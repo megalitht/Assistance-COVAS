@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>COVAS — Assistance de bord</title>
     <link rel="stylesheet" href="interface.css">
+    <link rel="stylesheet" href="second_ecran.css">
 </head>
 <body data-mode="nav" data-liaison="hors-ligne">
     <!-- Application Python (Backend/app.py, interface.html?app) : l'écran d'accueil s'affiche
          dès le premier rendu, le panneau n'apparaît qu'une fois le COVAS activé. -->
     <script>if (new URLSearchParams(location.search).has('app')) { document.body.dataset.app = ''; document.body.dataset.liaison = 'veille'; }</script>
 
-    <svg class="lecteur-seul" aria-hidden="true"><symbol id="icone-reglages" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></symbol><symbol id="icone-carburant" viewBox="0 0 24 24"><path d="M12 2.6c-3.3 4.5-6.2 8-6.2 11.6a6.2 6.2 0 0 0 12.4 0c0-3.6-2.9-7.1-6.2-11.6z"></path></symbol><symbol id="icone-quitter" viewBox="0 0 24 24"><path d="M12 3v8"></path><path d="M6.4 6.6a8 8 0 1 0 11.2 0"></path></symbol></svg>
+    <svg class="lecteur-seul" aria-hidden="true"><symbol id="icone-reglages" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></symbol><symbol id="icone-carburant" viewBox="0 0 24 24"><path d="M12 2.6c-3.3 4.5-6.2 8-6.2 11.6a6.2 6.2 0 0 0 12.4 0c0-3.6-2.9-7.1-6.2-11.6z"></path></symbol><symbol id="icone-telephone" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2"></rect><path d="M10.5 18.5h3"></path></symbol><symbol id="icone-quitter" viewBox="0 0 24 24"><path d="M12 3v8"></path><path d="M6.4 6.6a8 8 0 1 0 11.2 0"></path></symbol></svg>
 
     <!-- ================= BANDEAU ================= -->
     <header class="bandeau">
@@ -33,6 +34,10 @@
             <button type="button" class="selecteur-mode" id="bouton-stop" data-action="stop" hidden title="Annule le programme en cours (décollage, apontage, fuite, autopilote...)">Stop</button>
             <button type="button" class="selecteur-mode" id="selecteur-mode" title="Changer de vue : automatique, combat forcé, navigation forcée">
                 Vue <b data-v="mode-choisi">auto</b>
+            </button>
+            <!-- Second écran : adresse et QR code pour le téléphone (PC seulement, second_ecran.js) -->
+            <button type="button" class="selecteur-mode bouton-reglages" id="bouton-second-ecran" hidden title="Second écran : ouvrir l'interface sur un téléphone ou une tablette" aria-label="Second écran" aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-telephone"></use></svg>
             </button>
             <button type="button" class="selecteur-mode bouton-reglages" id="bouton-reglages" title="Réglages" aria-label="Réglages" aria-haspopup="dialog">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#icone-reglages"></use></svg>
@@ -57,7 +62,7 @@
     <main class="vue vue-nav" aria-label="Navigation">
 
         <div class="colonne">
-            <section class="panneau">
+            <section data-mobile="navigation" class="panneau">
                 <h2>Position</h2>
                 <p class="titre-systeme" data-v="systeme">—</p>
                 <p class="sous-titre" data-v="lieu"></p>
@@ -76,7 +81,7 @@
                 </div>
             </section>
 
-            <section class="panneau grandit">
+            <section data-mobile="navigation exploration" class="panneau grandit">
                 <h2>Route</h2>
                 <div class="onglets" role="tablist">
                     <button type="button" role="tab" data-onglet="tracee" aria-selected="true">Route tracée</button>
@@ -111,7 +116,7 @@
                 </div>
             </section>
 
-            <section class="panneau">
+            <section data-mobile="vaisseau" class="panneau">
                 <h2>Commandant</h2>
                 <dl class="fiche trois-colonnes" id="fiche-rangs"></dl>
                 <h3>Missions <span data-v="missions-nombre"></span></h3>
@@ -121,7 +126,7 @@
 
         <div class="colonne centre">
             <!-- Dernier corps scanné : posé sur l'hologramme, qui n'a ainsi jamais à se redessiner -->
-            <section class="carte-scan" id="carte-scan" aria-live="polite" hidden>
+            <section data-mobile="exploration" class="carte-scan" id="carte-scan" aria-live="polite" hidden>
                 <p class="carte-scan-titre"><span>Scan</span> <b data-v="scan-nom"></b></p>
                 <p class="sous-titre" data-v="scan-classe"></p>
                 <dl class="chiffres">
@@ -131,22 +136,22 @@
                 </dl>
                 <ul class="pastilles" id="scan-pastilles"></ul>
             </section>
-            <section class="hologramme" data-hologramme></section>
-            <section class="jauges">
+            <section data-mobile="vaisseau" class="hologramme" data-hologramme></section>
+            <section data-mobile="navigation vaisseau" class="jauges">
                 <div class="jauge-bloc"><span>Coque</span><b data-v="coque">—</b><div class="jauge" data-j="coque"><i></i></div></div>
                 <div class="jauge-bloc bouclier"><span>Boucliers</span><b data-v="boucliers">—</b><div class="jauge" data-j="boucliers"><i></i></div></div>
                 <div class="jauge-bloc" data-bloc="carburant" title="Carburant du réservoir principal. Sauts estimés d'après la consommation des derniers sauts."><span>Carburant <small class="jauge-note" data-v="carburant-sauts"></small></span><b data-v="carburant">—</b><div class="jauge" data-j="carburant"><i></i></div></div>
                 <div class="jauge-bloc"><span>Soute</span><b data-v="soute-charge">—</b><div class="jauge" data-j="soute"><i></i></div></div>
                 <div class="jauge-bloc pips-bloc"><span>Énergie</span><div class="pips" data-pips></div></div>
             </section>
-            <section class="panneau">
+            <section data-mobile="vaisseau" class="panneau">
                 <h2>Systèmes de vol</h2>
                 <ul class="voyants" data-voyants="vol"></ul>
             </section>
         </div>
 
         <div class="colonne">
-            <section class="panneau">
+            <section data-mobile="navigation" class="panneau">
                 <h2>Commandes <small data-v="commandes-contexte">en vol</small></h2>
                 <!-- Un jeu de commandes par situation (voir contexteCommandes dans interface.js) -->
                 <div class="commandes" data-commandes="vol">
@@ -230,12 +235,12 @@
                     </div>
                 </div>
             </section>
-            <section class="panneau grandit">
+            <section data-mobile="navigation" class="panneau grandit">
                 <h2>Journal de bord</h2>
                 <div class="filtres" id="filtres-journal"></div>
                 <ol class="liste defile journal" id="liste-journal"></ol>
             </section>
-            <section class="panneau">
+            <section data-mobile="navigation" class="panneau">
                 <h2>Communications</h2>
                 <ol class="liste defile journal courte" id="liste-comms"></ol>
                 <form class="parler" id="form-question" autocomplete="off">
@@ -247,7 +252,7 @@
         </div>
 
         <div class="colonne">
-            <section class="panneau">
+            <section data-mobile="vaisseau" class="panneau">
                 <h2>Vaisseau</h2>
                 <dl class="fiche deux-colonnes">
                     <div><dt>Modèle</dt><dd data-v="vaisseau-modele">—</dd></div>
@@ -258,12 +263,12 @@
                     <div><dt>Groupe de tir</dt><dd data-v="groupe-tir">—</dd></div>
                 </dl>
             </section>
-            <section class="panneau grandit">
+            <section data-mobile="vaisseau" class="panneau grandit">
                 <h2>Modules <small data-v="modules-releve"></small></h2>
                 <p class="rapport-resume" data-rapport hidden></p>
                 <div class="liste defile" id="liste-modules"></div>
             </section>
-            <section class="panneau">
+            <section data-mobile="commerce" class="panneau">
                 <h2>Soute <small data-v="soute-charge"></small></h2>
                 <ul class="liste defile courte" id="liste-soute"></ul>
             </section>
@@ -272,7 +277,7 @@
 
     <!-- ================= VUE COMBAT =================
          Cible et menaces | hologramme | énergie et tactique | état et modules -->
-    <main class="vue vue-combat" aria-label="Combat">
+    <main data-mobile="combat" class="vue vue-combat" aria-label="Combat">
 
         <div class="colonne">
             <section class="panneau">
@@ -391,7 +396,7 @@
 
     <!-- ================= VUE CHASSEUR (violet) : le commandant pilote le chasseur embarqué =================
          Cible et tableau de chasse | viseur et constantes | énergie et tactique | menaces -->
-    <main class="vue vue-chasseur" aria-label="Chasseur">
+    <main data-mobile="combat" class="vue vue-chasseur" aria-label="Chasseur">
         <div class="colonne">
             <section class="panneau">
                 <h2>Cible</h2>
@@ -494,7 +499,7 @@
          Terrain et vaisseau | boussole et constantes | commandes | journal.
          data-seul="vrs", "pied" ou "nomade" : bloc affiché dans cette situation seulement.
          data-sauf="nomade" : bloc caché en Nomad. -->
-    <main class="vue vue-surface" aria-label="Surface">
+    <main data-mobile="navigation" class="vue vue-surface" aria-label="Surface">
 
         <div class="colonne">
             <section class="panneau">
@@ -849,6 +854,55 @@
         <div class="reglages-panneau" data-panneau="atelier" role="tabpanel" hidden></div>
     </dialog>
 
+    <!-- ================= SECOND ÉCRAN (second_ecran.js) =================
+         Téléphone en portrait : une colonne, et ces onglets en bas de l'écran. Un onglet sans
+         panneau (data-mobile) reste caché. -->
+    <nav class="onglets-telephone" id="onglets-telephone" aria-label="Sections de l'interface">
+        <button type="button" data-onglet-tel="navigation">Navigation</button>
+        <button type="button" data-onglet-tel="combat">Combat</button>
+        <button type="button" data-onglet-tel="vaisseau">Vaisseau</button>
+        <button type="button" data-onglet-tel="exploration">Exploration</button>
+        <button type="button" data-onglet-tel="commerce">Commerce</button>
+        <button type="button" data-onglet-tel="minage">Minage</button>
+        <button type="button" data-onglet-tel="materiaux">Matériaux</button>
+    </nav>
+
+    <!-- Code demandé avant la première commande envoyée depuis un autre appareil -->
+    <dialog class="fenetre-pin" id="fenetre-pin" aria-labelledby="pin-titre">
+        <form method="dialog" id="form-pin" autocomplete="off">
+            <h2 id="pin-titre">Code du COVAS</h2>
+            <p class="sous-titre" data-v="pin-consigne">Les commandes envoyées depuis cet appareil demandent le code réglé sur le PC.</p>
+            <label class="lecteur-seul" for="champ-pin">Code</label>
+            <input id="champ-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="off" placeholder="••••">
+            <label class="pin-memoire"><input type="checkbox" id="pin-memoire"> Retenir sur cet appareil</label>
+            <p class="pin-message" data-v="pin-message" role="alert"></p>
+            <div class="pin-boutons">
+                <button type="button" id="pin-annuler">Annuler</button>
+                <button type="submit" id="pin-valider">Valider</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- PC : l'adresse à taper sur le téléphone, son QR code, et le pare-feu -->
+    <dialog class="fenetre-second-ecran" id="fenetre-second-ecran" aria-labelledby="second-titre">
+        <header class="second-tete">
+            <h2 id="second-titre">Second écran</h2>
+            <button type="button" class="selecteur-mode" id="second-fermer">Fermer</button>
+        </header>
+        <div class="second-corps">
+            <div class="second-qr" id="second-qr" aria-label="QR code de l'adresse"></div>
+            <div class="second-texte">
+                <p>Sur le téléphone ou la tablette, connecté au <b>même Wi-Fi</b> que ce PC, ouvre :</p>
+                <ul class="second-adresses" id="second-adresses"></ul>
+                <p class="sous-titre" data-v="second-pin"></p>
+                <h3>Pare-feu de Windows</h3>
+                <p class="sous-titre">Si la page ne s'ouvre pas sur le téléphone : PowerShell <b>en administrateur</b>, puis</p>
+                <pre class="second-commande" data-v="second-commande"></pre>
+                <p class="sous-titre">Le Wi-Fi doit aussi être un réseau <b>privé</b> (Paramètres &gt; Réseau et Internet &gt; Wi-Fi &gt; propriétés).</p>
+            </div>
+        </div>
+    </dialog>
+
     <!-- Grésillement d'un quart de seconde à chaque changement d'interface (interface.js) -->
     <canvas class="gresillement" id="gresillement" aria-hidden="true" hidden></canvas>
 
@@ -858,6 +912,7 @@
     <script src="reglages_commandes.js"></script>
     <script src="reglages_son.js"></script>
     <script src="reglages.js"></script>
+    <script src="second_ecran.js"></script>
     <script src="interface.js"></script>
 </body>
 </html>

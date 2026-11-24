@@ -1012,6 +1012,8 @@ body.secoue .vue-combat { animation: secousse 0.3s; }
     .jauges { grid-template-columns: 1fr 1fr; }
     .voyants { grid-template-columns: repeat(3, 1fr); }
     .defile { max-height: 16rem; }
+    /* Une seule colonne de hauteur libre : un panneau « grandit » prend la hauteur de son contenu */
+    .colonne > .panneau.grandit { flex: none; }
     .actions.remplit { grid-auto-rows: auto; }
     .fenetre-reglages { width: 100vw; height: 100vh; }
     .reglages-tete { flex-wrap: wrap; }

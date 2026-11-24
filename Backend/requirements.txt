@@ -9,6 +9,7 @@ pygame==2.6.1                # lecture des répliques audio
 PyDirectInput==1.0.4         # touches envoyées au jeu
 websockets==17.4             # liaison avec l'interface (Frontend/interface.html)
 pywebview==6.2.1             # fenêtre de l'application (Backend/app.py, moteur Edge WebView2)
+segno==1.6.6                 # QR code de l'adresse du second écran (module/interface/second_ecran.py)
 
 # Whisper sur carte graphique NVIDIA (CUDA 12)
 nvidia-cublas-cu12==12.9.2.10

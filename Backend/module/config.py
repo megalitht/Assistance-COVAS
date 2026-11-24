@@ -61,6 +61,19 @@ annonces = true           # false : la route reste à l'écran, sans annonce voc
 sauts_restants = 5        # « Il reste 5 sauts » quand il en reste ce nombre (0 : jamais)
 sauts_min_mi_parcours = 6 # pas d'annonce de mi-parcours pour une route plus courte
 """,
+    "second_ecran": """\
+[second_ecran]
+# L'interface sur un téléphone ou une tablette connecté au même Wi-Fi que ce PC.
+# L'adresse à taper (et un QR code) est dans l'interface du PC : bouton « Second écran ».
+# Il faut aussi autoriser ce port dans le pare-feu de Windows (voir le bouton « Second écran »).
+actif = true              # false : l'interface reste réservée à ce PC
+port = 8765               # port des pages et de la liaison (relancer le COVAS après un changement)
+# Code demandé par le téléphone pour les boutons qui agissent sur le jeu (consulter reste libre).
+# Entre guillemets, 4 à 8 chiffres, par exemple : pin = "4821". Vide : commandes refusées.
+pin = ""
+tentatives = 5            # erreurs de code avant de bloquer l'appareil
+blocage_minutes = 5       # durée du blocage
+""",
 }
 
 DEFAUTS = {}
@@ -122,6 +135,8 @@ def _fusionner_section(section, contenu, valeurs, erreurs):
             valeurs[cle] = _table_libre(defaut, valeur, f"{section}.{cle}", erreurs)
         elif _meme_type(defaut, valeur):
             valeurs[cle] = float(valeur) if isinstance(defaut, float) else valeur
+        elif isinstance(defaut, str) and isinstance(valeur, int) and not isinstance(valeur, bool):
+            valeurs[cle] = str(valeur)              # pin = 4821 sans guillemets : accepté
         else:
             erreurs.append(f"{section}.{cle} : valeur invalide ({valeur!r}), "
                            f"valeur par défaut utilisée ({defaut!r})")

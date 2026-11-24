@@ -897,7 +897,9 @@ def _lancer_fenetre_interface():
     import subprocess
     navigateur = _navigateur_app() if os.name == "nt" else None
     if navigateur:
-        subprocess.Popen([navigateur, f"--app={pathlib.Path(CHEMIN_INTERFACE).as_uri()}"])
+        # ?ws= : port de la liaison (data/config.toml [second_ecran] port)
+        adresse = f"{pathlib.Path(CHEMIN_INTERFACE).as_uri()}?ws={serveur_ws.PORT}"
+        subprocess.Popen([navigateur, f"--app={adresse}"])
     else:
         os.startfile(CHEMIN_INTERFACE)
 
@@ -910,8 +912,8 @@ async def _ouvrir_interface(action, texte, dire, poli):
     if MODE_APPLICATION:
         return await refuser(dire, "macro_echec",
                              "Interface : la fenêtre de l'application est introuvable")
-    if serveur_ws.interfaces_ouvertes():
-        # Connectée mais introuvable : c'est un onglet caché d'un navigateur -> on ouvre
+    if serveur_ws.interfaces_locales_ouvertes():
+        # Connectée sur ce PC mais introuvable (un téléphone connecté ne compte pas) : c'est un onglet caché d'un navigateur -> on ouvre
         # une vraie fenêtre (tu peux fermer l'ancien onglet)
         await logs.annoncer("Interface cachée dans un onglet : ouverture dans sa propre "
                             "fenêtre (tu peux fermer l'ancien onglet)", "attention")
