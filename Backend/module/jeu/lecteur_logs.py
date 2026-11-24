@@ -35,6 +35,7 @@ from module.jeu.avaries import nommer
 from module.jeu.carburant import Reservoir
 from module.jeu import suivi as suivis
 from module.jeu.suivi_exploration import SuiviExploration
+from module.jeu.commerce import SuiviCommerce
 from module.interface.serveur_ws import definir_instantane, envoyer_donnees_web, programme_actuel
 
 # --- CHEMINS D'ACCÈS ---
@@ -88,8 +89,9 @@ _reservoir = Reservoir()         # carburant : sauts possibles et alertes (modul
 _annonceur = navigation.Annonceur()   # annonces du voyage (module/jeu/route.py)
 # Suivis enregistrés dans data/suivi/ (module/jeu/suivi.py) : chaque événement compté une seule fois
 _explo = SuiviExploration(reglages=lambda: config.section("exploration"))
-_SUIVIS = [_explo]
-_SECTIONS_SUIVIS = {_explo: "donnees_explo"}
+_commerce = SuiviCommerce()
+_SUIVIS = [_explo, _commerce]
+_SECTIONS_SUIVIS = {_explo: "donnees_explo", _commerce: "commerce"}
 _saut_en_cours = {"vers": None}  # système visé par le saut hyperespace en cours (StartJump)
 PROGRAMME_VOYAGE = "Voyage automatique"   # actions.py annonce lui-même l'arrivée de ce programme
 _corps_annonces = set()          # (système, corps, "valeur" ou "bio") déjà dits à voix haute
@@ -147,6 +149,7 @@ def _reinitialiser_etat():
         "pilotage": _pilotage_vierge(),
         "carburant": _reservoir.vue([], config.section("carburant")),   # voir module/jeu/carburant.py
         "donnees_explo": _explo.vue(),        # données non vendues : module/jeu/suivi_exploration.py
+        "commerce": _commerce.vue(),          # trajets et soute : module/jeu/commerce.py
     })
 
 
@@ -1649,6 +1652,18 @@ def _annonce_suivi(annonce, e):
     elif genre == "perdu":
         _note(e, "exploration", f"Données d'exploration perdues : ≈ {_credits_courts(montant)}", "alerte")
         _parle_morceaux(morceaux.pour_donnees("perdu", montant), "exploration_perdue")
+    elif genre == "soute_pleine":
+        _note(e, "soute", f"Soute pleine — {annonce.get('capacite')} t", "attention")
+        _parle("soute_pleine")
+    elif genre == "bilan":
+        profit = annonce.get("profit") or 0
+        texte = "Bénéfice du trajet" if profit >= 0 else "Perte sur ce trajet"
+        _note(e, "soute", f"{texte} : {_credits(abs(profit))} (recette {_credits(annonce.get('recette'))})",
+              "succes" if profit >= 0 else "attention")
+        _parle_morceaux(morceaux.pour_bilan(profit), "commerce_benefice" if profit >= 0 else "commerce_perte")
+    elif genre == "cargaison_perdue":
+        perte = f", {_credits(annonce['pertes'])} d'achats" if annonce.get("pertes") else ""
+        _note(e, "soute", f"Cargaison perdue : {annonce.get('unites')} t{perte}", "alerte")
 
 
 def _enregistrer_suivis(forcer=False):

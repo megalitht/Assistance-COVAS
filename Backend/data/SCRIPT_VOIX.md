@@ -1,6 +1,6 @@
 # Script des répliques du COVAS
 
-**165 répliques** au total.
+**168 répliques** au total.
 
 Chaque ligne = un fichier.
 
@@ -160,6 +160,17 @@ la remplacent tant qu'un morceau manque, et pour le dernier saut et l'arrivée.
 | `route_sauts_restants` | `data/son/Route/PlusQueQuelques.mp3` | Plus que quelques sauts avant la destination. |
 | `route_dernier_saut` | `data/son/Route/DernierSaut.mp3` | Dernier saut avant la destination, commandant. |
 | `route_arrivee` | `data/son/Route/Arrivee.mp3` | Nous sommes arrivés à destination, commandant. |
+
+## Commerce et soute
+
+Le bilan dit d'abord le montant, assemblé avec les morceaux du studio (« Bénéfice du trajet : » +
+« neuf cent cinquante mille crédits »). Ces répliques le remplacent tant qu'un morceau manque.
+
+| Quand | Fichier | Phrase à dire |
+|---|---|---|
+| `soute_pleine` | `data/son/Commerce/SoutePleine.mp3` | Soute pleine, commandant. |
+| `commerce_benefice` | `data/son/Commerce/Benefice.mp3` | Vente terminée. Ce trajet est rentable, commandant. |
+| `commerce_perte` | `data/son/Commerce/Perte.mp3` | Vente terminée, mais ce trajet nous a coûté de l'argent. |
 
 ## Refus et erreurs
 

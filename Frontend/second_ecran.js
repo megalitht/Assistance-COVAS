@@ -23,6 +23,11 @@ window.COVAS_SECOND_ECRAN = (() => {
     };
     const ecrire = (cle, texte) => tous(`[data-v="${cle}"]`).forEach(el => { el.textContent = texte ?? ''; });
 
+    // Onglet du téléphone -> onglet de panneau à ouvrir ; onglet de panneau -> onglet du téléphone
+    const SOUS_ONGLETS = { navigation: 'tracee', exploration: 'exploration', commerce: 'commerce',
+        minage: 'minage', materiaux: 'materiaux' };
+    const PROPRIETAIRE = { tracee: 'navigation', proches: 'navigation', exploration: 'exploration',
+        vente: 'exploration', soute: 'commerce', commerce: 'commerce', minage: 'minage', materiaux: 'materiaux' };
     const ecran = matchMedia(LARGEUR_TELEPHONE);
     let onglet = lire('localStorage', CLE_ONGLET) || 'navigation';
     let ongletAvantCombat = null;
@@ -70,12 +75,13 @@ window.COVAS_SECOND_ECRAN = (() => {
             // Un onglet sans aucun panneau (ajout à venir) reste caché
             bouton.hidden = !document.querySelector(`[data-mobile~="${cle}"]`);
         });
-        // Le panneau Route a ses propres onglets : Exploration y montre l'exploration
-        const sousOnglet = onglet === 'exploration' ? 'exploration' : onglet === 'navigation' ? 'tracee' : null;
-        const actuel = document.querySelector('[data-onglet][aria-selected="true"]')?.dataset.onglet;
-        if (sousOnglet && (onglet === 'exploration' || actuel === 'exploration') && actuel !== sousOnglet) {
-            document.querySelector(`[data-onglet="${sousOnglet}"]`)?.click();
-        }
+        // Les panneaux à onglets (Route, Soute...) servent à plusieurs onglets du téléphone :
+        // on y ouvre l'onglet qui correspond, sauf si celui choisi appartient déjà au même onglet.
+        tous('[data-mobile]:not(.hors-onglet)').forEach(panneau => {
+            const actuel = panneau.querySelector('[data-onglet][aria-selected="true"]');
+            const voulu = panneau.querySelector(`[data-onglet="${SOUS_ONGLETS[onglet]}"]`);
+            if (actuel && voulu && PROPRIETAIRE[actuel.dataset.onglet] !== onglet) voulu.click();
+        });
     }
 
     function choisir(cle, automatique = false) {

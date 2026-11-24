@@ -179,7 +179,7 @@
         cible: {}, combat: {}, missions: { liste: [] }, proches: { liste: [] },
         sol: { vaisseau: {} }, pilotage: {},
         chasse: { profil: {}, a_encaisser: {} }, exploration: { corps: [], session: {} },
-        carburant: {}, donnees_explo: {},
+        carburant: {}, donnees_explo: {}, commerce: {},
     };
     let journal = [];                 // lignes du journal de bord, la plus récente en premier
     let filtreJournal = 'tous';
@@ -626,6 +626,38 @@
         }), 'Soute vide');
     }
 
+    /** Montant signé : « +950 000 cr » ou « −1 515 cr ». */
+    const signe = n => (n < 0 ? '−' + creditsCourts(-n) : '+' + creditsCourts(n || 0));
+    function ecrireSigne(cle, n) {
+        ecrire(cle, n == null ? '—' : signe(n));
+        tous(`[data-v="${cle}"]`).forEach(el => { el.dataset.signe = n == null || n === 0 ? '' : n > 0 ? 'positif' : 'negatif'; });
+    }
+
+    /** Trajets commerciaux : dernier, session, en cours, historique (Backend/module/jeu/commerce.py). */
+    function rendreCommerce() {
+        const c = etat.commerce || {}, session = c.session || {};
+        ecrireSigne('commerce-dernier', c.dernier?.profit ?? null);
+        ecrireSigne('commerce-session', session.profit ?? null);
+        ecrireSigne('commerce-en-cours', c.en_cours?.profit ?? null);
+        const t = c.en_cours;
+        ecrire('commerce-detail', t
+            ? `Trajet en cours : ${t.de} → ${t.vers === '—' ? '?' : t.vers}${t.marchandises.length ? ' · ' + t.marchandises.join(', ') : ''}${t.cout ? ' · achats ' + creditsCourts(t.cout) : ''}${t.frais ? ' · drones ' + creditsCourts(t.frais) : ''}`
+            : `${session.trajets || 0} trajet${session.trajets > 1 ? 's' : ''} cette session${session.pertes ? ' · pertes ' + creditsCourts(session.pertes) : ''}`);
+        remplir($('liste-trajets'), (c.historique || []).map(h => {
+            const li = creer('li');
+            li.append(creer('span', 'nom', `${h.de} → ${h.vers}`));
+            li.lastChild.title = [h.marchandises.join(', '), h.fin && heure(h.fin) && new Date(h.fin).toLocaleString('fr-FR'),
+                h.cout && `achats ${credits(h.cout)}`, h.recette && `recette ${credits(h.recette)}`, h.frais && `drones ${credits(h.frais)}`,
+                (h.pertes || h.unites_perdues) && `pertes ${credits(h.pertes)} (${h.unites_perdues} t)`,
+                { mort: 'vaisseau détruit', largage: 'cargaison larguée', sortie: 'soute vidée sans vente' }[h.issue]].filter(Boolean).join(' · ');
+            li.append(creer('span', 'discret', h.marchandises.length > 2 ? `${h.marchandises.length} marchandises` : h.marchandises.join(', ')));
+            const valeur = creer('span', 'valeur', signe(h.profit));
+            valeur.dataset.signe = h.profit > 0 ? 'positif' : h.profit < 0 ? 'negatif' : '';
+            li.append(valeur);
+            return li;
+        }), 'Aucun trajet terminé.');
+    }
+
     function rendreCommandant() {
         const { rangs = {}, progression = {} } = etat.commandant;
         const lignes = Object.keys(DOMAINES).filter(d => rangs[d] != null).map(d => {
@@ -1056,6 +1088,7 @@
         proches: [rendreProches],
         carburant: [rendreCarburant],
         donnees_explo: [rendreDonneesExplo],
+        commerce: [rendreCommerce],
     };
 
     function rendreTout() {
@@ -1540,8 +1573,9 @@
         // Onglets de la route
         tous('[data-onglet]').forEach(bouton => {
             bouton.onclick = () => {
-                tous('[data-onglet]').forEach(b => b.setAttribute('aria-selected', String(b === bouton)));
-                tous('[data-contenu]').forEach(c => { c.hidden = c.dataset.contenu !== bouton.dataset.onglet; });
+                const panneau = bouton.closest('.panneau') || document;      // chaque panneau a ses onglets
+                panneau.querySelectorAll('[data-onglet]').forEach(b => b.setAttribute('aria-selected', String(b === bouton)));
+                panneau.querySelectorAll('[data-contenu]').forEach(c => { c.hidden = c.dataset.contenu !== bouton.dataset.onglet; });
             };
         });
 

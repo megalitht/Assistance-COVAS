@@ -282,7 +282,23 @@
             </section>
             <section data-mobile="commerce" class="panneau">
                 <h2>Soute <small data-v="soute-charge"></small></h2>
-                <ul class="liste defile courte" id="liste-soute"></ul>
+                <div class="onglets" role="tablist">
+                    <button type="button" role="tab" data-onglet="soute" aria-selected="true">Soute</button>
+                    <button type="button" role="tab" data-onglet="commerce" aria-selected="false" title="Profit des trajets commerciaux (Backend/module/jeu/commerce.py)">Commerce</button>
+                </div>
+                <div data-contenu="soute" class="contenu-onglet">
+                    <div class="jauge" data-j="soute"><i></i></div>
+                    <ul class="liste defile courte" id="liste-soute"></ul>
+                </div>
+                <div data-contenu="commerce" class="contenu-onglet" hidden>
+                    <dl class="chiffres">
+                        <div title="Profit du dernier trajet terminé"><dt>Dernier trajet</dt><dd data-v="commerce-dernier">—</dd></div>
+                        <div title="Profit depuis le lancement du jeu"><dt>Session</dt><dd data-v="commerce-session">—</dd></div>
+                        <div title="Profit du trajet en cours (ventes moins frais et pertes)"><dt>En cours</dt><dd data-v="commerce-en-cours">—</dd></div>
+                    </dl>
+                    <p class="sous-titre" data-v="commerce-detail"></p>
+                    <ul class="liste defile courte" id="liste-trajets"></ul>
+                </div>
             </section>
         </div>
     </main>

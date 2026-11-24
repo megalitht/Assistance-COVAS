@@ -1248,5 +1248,17 @@
     "exploration_perdue": {
         "mots_cles": [],
         "reponses": ["data/son/Exploration/DonneesPerdues.mp3"]
+    },
+    "soute_pleine": {
+        "mots_cles": [],
+        "reponses": ["data/son/Commerce/SoutePleine.mp3"]
+    },
+    "commerce_benefice": {
+        "mots_cles": [],
+        "reponses": ["data/son/Commerce/Benefice.mp3"]
+    },
+    "commerce_perte": {
+        "mots_cles": [],
+        "reponses": ["data/son/Commerce/Perte.mp3"]
     }
 }

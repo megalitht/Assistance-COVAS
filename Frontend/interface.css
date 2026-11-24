@@ -417,6 +417,10 @@ h3 span { color: var(--creme); text-transform: none; letter-spacing: 0; }
 .progression-route .sous-titre b { font-weight: 400; color: var(--creme); }
 .progression-route .discret { margin: 0.25rem 0 0; color: var(--marron-3); font-size: 0.8rem; }
 .progression-route[data-etat="arrivee"] .jauge i { background: var(--jaune); }
+/* Commerce : profit en vert pâle, perte en rouge */
+[data-signe="positif"] { color: #b9e07a !important; }
+[data-signe="negatif"] { color: var(--rouge) !important; }
+[data-contenu="soute"] > .jauge { margin: 0.2rem 0 0.3rem; }
 
 .onglets, .filtres { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .onglets button, .filtres button { padding: 0.2rem 0.65rem; font-size: 0.82rem; color: var(--ambre); }

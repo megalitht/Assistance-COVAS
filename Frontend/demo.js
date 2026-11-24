@@ -304,6 +304,17 @@ window.COVAS_DEMO = (() => {
             };
             etat.exploration = explorationDemo();
             etat.carburant = carburantDemo(24.3, 7);
+            // Commerce (même forme que Backend/module/jeu/commerce.py, vue())
+            const trajet = (de, vers, marchandises, profit, extra = {}) => ({ debut: null, fin: new Date().toISOString(), issue: 'vente', de, vers, marchandises, cout: 0, recette: profit, frais: 0, pertes: 0, unites_perdues: 0, profit, ...extra });
+            etat.commerce = {
+                soute: { quantite: 14, capacite: 32 }, stock: [{ nom: 'Or', quantite: 8, prix_moyen: 9120 }, { nom: 'Painite', quantite: 4, prix_moyen: 0 }],
+                en_cours: { ...trajet('Mars High', '—', ['Or', 'Painite'], -72960, { fin: null, issue: null, cout: 72960 }) },
+                dernier: trajet('Minage', 'Rushworth Station', ['Cobalt', 'Coltan', 'Gallite'], 952787, { frais: 21715 }),
+                historique: [trajet('Minage', 'Rushworth Station', ['Cobalt', 'Coltan', 'Gallite'], 952787, { frais: 21715 }),
+                    trajet('Abraham Lincoln', 'Hutton Orbital', ['Or'], 184300, { cout: 1240000 }),
+                    trajet('Mars High', '—', ['Méta-alliages'], -246598, { issue: 'mort', pertes: 246598, unites_perdues: 1 })],
+                session: { debut: null, profit: 1137087, trajets: 2, pertes: 0 },
+            };
             // Données non vendues (même forme que Backend/module/jeu/suivi_exploration.py, vue())
             etat.donnees_explo = {
                 total: 31840200, cartographie: 22595200, bonus: 23000, bio: 9245000, corps: 87, systemes: 12, especes: 3,

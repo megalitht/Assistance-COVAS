@@ -85,6 +85,7 @@ _FIXES = {
         ("VistaGenomics", "Vista Genomics est ici."),
         ("AnalysesNonVendues", "Analyses biologiques non vendues :"),
         ("DonneesPerdues", "Données d'exploration perdues :"),
+        ("BeneficeTrajet", "Bénéfice du trajet :"), ("PerteTrajet", "Perte sur ce trajet :"),
     ],
     "Route": [
         ("RouteTracee", "Route tracée :"), ("MiParcours", "Mi-parcours."), ("IlReste", "Il reste"),
@@ -290,6 +291,12 @@ def pour_donnees(annonce, montant_credits):
              "rappel_bio": [v("VistaGenomics"), PAUSE, v("AnalysesNonVendues")],
              "perdu": [v("DonneesPerdues")]}.get(annonce)
     return debut + montant(montant_credits) if debut else None
+
+
+def pour_bilan(profit):
+    """Bilan d'un trajet commercial : « Bénéfice du trajet : » ou « Perte sur ce trajet : » + montant."""
+    v = lambda nom: _ident("Valeurs", nom)
+    return [v("BeneficeTrajet" if profit >= 0 else "PerteTrajet"), *montant(abs(profit))]
 
 
 def pour_analyse(total, bonus):
