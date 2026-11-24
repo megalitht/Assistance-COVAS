@@ -285,6 +285,11 @@ class Service(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(appel.call_args.args[3], 75)
         self.assertEqual(self.publies[-1]["route"]["etat"], "ok")
         self.assertAlmostEqual(self.publies[-1]["route"]["portee"], 50.04, places=1)
+        self.assertEqual(appel.call_args.args[2], CASPIAN["MaxJumpRange"])          # portée écrite par le jeu
+        sans_portee = {k: v for k, v in CASPIAN.items() if k != "MaxJumpRange"}
+        with mock.patch.object(spansh, "route_neutron", return_value=route) as appel:
+            await self.s.tracer({"route": "neutron", "destination": "Colonia"}, "Sol", sans_portee)
+        self.assertAlmostEqual(appel.call_args.args[2], spansh.portee(spansh.parametres_vaisseau(CASPIAN)))
 
     async def test_inara_seulement_avec_une_cle(self):
         with mock.patch.object(inara, "profil", side_effect=AssertionError("requête envoyée !")):

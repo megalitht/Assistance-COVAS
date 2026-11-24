@@ -104,15 +104,19 @@ class ServiceExterne:
             else:
                 self.etat["route"] = {"etat": "recherche", "type": genre, "depart": systeme_actuel, "arrivee": destination}
                 await self.publier(self.etat)
-                self.etat["route"] = await self._route(genre, systeme_actuel, destination, vaisseau, demande)
+                # Portée : celle que le jeu écrit (MaxJumpRange) ; le calcul ne sert qu'à défaut (il dépasse
+                # de 0,65 al celle du jeu pour un Python Mk II des journaux : des sauts seraient impossibles)
+                portee_jeu = (loadout or {}).get("MaxJumpRange")
+                portee_al = portee_jeu if isinstance(portee_jeu, (int, float)) and portee_jeu > 0 else spansh.portee(vaisseau)
+                self.etat["route"] = await self._route(genre, systeme_actuel, destination, vaisseau, demande, portee_al)
         await self.publier(self.etat)
 
-    async def _route(self, genre, depart, arrivee, vaisseau, demande):
+    async def _route(self, genre, depart, arrivee, vaisseau, demande, portee_al):
         delai = self._delai()
         try:
             if genre == "neutron":
                 efficacite = max(1, min(100, int(demande.get("efficacite") or 60)))
-                route = await self._en_fond(spansh.route_neutron, depart, arrivee, spansh.portee(vaisseau),
+                route = await self._en_fond(spansh.route_neutron, depart, arrivee, portee_al,
                                             efficacite, delai, limite=spansh.ATTENTE_MAX + delai * 2)
             else:
                 route = await self._en_fond(spansh.route_galaxie, depart, arrivee, vaisseau, True, delai,
@@ -120,7 +124,7 @@ class ServiceExterne:
             route["etat"] = "ok" if route["etapes"] else "erreur"
             if not route["etapes"]:
                 route["message"] = "Spansh n'a trouvé aucune route."
-            route["portee"] = round(spansh.portee(vaisseau), 2)
+            route["portee"] = round(portee_al, 2)
             return route
         except (ErreurExterne, asyncio.TimeoutError, OSError, ValueError) as erreur:
             return {"etat": "erreur", "type": genre, "depart": depart, "arrivee": arrivee,
