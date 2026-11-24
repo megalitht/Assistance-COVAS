@@ -179,7 +179,7 @@
         cible: {}, combat: {}, missions: { liste: [] }, proches: { liste: [] },
         sol: { vaisseau: {} }, pilotage: {},
         chasse: { profil: {}, a_encaisser: {} }, exploration: { corps: [], session: {} },
-        carburant: {},
+        carburant: {}, donnees_explo: {},
     };
     let journal = [];                 // lignes du journal de bord, la plus récente en premier
     let filtreJournal = 'tous';
@@ -774,6 +774,41 @@
         return li;
     }
 
+    /** Données pas encore vendues : total, systèmes et corps, les corps les plus rentables. */
+    function rendreDonneesExplo() {
+        const d = etat.donnees_explo || {};
+        ecrire('vente-total', d.total != null ? '≈ ' + creditsCourts(d.total) : '—');
+        ecrire('vente-systemes', nombre(d.systemes ?? 0));
+        ecrire('vente-corps', nombre(d.corps ?? 0));
+        ecrire('vente-detail', `Cartographie ≈ ${creditsCourts(d.cartographie || 0)}${d.bonus ? ` (bonus de système ${creditsCourts(d.bonus)})` : ''} · biologie ≈ ${creditsCourts(d.bio || 0)} (${d.especes || 0} espèce${d.especes > 1 ? 's' : ''})`);
+        const v = d.derniere_vente;
+        let verif = 'Aucune vente de cartographie connue.';
+        if (v?.paye) {
+            const ecart = Math.round((v.estimation - v.paye) / v.paye * 100);
+            verif = `Dernière vente : estimée ≈ ${creditsCourts(v.estimation)}, payée ${creditsCourts(v.paye)} (écart ${ecart > 0 ? '+' : ''}${ecart} %)`;
+        }
+        ecrire('vente-verif', verif);
+        const lignes = (d.top || []).map(c => {
+            const li = creer('li');
+            li.append(creer('span', 'nom', c.nom));
+            li.lastChild.title = [c.systeme, c.classe, c.cartographie ? 'cartographié' : `≈ ${creditsCourts(c.valeur_carto)} une fois cartographié`].filter(Boolean).join(' · ');
+            if (c.premiere_decouverte) { const m = creer('span', 'marque', '1re'); m.title = 'Première découverte'; li.append(m); }
+            if (c.cartographie) { const m = creer('span', 'marque', 'carto'); m.title = 'Cartographié'; li.append(m); }
+            li.append(creer('span', 'valeur', creditsCourts(c.valeur)));
+            return li;
+        });
+        (d.bio_liste || []).slice(0, 5).forEach(b => {
+            const li = creer('li');
+            li.append(creer('span', 'nom', b.nom));
+            li.lastChild.title = [b.systeme, b.bonus ? 'bonus du premier pas' : null].filter(Boolean).join(' · ');
+            const m = creer('span', 'marque', 'Vie'); m.dataset.t = 'vie'; li.append(m);
+            li.append(creer('span', 'valeur', creditsCourts(b.valeur)));
+            lignes.push(li);
+        });
+        remplir($('liste-vente'), lignes, 'Rien à vendre pour l\'instant.');
+        rendreExploration();
+    }
+
     /** facteur : 5 si personne n'a encore posé le pied ici, comme le total affiché au-dessus. */
     function ligneBio(l, facteur) {
         const li = creer('li');
@@ -816,9 +851,13 @@
         const ici = ficheActuelle()?.id;
         ecrire('explo-total', x.total ? `≈ ${creditsCourts(x.total_carto)}` : '—');
         ecrire('explo-vie', x.bio_max ? `≤ ${creditsCourts(x.bio_max)}` : '—');
-        ecrire('explo-vendre', creditsCourts(session.a_vendre || 0));
-        ecrire('exo-vendre', creditsCourts(session.exo || 0));
-        ecrire('explo-resume', x.corps?.length ? `${x.corps.length} corps connus · ${x.premieres || 0} première${x.premieres > 1 ? 's' : ''} découverte${x.premieres > 1 ? 's' : ''} · exobiologie à vendre ${creditsCourts(session.exo || 0)}` : 'Lancez un balayage du système pour estimer ses corps.');
+        // À vendre : le suivi enregistré sur le disque (toutes sessions), sinon la session
+        const donnees = etat.donnees_explo || {};
+        const aVendre = donnees.total ?? ((session.a_vendre || 0) + (session.exo || 0));
+        const bioAVendre = donnees.bio ?? session.exo ?? 0;
+        ecrire('explo-vendre', creditsCourts(aVendre));
+        ecrire('exo-vendre', creditsCourts(bioAVendre));
+        ecrire('explo-resume', x.corps?.length ? `${x.corps.length} corps connus · ${x.premieres || 0} première${x.premieres > 1 ? 's' : ''} découverte${x.premieres > 1 ? 's' : ''} · exobiologie à vendre ${creditsCourts(bioAVendre)}` : 'Lancez un balayage du système pour estimer ses corps.');
         remplir($('liste-corps'), (x.corps || []).map(f => ligneCorps(f, ici)), 'Aucun corps scanné dans ce système.');
         remplir($('liste-corps-nomade'), (x.corps || []).filter(f => f.bio || f.atterrissable).slice(0, 12).map(f => ligneCorps(f, ici)), 'Aucun corps posable scanné.');
         rendreCarteScan();
@@ -1016,6 +1055,7 @@
         missions: [rendreMissions],
         proches: [rendreProches],
         carburant: [rendreCarburant],
+        donnees_explo: [rendreDonneesExplo],
     };
 
     function rendreTout() {

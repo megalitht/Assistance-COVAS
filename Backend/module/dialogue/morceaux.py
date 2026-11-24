@@ -80,6 +80,11 @@ _FIXES = {
         ("VieDetectee", "Vie détectée. Jusqu'à"), ("PremierPas", "Personne n'y a encore posé le pied."),
         ("AnalyseTerminee", "Analyse terminée."), ("ValeurDe", "Valeur :"),
         ("AvecBonus", "avec le bonus du premier pas."),
+        ("DonneesNonVendues", "Données d'exploration non vendues :"),
+        ("StationRachete", "Cette station rachète nos données d'exploration."),
+        ("VistaGenomics", "Vista Genomics est ici."),
+        ("AnalysesNonVendues", "Analyses biologiques non vendues :"),
+        ("DonneesPerdues", "Données d'exploration perdues :"),
     ],
     "Route": [
         ("RouteTracee", "Route tracée :"), ("MiParcours", "Mi-parcours."), ("IlReste", "Il reste"),
@@ -274,6 +279,17 @@ def pour_route(annonce, sauts):
     if annonce == "mi_parcours":
         return [r("MiParcours"), PAUSE, r("IlReste"), *nombre]
     return [r("IlReste"), *nombre]
+
+
+def pour_donnees(annonce, montant_credits):
+    """Données non vendues : palier franchi, rappel à l'amarrage, perte à la destruction.
+    annonce : "palier", "rappel_cartographie", "rappel_bio" ou "perdu"."""
+    v = lambda nom: _ident("Valeurs", nom)
+    debut = {"palier": [v("DonneesNonVendues")],
+             "rappel_cartographie": [v("StationRachete"), PAUSE, v("DonneesNonVendues")],
+             "rappel_bio": [v("VistaGenomics"), PAUSE, v("AnalysesNonVendues")],
+             "perdu": [v("DonneesPerdues")]}.get(annonce)
+    return debut + montant(montant_credits) if debut else None
 
 
 def pour_analyse(total, bonus):

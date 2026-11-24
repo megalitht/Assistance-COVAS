@@ -2,7 +2,7 @@
 exploration.py — Ce que vaut un corps céleste, et la vie qu'on peut y trouver.
 
   - valeur d'un corps : formule de la communauté (MattG, forum Frontier), selon qu'il a déjà
-    été découvert ou cartographié ;
+    été découvert ou cartographié (calcul dans module/jeu/valeur_corps.py) ;
   - exobiologie : espèces possibles d'après la planète (data/exobiologie.json), prix exacts,
     bonus ×5 du premier pas ;
   - le Carnet : les corps du système actuel et ce qui reste à vendre depuis le début de la session.
@@ -11,6 +11,8 @@ Module pur : ni touches, ni micro. Il se teste sans importer macros.py.
 """
 import json
 import os
+
+from module.jeu import valeur_corps
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHEMIN_EXOBIO = os.path.join(DOSSIER_BACKEND, "data", "exobiologie.json")
@@ -34,50 +36,10 @@ CLASSES = {
 
 
 # =====================================================================
-#  VALEUR D'UN CORPS
+#  VALEUR D'UN CORPS : formule isolée dans module/jeu/valeur_corps.py
 # =====================================================================
-def _k_planete(classe, terraformable):
-    if classe == "Metal rich body":
-        return 21790
-    if classe == "Ammonia world":
-        return 96932
-    if classe == "Sudarsky class I gas giant":
-        return 1656
-    if classe == "Sudarsky class II gas giant":
-        return 9654
-    if classe == "High metal content body":
-        return 9654 + (100677 if terraformable else 0)
-    if classe == "Water world":
-        return 64831 + (116295 if terraformable else 0)
-    if classe == "Earthlike body":
-        return 64831 + 116295
-    return 300 + (93328 if terraformable else 0)
-
-
-def valeur_planete(classe, terraformable, masse, premier, carto=False, premier_carto=False,
-                   efficace=True):
-    """Crédits à la vente. premier : première découverte. carto : cartographiée."""
-    k = _k_planete(classe, terraformable)
-    valeur = k + k * 0.56591828 * (masse or 0) ** 0.2
-    if carto:
-        if premier and premier_carto:
-            valeur *= 3.699622554
-        elif premier_carto:
-            valeur *= 8.0956
-        else:
-            valeur *= 10 / 3
-        valeur += max(valeur * 0.3, 555)
-        if efficace:
-            valeur *= 1.25
-    valeur = max(500, valeur)
-    return round(valeur * (2.6 if premier else 1))
-
-
-def valeur_etoile(type_etoile, masse, premier):
-    type_etoile = type_etoile or ""
-    k = 22628 if type_etoile in ("N", "H", "SuperMassiveBlackHole") else (
-        14057 if type_etoile.startswith("D") else 1200)
-    return round((k + (masse or 0) * k / 66.25) * (2.6 if premier else 1))
+valeur_planete = valeur_corps.valeur_planete
+valeur_etoile = valeur_corps.valeur_etoile
 
 
 # =====================================================================
@@ -341,14 +303,7 @@ class Carnet:
         e = c.get("scan")
         if not e:
             return None, None
-        premier = e.get("WasDiscovered") is False
-        if e.get("StarType"):
-            v = valeur_etoile(e.get("StarType"), e.get("StellarMass"), premier)
-            return v, v
-        terra = (e.get("TerraformState") or "") in ("Terraformable", "Terraforming", "Terraformed")
-        classe, masse = e.get("PlanetClass"), e.get("MassEM")
-        carte = valeur_planete(classe, terra, masse, premier, True, e.get("WasMapped") is False, c["efficace"])
-        return (carte if c["carto"] else valeur_planete(classe, terra, masse, premier)), carte
+        return valeur_corps.valeur_scan(e, c["carto"], c["efficace"])
 
     def _retenir(self, c):
         e = c.get("scan") or {}

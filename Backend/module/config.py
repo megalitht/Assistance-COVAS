@@ -74,6 +74,15 @@ pin = ""
 tentatives = 5            # erreurs de code avant de bloquer l'appareil
 blocage_minutes = 5       # durée du blocage
 """,
+    "exploration": """\
+[exploration]
+# Données d'exploration et biologiques pas encore vendues (gardées dans data/suivi/exploration.json).
+# Montants en millions de crédits.
+paliers_millions = [10, 50, 100]  # annonce quand le total non vendu dépasse chacun de ces montants
+rappel_min_millions = 1.0         # rappel à l'amarrage (station qui achète les données) au-delà de ce montant
+rappel_bio = true                 # rappel aussi dans une station Vista Genomics (analyses biologiques)
+annonce_corps_millions = 1.0      # un corps qui vaudra plus que ça une fois cartographié est annoncé au scan
+""",
 }
 
 DEFAUTS = {}

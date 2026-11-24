@@ -304,6 +304,18 @@ window.COVAS_DEMO = (() => {
             };
             etat.exploration = explorationDemo();
             etat.carburant = carburantDemo(24.3, 7);
+            // Données non vendues (même forme que Backend/module/jeu/suivi_exploration.py, vue())
+            etat.donnees_explo = {
+                total: 31840200, cartographie: 22595200, bonus: 23000, bio: 9245000, corps: 87, systemes: 12, especes: 3,
+                top: [
+                    { nom: 'Alpha Centauri A 1', systeme: 'Alpha Centauri', classe: 'Monde terrestre', valeur: 7842100, valeur_carto: 7842100, cartographie: true, premiere_decouverte: true },
+                    { nom: 'Synuefe XT-L b55-1 3', systeme: 'Synuefe XT-L b55-1', classe: "Monde d'eau", valeur: 1210400, valeur_carto: 3254800, cartographie: false, premiere_decouverte: false },
+                    { nom: 'HIP 117776 A 4', systeme: 'HIP 117776', classe: 'Haute teneur en métaux', valeur: 812300, valeur_carto: 812300, cartographie: true, premiere_decouverte: false },
+                ],
+                bio_liste: [{ nom: 'Stratum Tectonicas', systeme: 'Alpha Centauri', valeur: 9245000, bonus: true }],
+                derniere_vente: { h: new Date().toISOString(), systemes: 4, reconnus: 4, estimation: 138191, paye: 210795 },
+                vendu: { cartographie: 210795, bio: 0 }, paliers: [10, 50, 100],
+            };
             etat.chasse = { actif: false, profil: { armes: 6, scanner: true, pret: true }, eliminations: 0, gains: 0, meilleure: 0, a_encaisser: {}, a_encaisser_total: 0 };
             etat.pilotage = { genre: null, modele: null, coque: null };
             if (SCENE === 'chasse' || SCENE === 'chasseur') { scenarioChasse(); return; }

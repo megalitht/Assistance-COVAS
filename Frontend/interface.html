@@ -84,9 +84,10 @@
             <section data-mobile="navigation exploration" class="panneau grandit">
                 <h2>Route</h2>
                 <div class="onglets" role="tablist">
-                    <button type="button" role="tab" data-onglet="tracee" aria-selected="true">Route tracée</button>
-                    <button type="button" role="tab" data-onglet="proches" aria-selected="false">À portée de saut</button>
+                    <button type="button" role="tab" data-onglet="tracee" aria-selected="true" title="Route tracée dans la carte de la galaxie">Route</button>
+                    <button type="button" role="tab" data-onglet="proches" aria-selected="false" title="Systèmes à portée de saut (EDSM)">À portée</button>
                     <button type="button" role="tab" data-onglet="exploration" aria-selected="false">Exploration</button>
+                    <button type="button" role="tab" data-onglet="vente" aria-selected="false" title="Données d'exploration et biologiques pas encore vendues">À vendre</button>
                 </div>
                 <div data-contenu="tracee" class="contenu-onglet">
                     <dl class="chiffres">
@@ -113,6 +114,17 @@
                     </dl>
                     <p class="sous-titre" data-v="explo-resume"></p>
                     <ul class="liste defile corps-liste" id="liste-corps"></ul>
+                </div>
+                <!-- Données pas encore vendues, gardées sur le disque (Backend/module/jeu/suivi_exploration.py) -->
+                <div data-contenu="vente" class="contenu-onglet" hidden>
+                    <dl class="chiffres">
+                        <div title="Cartographie et biologie, estimation (≈)"><dt>Non vendu</dt><dd data-v="vente-total">—</dd></div>
+                        <div><dt>Systèmes</dt><dd data-v="vente-systemes">—</dd></div>
+                        <div><dt>Corps</dt><dd data-v="vente-corps">—</dd></div>
+                    </dl>
+                    <p class="sous-titre" data-v="vente-detail"></p>
+                    <p class="discret" data-v="vente-verif"></p>
+                    <ul class="liste defile corps-liste" id="liste-vente"></ul>
                 </div>
             </section>
 

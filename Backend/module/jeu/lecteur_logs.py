@@ -33,6 +33,8 @@ from module.dialogue import morceaux
 from module.jeu import sol
 from module.jeu.avaries import nommer
 from module.jeu.carburant import Reservoir
+from module.jeu import suivi as suivis
+from module.jeu.suivi_exploration import SuiviExploration
 from module.interface.serveur_ws import definir_instantane, envoyer_donnees_web, programme_actuel
 
 # --- CHEMINS D'ACCÈS ---
@@ -53,7 +55,6 @@ SYSTEMES_PROCHES_MAX = 120       # nombre de systèmes transmis à l'interface
 DELAI_ENTRE_REPLIQUES = 15       # secondes avant de redire la même alerte
 DELAI_MEME_SON = 8               # secondes avant de rejouer le même fichier audio
 TAILLE_HISTORIQUE = 200          # lignes de journal de bord gardées en mémoire
-SEUIL_VOIX_CORPS = 1_000_000     # cr une fois cartographié : en dessous, le scan reste à l'écran
 FILE_MAX_ANNONCES = 2            # annonces en attente : au-delà, une nouvelle serait déjà périmée
 # Annonces de chasse et de scan : elles s'enchaînent bien plus vite que les alertes
 DELAIS_REPLIQUES = {"chasse_recherchee": 2, "chasse_clean": 2, "chasse_autorite": 2,
@@ -85,6 +86,10 @@ _carnet = exploration.Carnet()   # corps du système et données à vendre
 _veille = chasse.Veille()        # pilotes déjà annoncés
 _reservoir = Reservoir()         # carburant : sauts possibles et alertes (module/jeu/carburant.py)
 _annonceur = navigation.Annonceur()   # annonces du voyage (module/jeu/route.py)
+# Suivis enregistrés dans data/suivi/ (module/jeu/suivi.py) : chaque événement compté une seule fois
+_explo = SuiviExploration(reglages=lambda: config.section("exploration"))
+_SUIVIS = [_explo]
+_SECTIONS_SUIVIS = {_explo: "donnees_explo"}
 _saut_en_cours = {"vers": None}  # système visé par le saut hyperespace en cours (StartJump)
 PROGRAMME_VOYAGE = "Voyage automatique"   # actions.py annonce lui-même l'arrivée de ce programme
 _corps_annonces = set()          # (système, corps, "valeur" ou "bio") déjà dits à voix haute
@@ -141,6 +146,7 @@ def _reinitialiser_etat():
         "exploration": _carnet.vue(),         # valeur des corps : voir module/jeu/exploration.py
         "pilotage": _pilotage_vierge(),
         "carburant": _reservoir.vue([], config.section("carburant")),   # voir module/jeu/carburant.py
+        "donnees_explo": _explo.vue(),        # données non vendues : module/jeu/suivi_exploration.py
     })
 
 
@@ -1279,7 +1285,7 @@ def _annoncer_valeur(fiche):
     """Un corps qui vaut le détour : le COVAS dit combien, une seule fois par corps."""
     cle = (_carnet.adresse, fiche["id"], "valeur")
     if cle in _corps_annonces or fiche["etoile"] or fiche["balise"] \
-            or (fiche["valeur_carto"] or 0) < SEUIL_VOIX_CORPS:
+            or (fiche["valeur_carto"] or 0) < config.valeur("exploration", "annonce_corps_millions") * 1e6:
         return
     _corps_annonces.add(cle)
     _parle_morceaux(morceaux.pour_corps(fiche),
@@ -1372,7 +1378,13 @@ def _cartographie(e):
 def _vente_exploration(e):
     _carnet.vente_exploration(e)
     _publier_exploration()
-    _note(e, "station", f"Données d'exploration vendues — {_credits(e.get('TotalEarnings'))}", "succes")
+    # Le suivi (déjà passé) a comparé son estimation au montant payé
+    vente = _explo.donnees["derniere_vente"] or {}
+    estimation = ""
+    if vente.get("h") == e.get("timestamp") and vente.get("estimation"):
+        ecart = (vente["estimation"] - vente["paye"]) / vente["paye"] * 100 if vente.get("paye") else 0
+        estimation = f" (estimation ≈ {_credits_courts(vente['estimation'])}, écart {ecart:+.0f} %)"
+    _note(e, "station", f"Données d'exploration vendues — {_credits(e.get('TotalEarnings'))}{estimation}", "succes")
 
 
 @_sur("SellOrganicData")
@@ -1573,12 +1585,16 @@ async def _traiter_ligne(ligne, en_direct):
             except Exception as erreur:
                 print(f"[Logs] Écouteur en erreur : {erreur!r}")
     gestionnaire = _GESTIONNAIRES.get(evenement.get("event"))
-    if not gestionnaire:
+    suivi = any(evenement.get("event") in s.EVENEMENTS for s in _SUIVIS)
+    if not gestionnaire and not suivi:
         return
 
     _lot["sections"], _lot["lignes"], _lot["repliques"] = set(), [], []
     try:
-        gestionnaire(evenement)
+        if suivi:
+            _suivre(evenement)
+        if gestionnaire:
+            gestionnaire(evenement)
     except Exception as erreur:
         print(f"[Logs] Événement {evenement.get('event')} ignoré : {erreur!r}")
         return
@@ -1597,6 +1613,65 @@ async def _traiter_ligne(ligne, en_direct):
         await _dire(cle)
     if sections & {"position", "vaisseau"}:
         _demander_systemes_proches()
+
+
+# =====================================================================
+#  SUIVIS ENREGISTRÉS (exploration, commerce, matériaux) : data/suivi/
+# =====================================================================
+def _suivre(e):
+    """Passe l'événement aux suivis (chacun ne le compte qu'une fois) ; leurs annonces partent avec
+    l'événement (voix et journal de bord)."""
+    for suivi in _SUIVIS:
+        if e.get("event") not in suivi.EVENEMENTS:
+            continue
+        annonces = suivi.traiter(e)
+        if suivi.modifie:
+            section = _SECTIONS_SUIVIS[suivi]
+            ETAT[section] = suivi.vue()
+            _touche(section)
+        for annonce in annonces:
+            _annonce_suivi(annonce, e)
+        suivi.enregistrer()
+
+
+def _annonce_suivi(annonce, e):
+    """Une annonce d'un suivi -> ligne du journal de bord et réplique (assemblée si possible)."""
+    genre, montant = annonce.get("type"), annonce.get("montant") or 0
+    if genre == "palier":
+        _note(e, "exploration", f"Données non vendues : ≈ {_credits_courts(montant)}", "succes")
+        _parle_morceaux(morceaux.pour_donnees("palier", montant), "exploration_palier")
+    elif genre == "rappel" and annonce.get("service") == "cartographie":
+        _note(e, "station", f"Cette station rachète les données d'exploration : ≈ {_credits_courts(montant)} à vendre", "attention")
+        _parle_morceaux(morceaux.pour_donnees("rappel_cartographie", montant), "exploration_rappel")
+    elif genre == "rappel" and annonce.get("service") == "bio":
+        _note(e, "station", f"Vista Genomics : analyses biologiques à vendre ≈ {_credits_courts(montant)}", "attention")
+        _parle_morceaux(morceaux.pour_donnees("rappel_bio", montant), "exobio_rappel")
+    elif genre == "perdu":
+        _note(e, "exploration", f"Données d'exploration perdues : ≈ {_credits_courts(montant)}", "alerte")
+        _parle_morceaux(morceaux.pour_donnees("perdu", montant), "exploration_perdue")
+
+
+def _enregistrer_suivis(forcer=False):
+    for suivi in _SUIVIS:
+        suivi.enregistrer(forcer)
+
+
+async def _ouvrir_suivis():
+    """Au démarrage : lit data/suivi/. Un suivi sans fichier (premier lancement) relit TOUS les
+    journaux du jeu, du plus ancien au plus récent : il retrouve ce qui n'a pas encore été vendu."""
+    neufs = [s for s in _SUIVIS if not s.ouvrir()]
+    if neufs:
+        try:
+            journaux = sorted(glob.glob(CHEMIN_LOGS), key=os.path.getctime)
+        except OSError:
+            journaux = []
+        print(f"[Suivi] Premier lancement : relecture de {len(journaux)} journaux "
+              f"({', '.join(s.NOM for s in neufs)})...")
+        compte = await asyncio.to_thread(suivis.reconstruire, neufs, journaux)
+        print(f"[Suivi] {compte} événements relus.")
+    for suivi in _SUIVIS:
+        ETAT[_SECTIONS_SUIVIS[suivi]] = suivi.vue()
+    await _publier(*_SECTIONS_SUIVIS.values())
 
 
 async def _relire_journaux_precedents(dernier, combien=2):
@@ -1620,6 +1695,10 @@ async def _relire_journaux_precedents(dernier, combien=2):
 async def surveiller_logs(tts_queue, generer_replique_func):
     _voix["file"], _voix["generer"] = tts_queue, generer_replique_func
     definir_instantane(_instantane)
+    try:
+        await _ouvrir_suivis()
+    except Exception as erreur:
+        print(f"[Suivi] Ouverture impossible : {erreur!r}")
 
     journal = None            # fichier actuellement suivi
     chemin_actuel = None
@@ -1642,6 +1721,7 @@ async def surveiller_logs(tts_queue, generer_replique_func):
                 if rattrapage:
                     rattrapage = False
                     _suivi["en_direct"] = True
+                    _enregistrer_suivis(forcer=True)
                     print(f"[Logs] État du vaisseau reconstruit, suivi en direct "
                           f"({len(HISTORIQUE)} événements en mémoire).")
                     await envoyer_donnees_web(_instantane())
@@ -1762,6 +1842,7 @@ async def surveiller_fichiers_auxiliaires():
                     await _controler_carburant()
             except Exception as erreur:
                 print(f"[Logs] Erreur sur {os.path.basename(fichier.chemin)} : {erreur!r}")
+        _enregistrer_suivis()      # les suivis modifiés sont écrits (au plus toutes les 2 s)
         await asyncio.sleep(1.0)   # Check toutes les secondes, très léger
 
 

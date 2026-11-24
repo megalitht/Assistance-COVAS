@@ -1232,5 +1232,21 @@
     "exo_distance_ok": {
         "mots_cles": [],
         "reponses": ["data/son/Exploration/ExoDistance.mp3"]
+    },
+    "exploration_palier": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/Palier.mp3"]
+    },
+    "exploration_rappel": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/RappelVente.mp3"]
+    },
+    "exobio_rappel": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/RappelBio.mp3"]
+    },
+    "exploration_perdue": {
+        "mots_cles": [],
+        "reponses": ["data/son/Exploration/DonneesPerdues.mp3"]
     }
 }

@@ -1,6 +1,6 @@
 # Script des répliques du COVAS
 
-**161 répliques** au total.
+**165 répliques** au total.
 
 Chaque ligne = un fichier.
 
@@ -228,3 +228,11 @@ la remplacent tant qu'un morceau manque, et pour le dernier saut et l'arrivée.
 | `scan_bio` | `data/son/Exploration/ScanBio.mp3` | Signaux biologiques détectés sur ce corps. |
 | `exo_analyse` | `data/son/Exploration/ExoAnalyse.mp3` | Analyse terminée, commandant. Échantillon enregistré. |
 | `exo_distance_ok` | `data/son/Exploration/ExoDistance.mp3` | Distance suffisante. Vous pouvez prélever. |
+| `exploration_palier` | `data/son/Exploration/Palier.mp3` | Nos données d'exploration commencent à valoir une petite fortune, commandant. |
+| `exploration_rappel` | `data/son/Exploration/RappelVente.mp3` | Cette station rachète les données d'exploration, commandant. |
+| `exobio_rappel` | `data/son/Exploration/RappelBio.mp3` | Vista Genomics est ici : pensez à vendre nos analyses biologiques. |
+| `exploration_perdue` | `data/son/Exploration/DonneesPerdues.mp3` | Nos données d'exploration non vendues sont perdues, commandant. |
+
+Les paliers, le rappel à l'amarrage et la perte disent d'abord le montant, assemblé avec les morceaux
+du studio (« Données d'exploration non vendues : » + « douze millions de crédits »). Les quatre
+répliques ci-dessus les remplacent tant qu'un morceau manque.
