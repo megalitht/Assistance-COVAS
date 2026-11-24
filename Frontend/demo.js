@@ -304,6 +304,14 @@ window.COVAS_DEMO = (() => {
             };
             etat.exploration = explorationDemo();
             etat.carburant = carburantDemo(24.3, 7);
+            // Prospecteurs (même forme que Backend/module/jeu/prospection.py, vue())
+            const roche = (contenu, materiaux, extra = {}) => ({ h: new Date().toISOString(), contenu, niveau: null, noyau: null, restant: 100,
+                materiaux: materiaux.map(([nom, pourcentage, interessant = false]) => ({ cle: nom, nom, pourcentage, interessant })), interessant: materiaux.some(x => x[2]), ...extra });
+            etat.minage = { prospectes: 23, interessants: 4, derniers: [
+                roche('Élevé', [['Platine', 31.8, true], ['Bertrandite', 12.2], ['Argent', 6.4]]),
+                roche('Moyen', [['Tritium', 26.2, true], ['Bromellite', 9.1], ['Eau', 7.5]], { noyau: 'Alexandrite', interessant: true }),
+                roche('Faible', [['Hématite', 24.3], ['Indite', 9.9], ['Cobalt', 7.6]]),
+            ] };
             // Commerce (même forme que Backend/module/jeu/commerce.py, vue())
             const trajet = (de, vers, marchandises, profit, extra = {}) => ({ debut: null, fin: new Date().toISOString(), issue: 'vente', de, vers, marchandises, cout: 0, recette: profit, frais: 0, pertes: 0, unites_perdues: 0, profit, ...extra });
             etat.commerce = {

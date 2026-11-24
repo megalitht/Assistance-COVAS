@@ -1260,5 +1260,17 @@
     "commerce_perte": {
         "mots_cles": [],
         "reponses": ["data/son/Commerce/Perte.mp3"]
+    },
+    "minage_riche": {
+        "mots_cles": [],
+        "reponses": ["data/son/Minage/Riche.mp3"]
+    },
+    "minage_noyau": {
+        "mots_cles": [],
+        "reponses": ["data/son/Minage/Noyau.mp3"]
+    },
+    "minage_sans_interet": {
+        "mots_cles": [],
+        "reponses": ["data/son/Minage/SansInteret.mp3"]
     }
 }

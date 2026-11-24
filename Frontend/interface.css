@@ -421,6 +421,15 @@ h3 span { color: var(--creme); text-transform: none; letter-spacing: 0; }
 [data-signe="positif"] { color: #b9e07a !important; }
 [data-signe="negatif"] { color: var(--rouge) !important; }
 [data-contenu="soute"] > .jauge { margin: 0.2rem 0 0.3rem; }
+/* Minage : un astéroïde par ligne, ses minerais en pastilles ; ceux à miner en évidence */
+.prospections li { display: block; padding: 0.35rem 0.2rem; }
+.prospections .tete { display: flex; gap: 0.5rem; align-items: baseline; }
+.prospections .tete .nom { flex: 1; }
+.prospections .pastilles { margin-top: 0.25rem; }
+.prospections li.a-miner { background: var(--accent-doux); box-shadow: inset 3px 0 #b9e07a; padding-left: 0.5rem; }
+.prospections .pastilles li { display: inline-block; padding: 0.05rem 0.45rem; }
+.prospections .pastilles li.interessant { color: var(--noir); background: #b9e07a; border-color: #b9e07a; font-weight: 600; }
+.prospections .noyau { color: var(--noir); background: var(--jaune); padding: 0 0.4rem; font-size: 0.78rem; font-weight: 600; }
 
 .onglets, .filtres { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .onglets button, .filtres button { padding: 0.2rem 0.65rem; font-size: 0.82rem; color: var(--ambre); }

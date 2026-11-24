@@ -280,11 +280,12 @@
                 <p class="rapport-resume" data-rapport hidden></p>
                 <div class="liste defile" id="liste-modules"></div>
             </section>
-            <section data-mobile="commerce" class="panneau">
+            <section data-mobile="commerce minage" class="panneau">
                 <h2>Soute <small data-v="soute-charge"></small></h2>
                 <div class="onglets" role="tablist">
                     <button type="button" role="tab" data-onglet="soute" aria-selected="true">Soute</button>
                     <button type="button" role="tab" data-onglet="commerce" aria-selected="false" title="Profit des trajets commerciaux (Backend/module/jeu/commerce.py)">Commerce</button>
+                    <button type="button" role="tab" data-onglet="minage" aria-selected="false" title="Les 5 derniers astéroïdes prospectés">Minage</button>
                 </div>
                 <div data-contenu="soute" class="contenu-onglet">
                     <div class="jauge" data-j="soute"><i></i></div>
@@ -298,6 +299,10 @@
                     </dl>
                     <p class="sous-titre" data-v="commerce-detail"></p>
                     <ul class="liste defile courte" id="liste-trajets"></ul>
+                </div>
+                <div data-contenu="minage" class="contenu-onglet" hidden>
+                    <p class="sous-titre" data-v="minage-resume"></p>
+                    <ol class="liste defile prospections" id="liste-prospections"></ol>
                 </div>
             </section>
         </div>

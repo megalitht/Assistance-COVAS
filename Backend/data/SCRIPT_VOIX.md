@@ -1,6 +1,6 @@
 # Script des répliques du COVAS
 
-**168 répliques** au total.
+**171 répliques** au total.
 
 Chaque ligne = un fichier.
 
@@ -171,6 +171,18 @@ Le bilan dit d'abord le montant, assemblé avec les morceaux du studio (« Bén�
 | `soute_pleine` | `data/son/Commerce/SoutePleine.mp3` | Soute pleine, commandant. |
 | `commerce_benefice` | `data/son/Commerce/Benefice.mp3` | Vente terminée. Ce trajet est rentable, commandant. |
 | `commerce_perte` | `data/son/Commerce/Perte.mp3` | Vente terminée, mais ce trajet nous a coûté de l'argent. |
+
+## Minage (prospecteurs)
+
+Le COVAS dit d'abord la phrase assemblée avec les morceaux du studio (groupes « Minage » et « Noms des
+minerais » : « Astéroïde riche en » + « platine » + « trente-deux » + « pour cent »). Ces répliques
+la remplacent quand le minerai n'a pas de nom enregistré.
+
+| Quand | Fichier | Phrase à dire |
+|---|---|---|
+| `minage_riche` | `data/son/Minage/Riche.mp3` | Astéroïde intéressant, commandant. Le détail est à l'écran. |
+| `minage_noyau` | `data/son/Minage/Noyau.mp3` | Noyau détecté ! Cet astéroïde peut être fracturé. |
+| `minage_sans_interet` | `data/son/Minage/SansInteret.mp3` | Rien d'intéressant dans celui-là. |
 
 ## Refus et erreurs
 

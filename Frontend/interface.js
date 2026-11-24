@@ -179,7 +179,7 @@
         cible: {}, combat: {}, missions: { liste: [] }, proches: { liste: [] },
         sol: { vaisseau: {} }, pilotage: {},
         chasse: { profil: {}, a_encaisser: {} }, exploration: { corps: [], session: {} },
-        carburant: {}, donnees_explo: {}, commerce: {},
+        carburant: {}, donnees_explo: {}, commerce: {}, minage: {},
     };
     let journal = [];                 // lignes du journal de bord, la plus récente en premier
     let filtreJournal = 'tous';
@@ -658,6 +658,24 @@
         }), 'Aucun trajet terminé.');
     }
 
+    /** Les 5 derniers astéroïdes prospectés (Backend/module/jeu/prospection.py). */
+    function rendreMinage() {
+        const m = etat.minage || {};
+        ecrire('minage-resume', m.prospectes ? `${m.prospectes} astéroïde${m.prospectes > 1 ? 's' : ''} prospecté${m.prospectes > 1 ? 's' : ''}, ${m.interessants || 0} à miner` : 'Lancez un drone de prospection sur un astéroïde.');
+        remplir($('liste-prospections'), (m.derniers || []).map(a => {
+            const li = creer('li', a.interessant ? 'a-miner' : '');
+            const tete = creer('div', 'tete');
+            tete.append(creer('span', 'nom', `Contenu ${a.contenu.toLowerCase()}`));
+            if (a.noyau) { const n = creer('span', 'noyau', `Noyau : ${a.noyau}`); tete.append(n); }
+            if (a.restant != null && a.restant < 100) tete.append(creer('span', 'discret', `reste ${Math.round(a.restant)} %`));
+            tete.append(creer('span', 'discret', heure(a.h)));
+            const pastilles = creer('ul', 'pastilles');
+            a.materiaux.forEach(x => pastilles.append(creer('li', x.interessant ? 'interessant' : '', `${x.nom} ${decimales(x.pourcentage, 1)} %`)));
+            li.append(tete, pastilles);
+            return li;
+        }), 'Aucun astéroïde prospecté.');
+    }
+
     function rendreCommandant() {
         const { rangs = {}, progression = {} } = etat.commandant;
         const lignes = Object.keys(DOMAINES).filter(d => rangs[d] != null).map(d => {
@@ -1089,6 +1107,7 @@
         carburant: [rendreCarburant],
         donnees_explo: [rendreDonneesExplo],
         commerce: [rendreCommerce],
+        minage: [rendreMinage],
     };
 
     function rendreTout() {

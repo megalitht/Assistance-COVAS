@@ -75,6 +75,12 @@ window.COVAS_SECOND_ECRAN = (() => {
             // Un onglet sans aucun panneau (ajout à venir) reste caché
             bouton.hidden = !document.querySelector(`[data-mobile~="${cle}"]`);
         });
+        // La barre d'onglets défile : l'onglet choisi reste visible
+        const choisi = document.querySelector(`[data-onglet-tel="${onglet}"]`);
+        const barre = choisi?.parentElement;
+        if (barre && (choisi.offsetLeft < barre.scrollLeft || choisi.offsetLeft + choisi.offsetWidth > barre.scrollLeft + barre.clientWidth)) {
+            barre.scrollLeft = choisi.offsetLeft - (barre.clientWidth - choisi.offsetWidth) / 2;
+        }
         // Les panneaux à onglets (Route, Soute...) servent à plusieurs onglets du téléphone :
         // on y ouvre l'onglet qui correspond, sauf si celui choisi appartient déjà au même onglet.
         tous('[data-mobile]:not(.hors-onglet)').forEach(panneau => {

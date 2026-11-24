@@ -83,6 +83,25 @@ rappel_min_millions = 1.0         # rappel à l'amarrage (station qui achète le
 rappel_bio = true                 # rappel aussi dans une station Vista Genomics (analyses biologiques)
 annonce_corps_millions = 1.0      # un corps qui vaudra plus que ça une fois cartographié est annoncé au scan
 """,
+    "minage": """\
+[minage]
+# Drones de prospection : quels astéroïdes annoncer.
+annoncer_noyau = true          # annonce spéciale quand l'astéroïde a un noyau (minage en profondeur)
+annoncer_sans_interet = false  # true : annonce aussi les astéroïdes sans minerai intéressant
+ignorer_deja_mines = true      # un astéroïde déjà entamé (moins de 100 % restant) n'est pas annoncé
+
+[minage.minerais]
+# Minerai (nom du journal, en minuscules) = pourcentage minimum pour annoncer l'astéroïde.
+# Ajoute ou retire des lignes. Autres noms : silver, samarium, opal, monazite, rhodplumsite...
+platinum = 15
+painite = 20
+osmium = 20
+palladium = 20
+gold = 25
+lowtemperaturediamond = 15
+tritium = 15
+bromellite = 15
+""",
 }
 
 DEFAUTS = {}
@@ -91,7 +110,7 @@ for _nom, _texte in SECTIONS.items():
 
 # Tables libres : le commandant y met les clés qu'il veut (ex. minerai -> pourcentage).
 # Chaque valeur doit avoir le type des valeurs par défaut de la table.
-LIBRES = set()
+LIBRES = {("minage", "minerais")}
 
 _verrou = threading.Lock()
 _etat = {"valeurs": None, "date": None, "verifie": 0.0}

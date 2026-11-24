@@ -36,6 +36,7 @@ from module.jeu.carburant import Reservoir
 from module.jeu import suivi as suivis
 from module.jeu.suivi_exploration import SuiviExploration
 from module.jeu.commerce import SuiviCommerce
+from module.jeu.prospection import Prospection
 from module.interface.serveur_ws import definir_instantane, envoyer_donnees_web, programme_actuel
 
 # --- CHEMINS D'ACCÈS ---
@@ -58,7 +59,7 @@ DELAI_MEME_SON = 8               # secondes avant de rejouer le même fichier au
 TAILLE_HISTORIQUE = 200          # lignes de journal de bord gardées en mémoire
 FILE_MAX_ANNONCES = 2            # annonces en attente : au-delà, une nouvelle serait déjà périmée
 # Annonces de chasse et de scan : elles s'enchaînent bien plus vite que les alertes
-DELAIS_REPLIQUES = {"chasse_recherchee": 2, "chasse_clean": 2, "chasse_autorite": 2,
+DELAIS_REPLIQUES = {"minage_riche": 2, "minage_noyau": 2, "minage_sans_interet": 2, "chasse_recherchee": 2, "chasse_clean": 2, "chasse_autorite": 2,
                     "chasse_sans_loi": 2, "chasse_joueur": 4, "chasse_gros_gibier": 4,
                     "chasse_dangereux": 6, "chasse_tir_clean": 8, "scan_valeur": 3, "scan_bio": 3,
                     "scan_premiere": 3, "exo_analyse": 3, "exo_distance_ok": 3}
@@ -90,6 +91,7 @@ _annonceur = navigation.Annonceur()   # annonces du voyage (module/jeu/route.py)
 # Suivis enregistrés dans data/suivi/ (module/jeu/suivi.py) : chaque événement compté une seule fois
 _explo = SuiviExploration(reglages=lambda: config.section("exploration"))
 _commerce = SuiviCommerce()
+_prospection = Prospection()     # 5 derniers astéroïdes prospectés (module/jeu/prospection.py)
 _SUIVIS = [_explo, _commerce]
 _SECTIONS_SUIVIS = {_explo: "donnees_explo", _commerce: "commerce"}
 _saut_en_cours = {"vers": None}  # système visé par le saut hyperespace en cours (StartJump)
@@ -150,6 +152,7 @@ def _reinitialiser_etat():
         "carburant": _reservoir.vue([], config.section("carburant")),   # voir module/jeu/carburant.py
         "donnees_explo": _explo.vue(),        # données non vendues : module/jeu/suivi_exploration.py
         "commerce": _commerce.vue(),          # trajets et soute : module/jeu/commerce.py
+        "minage": _prospection.vue(),         # prospecteurs : module/jeu/prospection.py
     })
 
 
@@ -1443,6 +1446,28 @@ def _largage(e):
 @_sur("MiningRefined")
 def _raffinage(e):
     _note(e, "soute", f"Raffiné : {_loc(e, 'Type')}", fusion=True)
+
+
+@_sur("ProspectedAsteroid")
+def _prospecte(e):
+    fiche, annonce = _prospection.analyser(e, config.section("minage"))
+    ETAT["minage"] = _prospection.vue()
+    _touche("minage")
+    principaux = ", ".join(f"{m['nom']} {m['pourcentage']:.0f} %" for m in fiche["materiaux"][:3])
+    noyau = f" — noyau : {fiche['noyau']}" if fiche["noyau"] else ""
+    _note(e, "soute", f"Astéroïde ({fiche['contenu'].lower()}) : {principaux}{noyau}",
+          "succes" if fiche["interessant"] else "info")
+    if annonce is None:
+        return
+    if annonce["sans_interet"]:
+        _parle("minage_sans_interet")
+        return
+    secours = "minage_noyau" if annonce["noyau"] else "minage_riche"
+    ids = morceaux.pour_prospection(annonce)
+    if ids:
+        _parle_morceaux(ids, secours)
+    else:
+        _parle(secours)
 
 
 @_sur("MaterialCollected")

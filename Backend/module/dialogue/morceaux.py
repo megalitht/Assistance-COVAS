@@ -24,6 +24,7 @@ from itertools import count
 import numpy as np
 
 from module.jeu import avaries
+from module.jeu import prospection
 from module.son import sons
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -87,6 +88,9 @@ _FIXES = {
         ("DonneesPerdues", "Données d'exploration perdues :"),
         ("BeneficeTrajet", "Bénéfice du trajet :"), ("PerteTrajet", "Perte sur ce trajet :"),
     ],
+    "Minage": [
+        ("AsteroideRicheEn", "Astéroïde riche en"), ("NoyauDetecte", "Noyau détecté :"),
+    ],
     "Route": [
         ("RouteTracee", "Route tracée :"), ("MiParcours", "Mi-parcours."), ("IlReste", "Il reste"),
         ("Saut", "saut."), ("Sauts", "sauts."),
@@ -94,7 +98,8 @@ _FIXES = {
 }
 _GROUPES = {"Rapport": "Rapport d'avarie", "Modules": "Noms des modules", "Nombres": "Nombres",
             "Heure": "Heure", "Date": "Date", "Position": "Position",
-            "Valeurs": "Primes et valeurs", "Route": "Route"}
+            "Valeurs": "Primes et valeurs", "Route": "Route", "Minage": "Minage",
+            "Minerais": "Noms des minerais"}
 
 
 def nombre(n, feminin=False):
@@ -145,6 +150,10 @@ def _id_module(nom):
     return _ident("Modules", _nom_fichier(nom))
 
 
+def _id_minerai(cle):
+    return _ident("Minerais", _nom_fichier(prospection.NOMS[cle]))
+
+
 def _texte_heure(h):
     return f"{nombre(h, feminin=True)} heure{'s' if h > 1 else ''}"
 
@@ -177,6 +186,10 @@ def catalogue():
         ajouter("Position", _ident("Position", nom), texte, "le nom exact reste à l'écran")
     for nom, texte in _FIXES["Valeurs"]:
         ajouter("Valeurs", _ident("Valeurs", nom), texte, "primes, valeur des planètes et de la vie")
+    for nom, texte in _FIXES["Minage"]:
+        ajouter("Minage", _ident("Minage", nom), texte, "« Astéroïde riche en » + minerai + pourcentage")
+    for cle in prospection.VOIX:
+        ajouter("Minerais", _id_minerai(cle), prospection.NOMS[cle].lower(), "minerai annoncé par les prospecteurs")
     for nom, texte in _FIXES["Route"]:
         ajouter("Route", _ident("Route", nom), texte, "« Route tracée : douze sauts. », « Il reste cinq sauts. »")
     return lignes
@@ -291,6 +304,26 @@ def pour_donnees(annonce, montant_credits):
              "rappel_bio": [v("VistaGenomics"), PAUSE, v("AnalysesNonVendues")],
              "perdu": [v("DonneesPerdues")]}.get(annonce)
     return debut + montant(montant_credits) if debut else None
+
+
+def pour_prospection(annonce):
+    """« Noyau détecté : alexandrite. Astéroïde riche en platine, trente-deux pour cent. »
+    None si un minerai n'a pas de nom enregistré (la réplique fixe est dite)."""
+    m = lambda nom: _ident("Minage", nom)
+    ids = []
+    if annonce.get("noyau"):
+        if annonce["noyau"] not in prospection.VOIX:
+            return None
+        ids += [m("NoyauDetecte"), _id_minerai(annonce["noyau"])]
+    if annonce.get("minerai"):
+        if annonce["minerai"] not in prospection.VOIX:
+            return None
+        if ids:
+            ids.append(PAUSE)
+        ids += [m("AsteroideRicheEn"), _id_minerai(annonce["minerai"])]
+        if annonce.get("pourcentage") is not None:
+            ids += [*_entier(min(100, round(annonce["pourcentage"]))), _ident("Rapport", "PourCent")]
+    return ids or None
 
 
 def pour_bilan(profit):
