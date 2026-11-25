@@ -16,8 +16,11 @@ Classe de base : un suivi définit EVENEMENTS, vierge() et _appliquer(e) -> anno
 """
 import hashlib
 import json
+import logging
 import os
 import time
+
+_log = logging.getLogger(__name__)
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DOSSIER = os.path.join(DOSSIER_BACKEND, "data", "suivi")
@@ -61,8 +64,8 @@ class Suivi:
         except FileNotFoundError:
             return False
         except (OSError, ValueError) as erreur:
-            print(f"[Suivi] {os.path.basename(self.chemin)} illisible ({erreur}) : mis de côté, "
-                  "reconstruit depuis les journaux.")
+            _log.warning(f"{os.path.basename(self.chemin)} illisible ({erreur}) : mis de côté, "
+                         "reconstruit depuis les journaux.")
             try:
                 os.replace(self.chemin, self.chemin + ".illisible")
             except OSError:
@@ -92,7 +95,7 @@ class Suivi:
             os.replace(provisoire, self.chemin)
             self.modifie, self.ecrit = False, time.monotonic()
         except OSError as erreur:
-            print(f"[Suivi] Écriture de {os.path.basename(self.chemin)} impossible : {erreur}")
+            _log.warning(f"Écriture de {os.path.basename(self.chemin)} impossible : {erreur}")
 
     # ---------- Événements ----------
     def nouvelle_lecture(self):

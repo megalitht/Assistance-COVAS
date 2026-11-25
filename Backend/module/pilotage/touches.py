@@ -17,16 +17,16 @@ peux pas les déclencher par erreur. Elles sont
 prend en compte à son prochain lancement. Une manette ou une souris déjà assignée
 reste en place : la touche virtuelle va dans l'emplacement libre.
 
-Diagnostic : lance   python module/pilotage/touches.py   pour voir ce qui a été lu
-             (ajoute  --assigner  pour écrire aussi les touches virtuelles).
-
 Si le dossier est ailleurs, indique-le dans la variable d'environnement COVAS_DOSSIER_BINDS.
 """
 import glob
+import logging
 import os
 import shutil
 import time
 import xml.etree.ElementTree as ET
+
+_log = logging.getLogger(__name__)
 
 # Disposition du clavier : "auto" (détectée), "azerty" ou "qwerty".
 # À changer seulement si les touches lues sont décalées (A/Q, Z/W, M inversés).
@@ -243,24 +243,10 @@ def profil_integre():
     return None
 
 
-def utiliser_profil_perso():
-    """Fait utiliser au jeu le fichier personnalisé (celui où le COVAS écrit) pour toutes
-    les catégories. À faire jeu fermé : le jeu réécrit ce fichier en quittant.
-    Renvoie un message d'explication."""
-    if _jeu_lance():
-        return "Ferme d'abord Elite Dangerous (il réécrit ses réglages en quittant)."
-    chemin, profils = lire_profils()
+def _nom_profil_perso():
+    """Nom du profil personnalisé (celui où le COVAS écrit), tel que le jeu l'affiche."""
     fichier = trouver_fichier()
-    if not chemin or not fichier:
-        return "Fichier StartPreset ou .binds introuvable."
-    perso = os.path.basename(fichier).split(".")[0]
-    if profils and all(p == perso for p in profils):
-        return f"Le jeu utilise déjà « {perso} » partout."
-    shutil.copy2(chemin, f"{chemin}.avant-covas-{time.strftime('%Y%m%d-%H%M%S')}.bak")
-    with open(chemin, "w", encoding="utf-8", newline="\n") as f:
-        f.write("\n".join([perso] * max(len(profils), 1)) + "\n")
-    return (f"Profils {' / '.join(profils)} remplacés par « {perso} » partout "
-            f"(sauvegarde faite). Lance le jeu et vérifie tes commandes.")
+    return os.path.basename(fichier).split(".")[0] if fichier else "Custom"
 
 
 def pourquoi_sans_effet(nom):
@@ -270,7 +256,8 @@ def pourquoi_sans_effet(nom):
     integre = profil_integre()
     if integre:
         return (f"le vaisseau utilise le profil intégré « {integre} », qui ne contient pas les "
-                "touches virtuelles : jeu fermé, lance « python module/pilotage/touches.py --profil-perso »")
+                f"touches virtuelles : choisis le profil « {_nom_profil_perso()} » dans "
+                "Options > Commandes du jeu")
     if ETAT["ecrit_jeu_lance"]:
         return "touche virtuelle ajoutée pendant que le jeu tournait : redémarre le jeu"
     return None
@@ -438,12 +425,12 @@ def _assigner_virtuelles(racine, sauf):
         commande = COMMANDES_JEU[nom][0]
         emplacement = _emplacement_libre(racine, commande)
         if emplacement is None:
-            print(f"[Touches] {nom} : les deux emplacements sont pris (manette/souris), "
-                  "pas de touche virtuelle possible.")
+            _log.warning(f"{nom} : les deux emplacements sont pris (manette/souris), "
+                         "pas de touche virtuelle possible.")
             continue
         combinaison = next(libres, None)
         if combinaison is None:
-            print("[Touches] Plus de touche virtuelle libre.")
+            _log.warning("Plus de touche virtuelle libre.")
             break
         touche, mods = combinaison
         emplacement.attrib.clear()
@@ -460,21 +447,14 @@ def _enregistrer(fichier, racine, vides):
     try:
         _ecrire(fichier, racine)
     except OSError as erreur:
-        print(f"[Touches] Impossible d'écrire {os.path.basename(fichier)} ({erreur}) : "
-              "touches virtuelles non enregistrées.")
+        _log.warning(f"Impossible d'écrire {os.path.basename(fichier)} ({erreur}) : "
+                     "touches virtuelles non enregistrées.")
         return False
-    if vides:
-        print(f"[Touches] {vides} touche(s) virtuelle(s) abîmée(s) par le jeu retirée(s) "
-              "(F21-F24 ou doublon).")
     for nom, element in ETAT["assignees"].items():
         ETAT["lues"][nom] = _touche_clavier(element, ETAT["azerty"])
         ETAT["manquantes"].pop(nom, None)
-        touche, mods = ETAT["lues"][nom]
-        print(f"[Touches] {libelle(nom)} -> touche virtuelle {' + '.join(mods + [touche]).upper()}")
     if _jeu_lance():
         ETAT["ecrit_jeu_lance"] = True
-        print("[Touches] Le jeu est lancé : redémarre-le pour qu'il charge les nouvelles touches "
-              "(sinon il risque aussi de les effacer en enregistrant ses options).")
     return True
 
 
@@ -486,13 +466,13 @@ def charger(assigner=False, sauf=()):
                 assignees={})
     fichier = trouver_fichier()
     if not fichier:
-        print(f"[Touches] Aucun fichier .binds dans {dossier_binds()} : touches par défaut de "
-              "macros.py. (Modifie une commande dans le jeu pour qu'il crée ce fichier.)")
+        _log.warning(f"Aucun fichier .binds dans {dossier_binds()} : touches par défaut de "
+                     "macros.py. (Modifie une commande dans le jeu pour qu'il crée ce fichier.)")
         return {}
     try:
         racine = ET.parse(fichier).getroot()
     except (OSError, ET.ParseError) as erreur:
-        print(f"[Touches] Fichier illisible ({erreur}) : touches par défaut de macros.py.")
+        _log.warning(f"Fichier illisible ({erreur}) : touches par défaut de macros.py.")
         return {}
 
     disposition = racine.findtext("KeyboardLayout")
@@ -507,8 +487,6 @@ def charger(assigner=False, sauf=()):
             ETAT["lues"][nom] = touche
         else:
             ETAT["manquantes"][nom] = libelle
-    print(f"[Touches] {len(ETAT['lues'])} touches lues dans {os.path.basename(fichier)} "
-          f"(clavier {'AZERTY' if azerty else 'QWERTY'}).")
     if assigner and ASSIGNER_TOUCHES_VIRTUELLES:
         if ETAT["manquantes"]:
             _assigner_virtuelles(racine, set(sauf))
@@ -516,10 +494,10 @@ def charger(assigner=False, sauf=()):
             ETAT["assignees"] = {}
     integre = profil_integre()
     if integre and any(est_virtuelle(n) for n in ETAT["lues"]):
-        print(f"[Touches] ATTENTION : pour le vaisseau, le jeu utilise son profil intégré "
-              f"« {integre} », pas {os.path.basename(fichier)} : il ne voit pas les touches "
-              "virtuelles (F13-F20). Jeu fermé, lance   python module/pilotage/touches.py --profil-perso"
-              "   ou choisis le profil « Custom » dans Options > Commandes.")
+        _log.warning(f"ATTENTION : pour le vaisseau, le jeu utilise son profil intégré "
+                     f"« {integre} », pas {os.path.basename(fichier)} : il ne voit pas les touches "
+                     f"virtuelles (F13-F20) : choisir le profil « {_nom_profil_perso()} » dans "
+                     "Options > Commandes du jeu.")
     return dict(ETAT["lues"])
 
 
@@ -562,19 +540,3 @@ def _lire_sol(fichier, racine, azerty):
 def libelle(nom):
     """Nom du réglage dans Options > Commandes, pour dire au commandant quoi régler."""
     return (COMMANDES_JEU.get(nom) or COMMANDES_SOL.get(nom) or (None, nom))[1]
-
-
-if __name__ == "__main__":
-    import sys
-    if "--profil-perso" in sys.argv:
-        print(utiliser_profil_perso())
-        sys.exit()
-    charger(assigner="--assigner" in sys.argv)
-    print(f"\nProfils du jeu (général, vaisseau, VRS, à pied) : {' / '.join(lire_profils()[1])}")
-    print(f"\nFichier : {ETAT['fichier']}\nDisposition : {ETAT['disposition']}\n")
-    for nom, (touche, modificateurs) in sorted(ETAT["lues"].items()):
-        print(f"  {nom:24} {' + '.join(modificateurs + [touche])}")
-    if ETAT["manquantes"]:
-        print("\nSans touche clavier dans le jeu (Options > Commandes) :")
-        for nom, texte in sorted(ETAT["manquantes"].items()):
-            print(f"  {nom:24} {texte}")

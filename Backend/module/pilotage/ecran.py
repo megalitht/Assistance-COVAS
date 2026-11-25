@@ -8,13 +8,9 @@ y sont presque blancs, c'est qu'une étoile se trouve dans l'axe et masque la ci
 Capture GDI de Windows (aucune dépendance en plus de numpy). Le jeu doit être en
 « plein écran fenêtré » (borderless) ou fenêtré : en plein écran exclusif, Windows
 renvoie souvent une image noire.
-
-Calibrage : lance `python -m module.pilotage.ecran` depuis Backend/, le jeu au premier plan,
-et regarde la part affichée face à une étoile puis face au vide.
 """
 import ctypes
 import os
-import time
 
 import numpy as np
 
@@ -152,14 +148,3 @@ def ecran_lisible():
     if image is None:
         return None
     return bool(image[::8, ::8].max() > 20)      # le HUD du cockpit n'est jamais tout noir
-
-
-if __name__ == "__main__":
-    print("Mets le jeu au premier plan (Ctrl+C pour arrêter)")
-    print(f"Seuil d'obstruction : {macros.ETOILE_PART_OBSTRUCTION:.1%}")
-    while True:
-        p = part_etoile()
-        print("écran illisible (jeu caché ?)" if p is None else
-              f"pixels blancs au centre : {p:6.1%}  ->  "
-              f"{'ÉTOILE DEVANT' if p >= macros.ETOILE_PART_OBSTRUCTION else 'voie libre'}")
-        time.sleep(1)

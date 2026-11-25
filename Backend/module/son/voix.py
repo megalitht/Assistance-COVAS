@@ -1,7 +1,10 @@
 import asyncio
+import logging
 import pygame
 
 from module.son import audio, sons
+
+_log = logging.getLogger(__name__)
 
 FREQUENCE = 16000
 _sortie_ouverte = False      # False : rien d'ouvert ; None : la sortie de Windows ; sinon son nom
@@ -17,7 +20,7 @@ def ouvrir_sortie():
     try:
         pygame.mixer.init(frequency=FREQUENCE, devicename=voulue)
     except pygame.error as erreur:
-        print(f"[Moteur Vocal] Sortie « {voulue} » indisponible ({erreur}) : sortie de Windows utilisée.")
+        _log.warning(f"Sortie « {voulue} » indisponible ({erreur}) : sortie de Windows utilisée.")
         pygame.mixer.init(frequency=FREQUENCE)
     _sortie_ouverte = voulue
 
@@ -29,7 +32,7 @@ async def generer_et_jouer_voix(chemin_audio: str):
     try:
         chemin = sons.trouver(chemin_audio)          # .mp3 ou .wav, quelle que soit l'extension écrite
         if not chemin:
-            print(f"[Moteur Vocal] Fichier introuvable : {chemin_audio}")
+            _log.warning(f"Fichier introuvable : {chemin_audio}")
             return
 
         ouvrir_sortie()
@@ -43,4 +46,4 @@ async def generer_et_jouer_voix(chemin_audio: str):
         pygame.mixer.music.unload()
 
     except Exception as e:
-        print(f"[Moteur Vocal] Erreur lors de la lecture audio : {e}")
+        _log.warning(f"Erreur lors de la lecture audio : {e}")

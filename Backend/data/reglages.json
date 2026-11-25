@@ -95,5 +95,10 @@
         "pips_armes"
       ]
     }
+  },
+  "audio": {
+    "entree": "Microphone (JBL Quantum910 Wire",
+    "sortie": "Casque pour téléphone (JBL Quantum910 Wireless Chat)",
+    "volume": 100
   }
 }

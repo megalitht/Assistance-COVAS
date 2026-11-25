@@ -15,11 +15,14 @@ Ce fichier n'est JAMAIS envoyé à l'interface : il contiendra le PIN du second 
 (Les réglages faits dans l'interface, eux, sont dans data/reglages.json : voir interface/reglages.py.)
 """
 import copy
+import logging
 import os
 import threading
 import time
 import tomllib
 from datetime import date
+
+_log = logging.getLogger(__name__)
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHEMIN = os.path.join(DOSSIER_BACKEND, "data", "config.toml")
@@ -205,15 +208,15 @@ def _lire():
         with open(CHEMIN, "rb") as f:
             lu = tomllib.load(f)
     except (OSError, tomllib.TOMLDecodeError) as erreur:
-        print(f"[Config] {os.path.basename(CHEMIN)} illisible ({erreur}) : "
-              f"{'réglages précédents gardés' if _etat['valeurs'] else 'valeurs par défaut'}.")
+        _log.warning(f"{os.path.basename(CHEMIN)} illisible ({erreur}) : "
+                     f"{'réglages précédents gardés' if _etat['valeurs'] else 'valeurs par défaut'}.")
         if _etat["valeurs"] is None:
             _etat["valeurs"] = copy.deepcopy(DEFAUTS)
         return
     erreurs = []
     _etat["valeurs"] = _fusionner(lu, erreurs)
     for erreur in erreurs:
-        print(f"[Config] {erreur}")
+        _log.warning(f"{erreur}")
 
 
 def _actuelles():
@@ -252,8 +255,8 @@ def preparer():
     except FileNotFoundError:
         lu = None
     except (OSError, tomllib.TOMLDecodeError) as erreur:
-        print(f"[Config] {os.path.basename(CHEMIN)} illisible ({erreur}) : "
-              "corrige-le, le COVAS utilise les valeurs par défaut en attendant.")
+        _log.warning(f"{os.path.basename(CHEMIN)} illisible ({erreur}) : "
+                     "corrige-le, le COVAS utilise les valeurs par défaut en attendant.")
         return []
     try:
         os.makedirs(os.path.dirname(CHEMIN), exist_ok=True)
@@ -271,7 +274,7 @@ def preparer():
                     f.write(f"\n# --- Ajouté par le COVAS le {date.today():%d/%m/%Y} ---\n")
                     f.write("".join("\n" + SECTIONS[nom] for nom in ecrites))
     except OSError as erreur:
-        print(f"[Config] Écriture de {os.path.basename(CHEMIN)} impossible : {erreur}")
+        _log.warning(f"Écriture de {os.path.basename(CHEMIN)} impossible : {erreur}")
         return []
     recharger()
     return ecrites

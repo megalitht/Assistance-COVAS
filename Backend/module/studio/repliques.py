@@ -8,12 +8,9 @@ import difflib
 import json
 import os
 import re
-import sys
 import unicodedata
 
-import numpy as np
-
-from module.son import sons
+from module.son import sons, whisper
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHEMIN_SCRIPT = os.path.join(DOSSIER_BACKEND, "data", "SCRIPT_VOIX.md")
@@ -31,22 +28,7 @@ _oreille = {}
 def _whisper():
     """Le modèle Whisper du COVAS (carte graphique, comme main.py ; processeur sinon)."""
     if "modele" not in _oreille:
-        nvidia = os.path.join(sys.prefix, "Lib", "site-packages", "nvidia")
-        for sous in ("cublas", "cudnn"):
-            dossier = os.path.join(nvidia, sous, "bin")
-            if os.path.isdir(dossier):
-                os.environ["PATH"] = dossier + ";" + os.environ.get("PATH", "")
-                os.add_dll_directory(dossier)
-        from faster_whisper import WhisperModel
-        chemin = os.path.join(DOSSIER_BACKEND, "module", "modele_vocal_turbo")
-        if not os.path.exists(os.path.join(chemin, "model.bin")):
-            chemin = os.path.join(DOSSIER_BACKEND, "module", "modele_vocal_fr")
-        try:
-            _oreille["modele"] = WhisperModel(chemin, device="cuda", compute_type="float16")
-            segments, _ = _oreille["modele"].transcribe(np.zeros(16000, np.float32), language="fr")
-            list(segments)                          # la transcription est paresseuse : on la force
-        except Exception:
-            _oreille["modele"] = WhisperModel(chemin, device="cpu", compute_type="int8")
+        _oreille["modele"] = whisper.charger()
     return _oreille["modele"]
 
 

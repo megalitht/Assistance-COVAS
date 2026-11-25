@@ -34,11 +34,10 @@ Ce module ne touche ni au clavier ni au micro : il décide QUOI dire, main.py le
 """
 import asyncio
 import json
+import logging
 import os
 import random
-import sys
 import time
-import traceback
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
@@ -47,7 +46,9 @@ from module import config
 from module.dialogue import morceaux
 from module.son import sons
 from module.dialogue.comprehension import (SEUIL_APPROCHE, meilleure_approche, normaliser, present,
-                                  similarite, trouver_action_detail)
+                                           similarite, trouver_action_detail)
+
+_log = logging.getLogger(__name__)
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHEMIN_CONVERSATIONS = os.path.join(DOSSIER_BACKEND, "data", "conversations.json")
@@ -865,7 +866,7 @@ async def jouer(replique, etat, *, dire, afficher, commander=None, profondeur=0)
     """
     texte, detail = texte_de(replique, etat)
     if replique.get("texte") and texte is None:
-        print(f"[Conversation] Valeur inconnue dans « {replique['texte']} » : réplique sautée")
+        _log.warning(f"Valeur inconnue dans « {replique['texte']} » : réplique sautée")
     elif texte:
         _memoire["paroles"].append((time.monotonic(), _normaliser_question(texte)))
         await afficher(texte, detail)
@@ -907,10 +908,8 @@ def configurer(programme_en_cours=None):
 def appliquer_interne(effet):
     if effet == "initiatives_off":
         _initiatives["actives"] = False
-        print("[Conversation] Silence radio : le COVAS ne parle plus de lui-même.")
     elif effet == "initiatives_on":
         _initiatives["actives"] = True
-        print("[Conversation] Le COVAS peut de nouveau engager la conversation.")
 
 
 def initiatives_actives():
@@ -960,7 +959,6 @@ async def _lancer(cle, initiative, etat, jouer_initiative):
     if not replique:
         return False
     _initiatives["derniere"] = time.monotonic()
-    print(f"[Conversation] Initiative du COVAS : {cle}")
     await jouer_initiative(replique)
     return True
 
@@ -1012,8 +1010,7 @@ async def surveiller_initiatives(etat, jouer_initiative, occupe):
         try:
             await tour_initiatives(etat, jouer_initiative, occupe)
         except Exception:
-            print("[Conversation] Erreur dans la surveillance des initiatives :")
-            traceback.print_exc()
+            _log.exception("Erreur dans la surveillance des initiatives")
 
 
 # =====================================================================
@@ -1136,37 +1133,3 @@ def ecrire_script(chemin=CHEMIN_SCRIPT):
     with open(chemin, "w", encoding="utf-8") as f:
         f.write("\n".join(entete + corps) + "\n")
     return len(fichiers), faits
-
-
-# =====================================================================
-#  ESSAIS EN LIGNE DE COMMANDE
-# =====================================================================
-def _main(arguments):
-    chemin_barks = os.path.join(DOSSIER_BACKEND, "data", "barks.json")
-    with open(chemin_barks, "r", encoding="utf-8") as f:
-        barks = json.load(f)
-    erreurs = charger(actions=barks)
-    contenu = _contenu
-    if erreurs:
-        print(f"{len(erreurs)} erreur(s) dans conversations.json :")
-        for erreur in erreurs:
-            print("  -", erreur)
-    if "--verifier" in arguments or not arguments:
-        enregistrables = {r["_fichier"] for r in contenu["repliques"] if r.get("_fichier")}
-        print(f"{len(contenu['sujets'])} sujets, {len(contenu['initiatives'])} initiatives, "
-              f"{len(contenu['repliques'])} répliques ({len(enregistrables)} fichiers à enregistrer).")
-    if "--script" in arguments:
-        total, faits = ecrire_script()
-        print(f"Script écrit : {CHEMIN_SCRIPT} ({faits}/{total} enregistrés).")
-    phrases = [a for a in arguments if not a.startswith("--")]
-    for phrase in phrases:
-        decision = decider(phrase, barks, {"mots_reveil", "politesse"}, {})
-        print(f"« {phrase} » -> {decision.type} {decision.action or decision.sujet or ''} "
-              f"({decision.raison})")
-        if decision.replique:
-            print("   COVAS :", texte_de(decision.replique, {})[0])
-    return 1 if erreurs else 0
-
-
-if __name__ == "__main__":
-    sys.exit(_main(sys.argv[1:]))

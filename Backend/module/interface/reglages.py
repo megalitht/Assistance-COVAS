@@ -15,12 +15,15 @@ Tout ce qui arrive de l'interface est revérifié ici. Aucune touche, aucun impo
 """
 import copy
 import json
+import logging
 import math
 import os
 import re
 
 from module.pilotage import commandes as clavier
 from module.pilotage import pips as moteur
+
+_log = logging.getLogger(__name__)
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHEMIN = os.path.join(DOSSIER_BACKEND, "data", "reglages.json")
@@ -153,7 +156,7 @@ def charger(chemin=None):
     except FileNotFoundError:
         _doc = _vierge()
     except (OSError, ValueError) as erreur:
-        print(f"[Réglages] {os.path.basename(CHEMIN)} illisible : {erreur}")
+        _log.warning(f"{os.path.basename(CHEMIN)} illisible : {erreur}")
         try:
             os.replace(CHEMIN, CHEMIN + ".illisible")
         except OSError:
@@ -186,7 +189,7 @@ def enregistrer(brut):
             json.dump(_sur_disque(nouveau), f, ensure_ascii=False, indent=2)
         os.replace(temporaire, CHEMIN)
     except OSError as erreur:
-        print(f"[Réglages] Écriture impossible : {erreur}")
+        _log.warning(f"Écriture impossible : {erreur}")
         return document(), "Écriture du fichier de réglages impossible"
     return document(), None
 

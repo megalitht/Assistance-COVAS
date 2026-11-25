@@ -1,31 +1,18 @@
-import os
-import sys
+"""
+main.py — Cœur du COVAS : modèle vocal, écoute du micro, commandes et répliques.
 
-# Le terminal est habillé AVANT les autres imports : certains modules affichent
-# déjà des messages au chargement.
-from module.interface import terminal as t
-t.activer()
-t.banniere("COVAS // ASSISTANCE DE BORD")
-t.ligne("SYSTEM", "Initialisation du noyau COVAS...")
-
-import speech_recognition as sr
-import pyaudio
-import struct
-import math
-import pydirectinput
-from faster_whisper import WhisperModel
-import json
-import random
+Lancé par l'application (app.py) au clic sur le bouton central : rien de lourd n'est chargé
+à l'import. Les problèmes sont écrits dans data/covas.log (voir app.py).
+"""
 import asyncio
+import json
+import logging
+import os
 import time
-import traceback
-import sounddevice as sd
+
 import numpy as np
-import winsound
+import speech_recognition as sr
 
-
-
-# Importation de nos modules personnalisés situés dans le sous-dossier 'module'
 from module.pilotage.actions import executer_commande, surveiller_reactions, programme_en_cours
 from module.dialogue.cerveau import obtenir_chemin_audio
 from module.son import audio
@@ -34,32 +21,18 @@ from module.jeu import lecteur_logs as logs
 from module.jeu.lecteur_logs import DOSSIER_ED, surveiller_logs, surveiller_status_json, surveiller_fichiers_auxiliaires
 from module.son.voix import generer_et_jouer_voix
 from module.son import sons
+from module.son import whisper
 from module.dialogue import conversation
 from module.son import ecoute as pause_ecoute
 from module import config
 from module.interface import reglages
 from module.interface import serveur_ws
 from module.interface.serveur_ws import demarrer_serveur_web
-from module.dialogue.comprehension import trouver_action, contient_reveil, est_reveil_seul, vocabulaire_pour_whisper
-t.ok("Modules de bord chargés.", t.CYAN)
+from module.dialogue.comprehension import contient_reveil, est_reveil_seul, vocabulaire_pour_whisper
 
-# Dossier Backend/ : les chemins ne dépendent plus de la lettre du disque
+_log = logging.getLogger(__name__)
+
 DOSSIER_BACKEND = os.path.dirname(os.path.abspath(__file__))
-
-# --- CONFIGURATION AUTOMATIQUE DES PATHS NVIDIA POUR LE VENV ---
-venv_site_packages = next((p for p in sys.path if 'site-packages' in p), None)
-
-if venv_site_packages:
-    cublas_path = os.path.join(venv_site_packages, "nvidia", "cublas", "bin")
-    cudnn_path = os.path.join(venv_site_packages, "nvidia", "cudnn", "bin")
-    
-    os.environ["PATH"] = f"{cublas_path};{cudnn_path};" + os.environ.get("PATH", "")
-    if hasattr(os, 'add_dll_directory'):
-        if os.path.exists(cublas_path): 
-            os.add_dll_directory(cublas_path)
-        if os.path.exists(cudnn_path): 
-            os.add_dll_directory(cudnn_path)
-            
 
 # Clés de barks.json qui ne sont pas des commandes
 CLES_IGNOREES = {"mots_reveil", "politesse"}
@@ -74,7 +47,7 @@ FORMULES_POLITESSE = ("s'il te plaît", "s'il te plait", "s'il te plaîs", "s'il
 
 def separer_politesse(texte):
     """Renvoie (phrase sans la formule de politesse, True si le commandant a été poli)."""
-    texte = texte.replace("\u2019", "'").replace("`", "'")     # apostrophes de Whisper
+    texte = texte.replace("’", "'").replace("`", "'")     # apostrophes de Whisper
     poli = False
     for formule in FORMULES_POLITESSE:
         if formule in texte:
@@ -82,12 +55,6 @@ def separer_politesse(texte):
             texte = texte.replace(formule, " ")
     return " ".join(texte.split()), poli
 
-
-def detecter_action(texte_entendu):
-    """Trouve l'action demandée (correspondance exacte, puis approchée) : voir module/dialogue/comprehension.py."""
-    return trouver_action(texte_entendu, barks, CLES_IGNOREES)
-
-TITRE = "COVAS — Assistance de bord"      # titre de la fenêtre (voir macros.TITRE_INTERFACE)
 
 # Remplis par initialiser() : rien de lourd (modèle vocal, micro) n'est chargé à l'import,
 # pour que l'application (app.py) s'ouvre tout de suite et n'active le COVAS qu'au clic.
@@ -109,14 +76,12 @@ def _signaler(progression, texte, etat="etape"):
 
 
 def initialiser(progression=None):
-    """Charge les répliques, le modèle vocal (GPU) et calibre le micro.
+    """Charge les répliques, le modèle vocal et calibre le micro.
     `progression(texte, etat)` : rappel facultatif pour l'écran d'accueil."""
     global barks, MOTS_REVEIL, PROMPT_WHISPER, modele_vocal, reconnaisseur, micro_calibre
 
     # --- CONFIGURATION (data/config.toml, modifiable à la main) ---
-    ecrites = config.preparer()
-    if ecrites:
-        t.ok(f"Configuration : {', '.join(ecrites)} ajouté(s) à {config.CHEMIN}")
+    config.preparer()
 
     # --- CHARGEMENT DES RÉPLIQUES ET PARAMÈTRES (BARKS) ---
     _signaler(progression, "Indexation des répliques")
@@ -124,38 +89,19 @@ def initialiser(progression=None):
     with open(chemin_barks, "r", encoding="utf-8") as fichier:
         barks = json.load(fichier)
     reglages.lier_commandes(barks)      # modes d'énergie créés dans l'interface
-    t.ok(f"Répliques indexées ({len(barks)} entrées).")
 
     # Conversations RP (data/conversations.json) : vérifiées au démarrage
     _signaler(progression, "Chargement des conversations")
     try:
-        erreurs_conversation = conversation.charger(actions=barks)
-        for erreur in erreurs_conversation:
-            t.erreur("CONVERSATION", erreur)
-        enregistrees = sum(1 for r in conversation._contenu["repliques"]
-                           if conversation.chemin_enregistrement(r))
-        t.ok(f"Conversations chargées ({len(conversation._contenu['sujets'])} sujets, "
-             f"{enregistrees}/{len(conversation._contenu['repliques'])} répliques enregistrées).")
+        for erreur in conversation.charger(actions=barks):
+            _log.warning(f"conversations.json : {erreur}")
     except (OSError, ValueError) as erreur:
-        t.erreur("CONVERSATION", f"conversations.json illisible : {erreur}")
+        _log.warning(f"conversations.json illisible : {erreur}")
 
-    # Extraire les mots de réveil depuis le JSON
     MOTS_REVEIL = barks["mots_reveil"]["mots_cles"]
 
-    # --- INITIALISATION IA (WHISPER) ---
-    # large-v3-turbo comprend bien mieux le français que l'ancien modèle « small » ;
-    # l'ancien reste utilisé en secours si le dossier du nouveau est absent.
-    chemin_vers_fichiers = os.path.join(DOSSIER_BACKEND, "module", "modele_vocal_turbo")
-    if not os.path.exists(os.path.join(chemin_vers_fichiers, "model.bin")):
-        chemin_vers_fichiers = os.path.join(DOSSIER_BACKEND, "module", "modele_vocal_fr")
-    t.vide()
-    t.ligne("IA", f"Chargement du modèle vocal : {os.path.basename(chemin_vers_fichiers)}")
-    t.ligne("IA", "Transfert vers le GPU (cuda / float16)...")
-    _signaler(progression, "Transfert du modèle vocal vers le GPU")
-    with t.Chargement():
-        modele_vocal = WhisperModel(chemin_vers_fichiers, device="cuda", compute_type="float16")
-    t.ok("Modèle de reconnaissance vocale opérationnel.")
-
+    # --- RECONNAISSANCE VOCALE (WHISPER) ---
+    modele_vocal = whisper.charger(lambda texte: _signaler(progression, texte))
     PROMPT_WHISPER = vocabulaire_pour_whisper(barks)
 
     # Le micro est calibré UNE fois au démarrage (puis le seuil s'adapte tout seul) :
@@ -167,12 +113,10 @@ def initialiser(progression=None):
     reconnaisseur.non_speaking_duration = 0.4
     micro_calibre = audio.entree()
     with sr.Microphone(device_index=audio.index_micro()) as source:
-        t.ligne("MICRO", "Calibrage du micro (silence, s'il vous plaît)...")
         reconnaisseur.adjust_for_ambient_noise(source, duration=1.0)
-    t.ok(f"Micro calibré (seuil {reconnaisseur.energy_threshold:.0f}).")
 
 
-def ecouter(silencieux=False):
+def ecouter():
     """Écoute le micro choisi dans Réglages > Son. S'il ne s'ouvre pas, celui de Windows prend
     le relais quelques secondes : un micro débranché ne doit pas arrêter le COVAS."""
     global micro_calibre
@@ -182,18 +126,16 @@ def ecouter(silencieux=False):
             if choisi != micro_calibre:             # autre micro : autre niveau de bruit de fond
                 reconnaisseur.adjust_for_ambient_noise(source, duration=0.6)
                 micro_calibre = choisi
-            return transcrire(source, silencieux)
+            return transcrire(source)
     except (OSError, AssertionError, AttributeError) as erreur:
-        t.erreur("MICRO", f"Micro inaccessible : {erreur}")
+        _log.warning(f"Micro inaccessible : {erreur}")
         audio.micro_en_echec()
         time.sleep(1)
         return ""
 
 
-def transcrire(source, silencieux=False):
+def transcrire(source):
     """Capte une phrase et la transcrit localement avec Whisper"""
-    if not silencieux:
-        t.etat("ÉCOUTE", "ACTIVE — parlez maintenant", t.CYAN)
     try:
         prise = reconnaisseur.listen(source, timeout=3, phrase_time_limit=7)
         # Directement en mémoire, au format attendu par Whisper (16 kHz, mono, float32)
@@ -214,14 +156,11 @@ def transcrire(source, silencieux=False):
             vad_filter=True,
             vad_parameters={"min_silence_duration_ms": 500, "speech_pad_ms": 300},
         )
-        texte = "".join(s.text for s in segments if s.no_speech_prob < 0.6).strip()
-        if texte and not silencieux:
-            t.ligne("WHISPER", f"« {texte} »", t.CYAN)
-        return texte
+        return "".join(s.text for s in segments if s.no_speech_prob < 0.6).strip()
     except sr.WaitTimeoutError:
         pass
     except Exception as e:
-        t.erreur("MICRO", f"Erreur lors de la capture : {e}")
+        _log.warning(f"Erreur lors de la capture : {e}")
     return ""
 
 
@@ -234,17 +173,9 @@ class CovasBackend:
         self.parole = {"en_cours": False, "fin": 0.0}
         self.phrases_en_cours = 0       # phrases du commandant en cours de traitement
 
-    async def generer_audio_tts(self, action_ou_texte: str):
-        await self.tts_queue.put(action_ou_texte)
-
     async def tache_lecture_audio(self):
         while True:
             texte_a_dire = await self.tts_queue.get()
-            nom = texte_a_dire
-            if os.path.isfile(nom):                       # chemin d'un son : on garde le nom
-                nom = os.path.splitext(os.path.basename(nom))[0]
-            t.ligne("COVAS", nom, t.CYAN)
-
             self.parole["en_cours"] = True
             try:
                 await generer_et_jouer_voix(texte_a_dire)
@@ -268,8 +199,6 @@ class CovasBackend:
         await self.tts_queue.join()
 
     async def afficher_covas(self, texte, detail=None):
-        if texte:
-            t.ligne("COVAS", f"« {texte} »", t.CYAN)
         await logs.dialogue("COVAS", texte, detail)
 
     async def commander(self, commande):
@@ -293,26 +222,20 @@ class CovasBackend:
             decision = conversation.decider(texte_min, barks, CLES_IGNOREES, logs.ETAT,
                                             reveil=reveil, echo_possible=echo)
             if decision.type == "ignore":
-                if reveil:
-                    t.ligne("ÉCOUTE", f"Ignoré : {decision.raison}", t.GRIS)
                 return
 
             if decision.type == "conversation":
-                t.ok(f"Conversation : {decision.sujet} ({decision.raison})")
                 await logs.dialogue("CMDR", texte.strip())
                 await self.jouer_replique(decision.replique)
                 return
 
             if decision.type == "commande":
-                t.ok(f"Commande reconnue : {decision.action}{' (poli)' if poli else ''}"
-                     + ("" if decision.raison == "commande reconnue" else f" — {decision.raison}"))
                 await self.action_queue.put((decision.action, texte_min, poli))
                 # On attend la fin de la commande et de la réponse avant de réécouter le micro
                 await self.action_queue.join()
                 await self.tts_queue.join()
                 return
 
-            t.erreur("ÉCOUTE", f"Aucune commande reconnue dans « {texte_min} »")
             if poli:
                 await self.dire("commande_incomprise")
         finally:
@@ -320,12 +243,11 @@ class CovasBackend:
 
     async def question_ecrite(self, texte):
         """Phrase tapée dans l'interface : traitée comme si elle suivait « Covas »."""
-        t.ligne("CLAVIER", f"« {texte} »", t.CYAN)
         await self.traiter_phrase(texte)
 
     async def dire(self, *cles, poli=False):
         """Joue la première réplique disponible parmi les clés de barks.json données.
-        Accepte aussi le chemin d'un son (.wav fabriqué par la synthèse vocale, .mp3...)."""
+        Accepte aussi le chemin d'un son (.mp3, .wav)."""
         for cle in cles:
             if sons.est_son(cle) and sons.trouver(cle):
                 await self.tts_queue.put(sons.trouver(cle))
@@ -343,26 +265,23 @@ class CovasBackend:
             action, texte, poli = commande if isinstance(commande, tuple) else (commande, "", False)
             if "|" in action:          # bouton de l'interface : "chasseur|rappel"
                 action, texte = action.split("|", 1)
-            t.ligne("ACTION", f"Exécution : {action}")
             try:
                 await executer_commande(action, texte, self.dire, poli)
             except Exception:
-                t.erreur("ACTION", f"Erreur pendant « {action} » :")
-                traceback.print_exc()
+                _log.exception(f"Erreur pendant « {action} »")
             finally:
                 self.action_queue.task_done()
 
     def lancer_tache(self, coroutine, nom):
         """Lance une tâche de fond en gardant une référence dessus (sinon Python peut
-        la supprimer en pleine exécution) et affiche son erreur si elle plante."""
+        la supprimer en pleine exécution) et note son erreur si elle plante."""
         tache = asyncio.create_task(coroutine, name=nom)
         self.taches.add(tache)
 
         def fin_de_tache(finie):
             self.taches.discard(finie)
             if not finie.cancelled() and finie.exception():
-                t.erreur("ERREUR", f"La tâche « {nom} » s'est arrêtée :")
-                traceback.print_exception(finie.exception())
+                _log.error(f"La tâche « {nom} » s'est arrêtée", exc_info=finie.exception())
 
         tache.add_done_callback(fin_de_tache)
         return tache
@@ -387,26 +306,20 @@ class CovasBackend:
         reseau = serveur_ws.infos_second_ecran()
         if reseau["actif"] and not serveur_web.done():
             for adresse in reseau["adresses"][:1]:
-                t.ok(f"Second écran : {adresse}" + ("" if reseau["pin_regle"] else
-                     " (sans PIN : consultation seulement)"))
                 await logs.annoncer(f"Second écran : ouvre {adresse} sur le téléphone (même Wi-Fi)")
 
         if problemes:
-            print("[Démarrage] Systèmes dégradés :")
             for probleme in problemes:
-                print(f"   - {probleme}")
+                _log.warning(f"Démarrage : {probleme}")
                 _signaler(self.progression, probleme, "attention")
             _signaler(self.progression, "Systèmes dégradés — COVAS en ligne", "pret")
             return
-        print("[Démarrage] Tous les systèmes sont opérationnels.")
         _signaler(self.progression, "Système COVAS opérationnel", "pret")
         await self.dire("système_vocal_opérationnel")
         await self.tts_queue.join()
 
     async def boucle_principale(self):
         self.taches = set()
-        t.vide()
-        t.ligne("SYSTEM", "Lancement des sous-systèmes...")
         _signaler(self.progression, "Lancement des sous-systèmes")
         # Le serveur de l'interface d'abord, pour que l'écran se connecte au plus vite
         serveur_web = self.lancer_tache(demarrer_serveur_web(self.action_queue), "serveur web")
@@ -427,21 +340,12 @@ class CovasBackend:
         await self.verifier_systemes(serveur_web)
         await asyncio.sleep(0.3)        # laisse les modules annoncer leur démarrage
 
-        t.separateur()
-        t.titre_central("Système COVAS opérationnel", "EN ATTENTE DU MOT DE RÉVEIL")
-        t.note(f"Dites « {MOTS_REVEIL[0].capitalize()} » suivi d'une commande,",
-               "ou seulement le mot de réveil pour l'écoute active.")
-        t.vide()
-        t.etat("STATUS", "ONLINE")
-        t.etat("ÉCOUTE", "VEILLE", t.CYAN)
-        t.vide()
-
         while True:
             if pause_ecoute.PAUSE.is_set():      # studio vocal ouvert : ses répliques ne sont pas des ordres
                 await asyncio.sleep(0.2)
                 continue
             debut_ecoute = time.monotonic()
-            text = await asyncio.to_thread(ecouter, silencieux=True)
+            text = await asyncio.to_thread(ecouter)
             if pause_ecoute.PAUSE.is_set():
                 continue
 
@@ -451,41 +355,27 @@ class CovasBackend:
                 if not contient_reveil(text_min, MOTS_REVEIL):
                     # Le COVAS vient de poser une question : on peut lui répondre sans « Covas »
                     if conversation.attend_reponse():
-                        t.ligne("ÉCOUTE", f"Réponse ? « {text} »", t.CYAN)
                         await self.traiter_phrase(text, reveil=False, debut_ecoute=debut_ecoute)
                     continue
 
-                t.vide()
-                t.etat("RÉVEIL", f"Mot de réveil détecté : « {text} »", t.JAUNE_VIF)
-
                 if est_reveil_seul(text_min, MOTS_REVEIL):
-                    t.ligne("SIGNAL", "Activation vocale. En attente de la commande...")
-
+                    # « Covas » seul : le COVAS répond, puis écoute la commande
                     chemin_reveil = await obtenir_chemin_audio("mots_reveil")
                     if chemin_reveil:
                         await self.tts_queue.put(chemin_reveil)
                         await self.tts_queue.join()
 
                     debut_ecoute = time.monotonic()
-                    text = await asyncio.to_thread(ecouter, silencieux=False)
-                    if pause_ecoute.PAUSE.is_set():
-                        continue
-                    if not text:
-                        t.ligne("SIGNAL", "Délai d'attente dépassé.", t.ROUGE)
-                        t.etat("ÉCOUTE", "VEILLE", t.CYAN)
+                    text = await asyncio.to_thread(ecouter)
+                    if pause_ecoute.PAUSE.is_set() or not text:
                         continue
 
                 # Commande ou conversation (voir module/dialogue/conversation.py). La politesse est
                 # notée puis retirée : la commande est toujours exécutée.
                 await self.traiter_phrase(text, debut_ecoute=debut_ecoute)
-                t.etat("ÉCOUTE", "VEILLE", t.CYAN)
 
 
 def demarrer(progression=None):
     """Active le COVAS : chargements, puis boucle d'écoute (ne rend la main qu'à l'arrêt)."""
     initialiser(progression)
     asyncio.run(CovasBackend(progression).boucle_principale())
-
-
-if __name__ == "__main__":
-    demarrer()

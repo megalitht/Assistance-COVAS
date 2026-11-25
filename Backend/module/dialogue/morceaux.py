@@ -14,6 +14,7 @@ Le studio vocal (module/studio/studio.py) propose donc ces morceaux à enregistr
 Les noms de systèmes, de stations et de planètes sont trop nombreux pour être enregistrés :
 la voix dit où en est le vaisseau, le nom exact est à l'écran.
 """
+import logging
 import os
 import re
 import tempfile
@@ -27,6 +28,8 @@ from module.jeu import avaries
 from module.jeu import prospection
 from module.jeu.materiaux_table import MATERIAUX
 from module.son import sons
+
+_log = logging.getLogger(__name__)
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DOSSIER = "data/son/Morceaux"
@@ -488,5 +491,5 @@ def assembler(ids):
         chemin = os.path.join(tempfile.gettempdir(), f"covas_morceaux_{next(_numero) % 6}.wav")
         return sons.ecrire_wav(chemin, sortie, TAUX)
     except Exception as erreur:
-        print(f"[Morceaux] Assemblage impossible : {erreur!r}")
+        _log.warning(f"Assemblage impossible : {erreur!r}")
         return None

@@ -19,9 +19,8 @@ Point d'entrée : executer_commande(action, texte, dire, poli)
 """
 import asyncio
 import json
-import os
+import logging
 import time
-import traceback
 
 from module.pilotage import annonces
 from module.jeu import avaries
@@ -36,14 +35,9 @@ from module.interface import serveur_ws
 from module.jeu import sol
 from module.pilotage import touches
 from module.dialogue.comprehension import intention, ordre_nie
-
-# Page de l'interface (le « panel »), ouverte par la commande vocale « ouvre le panel »
-CHEMIN_INTERFACE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))), "Frontend", "interface.html")
-# True quand le COVAS tourne dans l'application (Backend/app.py) : l'interface est alors
-# sa propre fenêtre, on ne lance jamais de navigateur.
-MODE_APPLICATION = False
 from module.pilotage.macros import normaliser
+
+_log = logging.getLogger(__name__)
 
 # Bits de Status.json utilisés ici
 BIT = {"amarre": 0, "pose": 1, "train": 2, "boucliers": 3, "supercroisiere": 4,
@@ -250,18 +244,14 @@ async def _jouer_sequence(cle, dire):
         await refuser(dire, "refus_touche_absente", f"{modele['nom']} : aucune touche pour "
                       f"« {touches.libelle(absente)} » (Réglages > Commandes)")
         return False
-    print(f"[Touche] --- Séquence « {modele['nom']} » : début (écran du jeu : {_focus()})")
     for etape in etapes:
         duree = commandes.duree_pause(etape)
         if duree is not None:
-            print(f"[Touche] pause de {duree:g} s")
             await asyncio.sleep(duree)
             continue
         if not await appuyer(etape):
-            print(f"[Touche] --- Séquence « {modele['nom']} » : interrompue")
             return False                        # « stop »
         await asyncio.sleep(modele["pause"])
-    print(f"[Touche] --- Séquence « {modele['nom']} » : fin (écran du jeu : {_focus()})")
     return True
 
 
@@ -318,7 +308,7 @@ async def _lancer_programme(nom, coroutine, dire):
             await logs.annoncer(f"{nom} : interrompu", "attention")
             raise
         except Exception:
-            traceback.print_exc()
+            _log.exception(f"{nom} : erreur interne")
             await asyncio.to_thread(macros.relacher_tout)
             await logs.annoncer(f"{nom} : erreur interne, programme arrêté", "alerte")
             await dire("macro_echec", "refus")
@@ -873,57 +863,12 @@ async def _drone(action, texte, dire, poli):
 # =====================================================================
 #  INTERFACE WEB (« ouvre le panel »)
 # =====================================================================
-def _navigateur_app():
-    """Chemin de Chrome ou d'Edge (ils savent ouvrir une page dans sa propre fenêtre)."""
-    import winreg
-    for exe in ("chrome.exe", "msedge.exe"):
-        for racine in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
-            try:
-                with winreg.OpenKey(racine, r"Software\Microsoft\Windows\CurrentVersion"
-                                            rf"\App Paths\{exe}") as cle:
-                    chemin = winreg.QueryValue(cle, None)
-            except OSError:
-                continue
-            if chemin and os.path.exists(chemin.strip('"')):
-                return chemin.strip('"')
-    return None
-
-
-def _lancer_fenetre_interface():
-    """Ouvre l'interface dans sa propre fenêtre (mode application de Chrome/Edge), et non
-    dans un onglet : le COVAS peut ainsi toujours la retrouver par son titre.
-    À défaut, navigateur par défaut."""
-    import pathlib
-    import subprocess
-    navigateur = _navigateur_app() if os.name == "nt" else None
-    if navigateur:
-        # ?ws= : port de la liaison (data/config.toml [second_ecran] port)
-        adresse = f"{pathlib.Path(CHEMIN_INTERFACE).as_uri()}?ws={serveur_ws.PORT}"
-        subprocess.Popen([navigateur, f"--app={adresse}"])
-    else:
-        os.startfile(CHEMIN_INTERFACE)
-
-
 async def _ouvrir_interface(action, texte, dire, poli):
-    # Déjà ouverte : on ramène sa fenêtre devant les autres
+    """Ramène la fenêtre de l'application devant les autres."""
     if await asyncio.to_thread(macros.focaliser_interface):
         await logs.annoncer("Interface ramenée au premier plan")
         return await confirmer(dire, action, poli)
-    if MODE_APPLICATION:
-        return await refuser(dire, "macro_echec",
-                             "Interface : la fenêtre de l'application est introuvable")
-    if serveur_ws.interfaces_locales_ouvertes():
-        # Connectée sur ce PC mais introuvable (un téléphone connecté ne compte pas) : c'est un onglet caché d'un navigateur -> on ouvre
-        # une vraie fenêtre (tu peux fermer l'ancien onglet)
-        await logs.annoncer("Interface cachée dans un onglet : ouverture dans sa propre "
-                            "fenêtre (tu peux fermer l'ancien onglet)", "attention")
-    if not os.path.exists(CHEMIN_INTERFACE):
-        return await refuser(dire, "macro_echec", f"Interface introuvable : {CHEMIN_INTERFACE}")
-    try:
-        await asyncio.to_thread(_lancer_fenetre_interface)
-    except OSError as erreur:
-        return await refuser(dire, "macro_echec", f"Interface : impossible de l'ouvrir ({erreur})")
-    await confirmer(dire, action, poli)
+    await refuser(dire, "macro_echec", "Interface : la fenêtre de l'application est introuvable")
 
 
 # =====================================================================
@@ -990,7 +935,7 @@ async def surveiller_reactions(dire):
                               "reaction_interdiction", "pips_defense")
             precedents = actuels
         except Exception as erreur:
-            print(f"[Réactions] Erreur : {erreur!r}")
+            _log.warning(f"Erreur : {erreur!r}")
 
 
 # =====================================================================
@@ -1601,7 +1546,6 @@ async def fermer_panneaux(essais=6):
         focus = _focus()
         if not focus:
             return True
-        print(f"[Touche] --- Fermeture d'un menu (écran du jeu : {focus})")
         await appuyer("ui_retour")
         await attendre(lambda: _focus() != focus, 1.5)
     return not _focus()

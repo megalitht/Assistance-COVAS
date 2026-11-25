@@ -8,13 +8,8 @@ sans toucher à barks.json ni à conversations.json.
 
 Formats essayés : l'Opus (.ogg) n'est pas relu par pygame, et l'encodeur Vorbis de FFmpeg est
 expérimental. Le MP3 (encodeur LAME, fourni avec PyAV, déjà installé pour Whisper) l'est.
-
-Conversion des .wav existants (les originaux sont déplacés dans un dossier de sauvegarde) :
-    python -m module.son.sons --convertir "D:\\Sauvegarde-wav"
 """
 import os
-import shutil
-import sys
 import wave
 
 import numpy as np
@@ -119,37 +114,3 @@ def ecrire_wav(chemin, x, taux):
         f.setframerate(taux)
         f.writeframes(donnees.tobytes())
     return chemin
-
-
-def convertir_dossier(dossier, sauvegarde):
-    """Chaque .wav de dossier (récursif) -> .mp3 au même endroit ; l'original part dans sauvegarde
-    (même arborescence). Renvoie [(wav, mp3, octets avant, octets après)]."""
-    faits = []
-    for racine, _, fichiers in os.walk(dossier):
-        for nom in sorted(fichiers):
-            if not nom.lower().endswith(".wav"):
-                continue
-            wav = os.path.join(racine, nom)
-            mp3 = os.path.splitext(wav)[0] + ".mp3"
-            x, taux = lire_wav(wav)
-            encoder_mp3(x, taux, mp3, DEBIT_ENREGISTREMENT if taux > 24000 else DEBIT_VOIX)
-            copie = os.path.join(sauvegarde, os.path.relpath(wav, dossier))
-            os.makedirs(os.path.dirname(copie), exist_ok=True)
-            avant = os.path.getsize(wav)
-            shutil.move(wav, copie)
-            faits.append((wav, mp3, avant, os.path.getsize(mp3)))
-    return faits
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 3 or sys.argv[1] != "--convertir":
-        print('Usage : python -m module.son.sons --convertir "dossier de sauvegarde des .wav"')
-        sys.exit(1)
-    dossier_sons = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "son")
-    resultats = convertir_dossier(dossier_sons, sys.argv[2])
-    for wav, mp3, avant, apres in resultats:
-        print(f"{os.path.relpath(mp3, dossier_sons):60s} {avant / 1024:7.0f} Ko -> {apres / 1024:5.0f} Ko")
-    total_avant = sum(r[2] for r in resultats)
-    total_apres = sum(r[3] for r in resultats)
-    print(f"{len(resultats)} fichiers : {total_avant / 1e6:.1f} Mo -> {total_apres / 1e6:.1f} Mo "
-          f"(originaux dans {sys.argv[2]})")

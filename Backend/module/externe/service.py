@@ -9,10 +9,13 @@ avec une limite de temps ; l'état (pour l'interface, ETAT["externe"]) passe par
 Réglages : data/config.toml [externe].
 """
 import asyncio
+import logging
 
 from module.externe import edsm, inara, spansh
 from module.externe.cache import Cache
 from module.externe.reseau import ErreurExterne
+
+_log = logging.getLogger(__name__)
 
 INDISPONIBLE = "Données indisponibles"
 
@@ -44,7 +47,7 @@ class ServiceExterne:
                 self.cache = Cache(edsm_chemin_cache())
                 self.cache.purger()
             except Exception as erreur:          # disque plein, droits... : sans cache
-                print(f"[Externe] Cache indisponible ({erreur!r}) : sans cache.")
+                _log.warning(f"Cache indisponible ({erreur!r}) : sans cache.")
                 self.cache = Cache()
         return self.cache
 
@@ -58,7 +61,7 @@ class ServiceExterne:
     def _fin(self, tache):
         self._taches.discard(tache)
         if not tache.cancelled() and tache.exception():
-            print(f"[Externe] Erreur : {tache.exception()!r}")
+            _log.warning(f"Erreur : {tache.exception()!r}")
 
     async def _en_fond(self, fonction, *args, marge=2, **kwargs):
         """Fonction bloquante dans un thread, avec une limite de temps."""

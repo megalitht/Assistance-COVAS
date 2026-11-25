@@ -7,17 +7,19 @@ changent quand on branche ou débranche un casque. Un périphérique absent : ce
 Rien n'est ouvert à l'import. Le micro n'est ouvert ici que pendant « Tester le micro ».
 """
 import json
+import logging
 import math
 import os
 import subprocess
-import sys
 import threading
 import time
 
+from module import programme
 from module.interface import reglages
 
+_log = logging.getLogger(__name__)
+
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-PROGRAMME_SORTIE = os.path.join(DOSSIER_BACKEND, "module", "son", "audio_sortie.py")
 SONS_ESSAI = ("data/son/Demarrage/Système COVAS opérationnel.mp3",
               "data/son/Demarrage/SysCOVASOp.mp3")
 VALIDITE_INDEX = 10         # secondes : retrouver le micro par son nom à chaque phrase serait lent
@@ -64,7 +66,7 @@ def _micros(p):
 
 
 def _sorties():
-    resultat = subprocess.run([sys.executable, PROGRAMME_SORTIE, "--lister"], capture_output=True,
+    resultat = subprocess.run(programme.commande("audio-sortie", "--lister"), capture_output=True,
                               text=True, timeout=DELAI_LISTE, cwd=DOSSIER_BACKEND,
                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     if resultat.returncode:
@@ -138,9 +140,9 @@ def index_micro():
         finally:
             p.terminate()
     except Exception as erreur:
-        print(f"[Audio] Micros illisibles : {erreur}")
+        _log.warning(f"Micros illisibles : {erreur}")
     if valeur is None:
-        print(f"[Audio] Micro « {nom} » absent : micro de Windows utilisé.")
+        _log.warning(f"Micro « {nom} » absent : micro de Windows utilisé.")
     _index.update(nom=nom, valeur=valeur, quand=maintenant)
     return valeur
 
@@ -162,7 +164,7 @@ def tester_sortie(nom=None, niveau=100):
     except (TypeError, ValueError):
         niveau = 100
     try:
-        resultat = subprocess.run([sys.executable, PROGRAMME_SORTIE, "--jouer", son, nom or "", str(niveau)],
+        resultat = subprocess.run(programme.commande("audio-sortie", "--jouer", son, nom or "", str(niveau)),
                                   capture_output=True, text=True, timeout=DELAI_ESSAI, cwd=DOSSIER_BACKEND,
                                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except (OSError, subprocess.SubprocessError) as erreur:

@@ -20,3 +20,7 @@ Backend/data/studio.log
 Backend/data/config.toml
 Backend/data/config.toml.tmp
 Backend/data/suivi/
+
+# Application à partager (distribution/construire_application.py)
+Application/
+.construction/

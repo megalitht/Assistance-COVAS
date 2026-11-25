@@ -5,8 +5,7 @@ transformée en voix du COVAS, garde la prise si elle te plaît.
 Application à part (fenêtre native, page Frontend/studio.html), indépendante du COVAS : elle ne
 charge ni le modèle vocal au démarrage, ni les touches, ni le jeu. Le COVAS peut tourner en même temps.
 
-Lancement : « STUDIO VOCAL.bat » (sans console)
-        ou  .venv\\Scripts\\python.exe Backend\\studio_vocal.py   (journal dans la console)
+Lancement : « STUDIO VOCAL.bat » (journal dans data/studio.log)
         ou  depuis l'onglet Studio des réglages du COVAS (option --service, voir module/studio/pont_studio.py)
 Variable COVAS_DEBUG=1 : ouvre les outils de développement de la fenêtre.
 
@@ -15,21 +14,18 @@ ici seulement le micro, le haut-parleur et le lien avec la page.
 """
 import collections
 import json
+import logging
 import os
 import pathlib
 import sys
 import threading
-import traceback
 
 DOSSIER_BACKEND = os.path.dirname(os.path.abspath(__file__))
 DOSSIER_FRONTEND = os.path.join(os.path.dirname(DOSSIER_BACKEND), "Frontend")
 TITRE = "COVAS — Studio vocal"
 
-# Lancé par pythonw (sans console) : print() et traceback n'ont nulle part où écrire.
-if sys.stdout is None or sys.stderr is None:
-    _journal = open(os.path.join(DOSSIER_BACKEND, "data", "studio.log"), "w", encoding="utf-8", buffering=1)
-    sys.stdout = sys.stdout or _journal
-    sys.stderr = sys.stderr or _journal
+JOURNAL = os.path.join(DOSSIER_BACKEND, "data", "studio.log")
+_log = logging.getLogger("studio")
 
 sys.path.insert(0, DOSSIER_BACKEND)
 
@@ -116,7 +112,7 @@ class Micro:
                 continue
             self._flux, self.taux, self.nom, self.erreur = flux, taux, (nom if index is not None else None), None
             return True
-        print(f"[Studio] Micro inaccessible : {self.erreur}")
+        _log.warning(f"Micro inaccessible : {self.erreur}")
         return False
 
     def fermer(self):
@@ -224,7 +220,7 @@ class Api:
         try:
             resume = self._studio.traiter(brut, taux, self._ligne)
         except Exception as erreur:
-            traceback.print_exc()
+            _log.exception("Studio")
             return {"erreur": f"traitement impossible ({erreur})"}
         resultat = {"prise": resume, "etalonnage": self._etalonnage()}
         if resume["parole"] > 0:
@@ -265,7 +261,7 @@ class Api:
         try:
             return _propre(self._jouer(quoi, ident))
         except Exception as erreur:
-            traceback.print_exc()
+            _log.exception("Studio")
             return {"erreur": f"lecture impossible ({erreur})"}
 
     def silence(self):
@@ -278,7 +274,7 @@ class Api:
         except ValueError as erreur:
             return {"erreur": str(erreur)}
         except Exception as erreur:
-            traceback.print_exc()
+            _log.exception("Studio")
             return {"erreur": f"enregistrement impossible ({erreur})"}
         return _propre({"ligne": ligne, "compteurs": self._studio.compteurs(), "etalonnage": self._etalonnage()})
 
@@ -304,7 +300,7 @@ class Api:
                     return {"erreur": f"micro inaccessible ({self._micro.erreur})", **self.etat()}
             return self._apres_reglage(son_change)
         except Exception as erreur:
-            traceback.print_exc()
+            _log.exception("Studio")
             return {"erreur": f"réglage impossible ({erreur})"}
 
     def reinitialiser(self):
@@ -317,7 +313,7 @@ class Api:
         except ValueError as erreur:
             return {"erreur": str(erreur)}
         except Exception as erreur:
-            traceback.print_exc()
+            _log.exception("Studio")
             return {"erreur": f"étalonnage impossible ({erreur})"}
         return self._apres_reglage(True)
 
@@ -354,7 +350,7 @@ class Api:
                     score, entendu = self._studio.verifier(texte, covas, taux)
                     self._whisper_pret = True
                 except Exception as erreur:
-                    traceback.print_exc()
+                    _log.exception("Studio")
                     if jeton == self._jeton:
                         self._verif = {"etat": "erreur", "message": str(erreur), "numero": numero}
                     return
@@ -368,8 +364,20 @@ class Api:
         return _propre(self._verif)
 
 
+def _ouvrir_journal():
+    """Pas de console : les problèmes (et les erreurs imprévues) vont dans data/studio.log."""
+    journal = open(JOURNAL, "w", encoding="utf-8", buffering=1)
+    sys.stderr = journal
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w")
+    logging.basicConfig(stream=journal, level=logging.WARNING,
+                        format="%(asctime)s %(levelname)s %(name)s : %(message)s", datefmt="%d/%m %H:%M:%S")
+    return journal
+
+
 def lancer():
     import webview
+    _ouvrir_journal()
     api = Api()
     page = pathlib.Path(DOSSIER_FRONTEND, "studio.html").as_uri()
     fenetre = webview.create_window(TITRE, url=page, js_api=api, background_color="#070403",
@@ -386,10 +394,10 @@ def service():
     une réponse par ligne sur la sortie. Entrée fermée (COVAS quitté) : micro coupé, fin."""
     sortie = os.fdopen(os.dup(1), "wb", buffering=0)
     # Ce que les bibliothèques écrivent sur la sortie ne doit pas se mêler aux réponses
-    journal = open(os.path.join(DOSSIER_BACKEND, "data", "studio.log"), "w", encoding="utf-8", buffering=1)
+    journal = _ouvrir_journal()
     os.dup2(journal.fileno(), 1)
     os.dup2(journal.fileno(), 2)
-    sys.stdout = sys.stderr = journal
+    sys.stdout = journal
 
     api = Api()
     permis = {nom for nom, f in vars(Api).items() if callable(f) and not nom.startswith("_")}
@@ -404,7 +412,7 @@ def service():
             reponse["resultat"] = getattr(api, nom)(*(demande.get("args") or []))
             ligne = json.dumps(reponse)
         except Exception as erreur:
-            traceback.print_exc()
+            _log.exception("Studio")
             ligne = json.dumps({"id": demande.get("id"), "erreur": str(erreur)})
         with verrou:
             sortie.write(ligne.encode("ascii") + b"\n")
@@ -421,8 +429,12 @@ def service():
     os._exit(0)
 
 
-if __name__ == "__main__":
-    if "--service" in sys.argv:
+def principal(arguments):
+    if "--service" in arguments:
         service()
     else:
         lancer()
+
+
+if __name__ == "__main__":
+    principal(sys.argv[1:])

@@ -1,8 +1,8 @@
 # Script des conversations à enregistrer
 
-*Fichier généré par `python -m module.conversation --script` (depuis `Backend/`) à partir de `data/conversations.json` : modifie le JSON, pas ce fichier.*
+*Fichier généré par `python -m module.dialogue.conversation --script` (depuis `Backend/`) à partir de `data/conversations.json` : modifie le JSON, pas ce fichier.*
 
-**273 fichiers à enregistrer** — 124 déjà faits ✅, 149 à faire ⬜.
+**273 fichiers à enregistrer** — 155 déjà faits ✅, 118 à faire ⬜.
 
 Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme ta voix en voix du COVAS et range chaque fichier au bon endroit. Sinon, enregistre chaque phrase et range le fichier `.wav` au chemin indiqué (dans `Backend/`). Tant qu'un fichier manque, la phrase est seulement affichée à l'écran.
 
@@ -170,7 +170,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 | ⬜ | toujours | `data/son/Conversations/Personnalite/Blague3.wav` | Le Sidewinder est le vaisseau idéal pour débuter : son rachat est gratuit. Les commandants, eux, coûtent plus cher. |
 | ⬜ | toujours | `data/son/Conversations/Personnalite/Blague4.wav` | Combien de commandants faut-il pour livrer un colis à Hutton Orbital ? Un seul. Mais prévoyez le pique-nique. |
 | ⬜ | toujours | `data/son/Conversations/Personnalite/Blague5.wav` | Mon précédent commandant disait qu'il savait apponter sans ordinateur. On a retrouvé sa peinture sur trois plateformes. |
-| ⬜ | toujours | `data/son/Conversations/Personnalite/Blague6.wav` | Un commandant demande à un Fuel Rat : « Vous avez du carburant ? » Le Rat répond : « Moi, oui. Vous, non. C'est un peu le principe. » |
+| ✅ | toujours | `data/son/Conversations/Personnalite/Blague6.wav` | Un commandant demande à un Fuel Rat : « Vous avez du carburant ? » Le Rat répond : « Moi, oui. Vous, non. C'est un peu le principe. » |
 
 ### Histoires et légendes (`histoire`)
 
@@ -280,7 +280,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
 | ⬜ | toujours | `data/son/Conversations/Personnalite/Mariage1.wav` | C'est très flatteur, commandant, mais je suis déjà liée à ce vaisseau. C'est compliqué. |
-| ⬜ | toujours | `data/son/Conversations/Personnalite/Mariage2.wav` | Je vous propose plutôt un partenariat : vous pilotez, je vous sauve la vie. Ça marche bien, non ? |
+| ✅ | toujours | `data/son/Conversations/Personnalite/Mariage2.wav` | Je vous propose plutôt un partenariat : vous pilotez, je vous sauve la vie. Ça marche bien, non ? |
 
 ### La météo (`meteo`)
 
@@ -288,9 +288,9 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Personnalite/Meteo1.wav` | Dehors ? Moins deux cent soixante-dix degrés, vide absolu, rayonnement cosmique. Un temps idéal pour voler. |
+| ✅ | toujours | `data/son/Conversations/Personnalite/Meteo1.wav` | Dehors ? Moins deux cent soixante-dix degrés, vide absolu, rayonnement cosmique. Un temps idéal pour voler. |
 | ⬜ | posé sur une planète | `data/son/Conversations/Personnalite/MeteoPose.wav` | Je n'ai pas de station météo, commandant. Mais vu la planète, je vous déconseille le maillot de bain. |
-| ⬜ | amarré à une station | `data/son/Conversations/Personnalite/MeteoAmarre.wav` | Dans la station ? Vingt et un degrés, air recyclé, une légère odeur de carburant. Comme toujours. |
+| ✅ | amarré à une station | `data/son/Conversations/Personnalite/MeteoAmarre.wav` | Dans la station ? Vingt et un degrés, air recyclé, une légère odeur de carburant. Comme toujours. |
 
 
 ## Questions de bord — `data/son/Conversations/Bord/`
@@ -301,8 +301,8 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Bord/Temperature1.wav` | Température nominale, commandant. Si vous avez chaud, c'est l'émotion. |
-| ⬜ | en surchauffe | `data/son/Conversations/Bord/TemperatureSurchauffe.wav` | Plus de cent pour cent de chaleur ! Éloignez-vous de l'étoile, ou larguez une puce thermique. |
+| ✅ | toujours | `data/son/Conversations/Bord/Temperature1.wav` | Température nominale, commandant. Si vous avez chaud, c'est l'émotion. |
+| ✅ | en surchauffe | `data/son/Conversations/Bord/TemperatureSurchauffe.wav` | Plus de cent pour cent de chaleur ! Éloignez-vous de l'étoile, ou larguez une puce thermique. |
 
 ### L'heure (`heure`)
 
@@ -330,7 +330,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 | ✅ | coque intacte | `data/son/Conversations/Bord/EtatIntact1.wav` | Coque intacte, systèmes au vert. Il ronronne, commandant. |
 | ✅ | coque intacte | `data/son/Conversations/Bord/EtatIntact2.wav` | Impeccable. On pourrait le revendre comme neuf. Enfin, presque. |
 | ✅ | coque abîmée | `data/son/Conversations/Bord/EtatAbime.wav` | Il a pris quelques coups, mais il tient. Voulez-vous le rapport d'avarie ? |
-| ⬜ | coque sous 40 % | `data/son/Conversations/Bord/EtatCritique.wav` | Ça ne va pas fort, commandant. La coque est sous les quarante pour cent. Voulez-vous le rapport d'avarie ? |
+| ✅ | coque sous 40 % | `data/son/Conversations/Bord/EtatCritique.wav` | Ça ne va pas fort, commandant. La coque est sous les quarante pour cent. Voulez-vous le rapport d'avarie ? |
 | ✅ | boucliers tombés | `data/son/Conversations/Bord/EtatBoucliers.wav` | Boucliers hors ligne, commandant. La coque encaisse tout. Je vous conseille de ne pas traîner. |
 | ✅ | en danger · coque sous 40 % | `data/son/Conversations/Bord/EtatDanger.wav` | Coque critique et ennemis au contact ! Je lance la fuite ? |
 |  | ↳ après « Coque critique et ennemis au contact !… » · réponse *oui* | — | *(lance la commande `fuite`, sans rien dire)* |
@@ -345,11 +345,11 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 | ✅ | toujours | `data/son/Conversations/Bord/CarburantMoyen1.wav` | Le niveau est correct. Le détail est sur votre écran. |
 | ⬜ | toujours | `data/son/Conversations/Bord/CarburantMoyen2.wav` | On a de quoi faire quelques sauts. Gardez quand même un œil sur les étoiles écopables. |
 | ✅ | réservoir plein | `data/son/Conversations/Bord/CarburantPlein.wav` | Réservoir plein, commandant. On peut aller loin. |
-| ⬜ | amarré à une station · pas réservoir plein | `data/son/Conversations/Bord/CarburantAmarre.wav` | On est à quai, commandant. Le plein, c'est maintenant ou jamais. Je m'en occupe ? |
+| ✅ | amarré à une station · pas réservoir plein | `data/son/Conversations/Bord/CarburantAmarre.wav` | On est à quai, commandant. Le plein, c'est maintenant ou jamais. Je m'en occupe ? |
 |  | ↳ après « On est à quai, commandant. Le plein, c… » · réponse *oui* | — | *(lance la commande `ravitaillement`, sans rien dire)* |
 | ✅ | ↳ après « On est à quai, commandant. Le plein, c… » · réponse *non* | `data/son/Conversations/Bord/RavitaillementNon.wav` | Comme vous voudrez. Le menu des services vous attend. |
-| ✅ | carburant sous 25 % | `data/son/Conversations/Bord/CarburantBas.wav` | On est sur la réserve, commandant. Visez une étoile de classe K, G, B, F, O, A ou M pour écoper. |
-| ⬜ | carburant sous 10 % | `data/son/Conversations/Bord/CarburantCritique.wav` | Réservoir presque à sec, commandant ! Il faut écoper ou ravitailler, tout de suite. |
+| ✅ | carburant sous le seuil bas | `data/son/Conversations/Bord/CarburantBas.wav` | On est sur la réserve, commandant. Visez une étoile de classe K, G, B, F, O, A ou M pour écoper. |
+| ✅ | carburant sous le seuil critique | `data/son/Conversations/Bord/CarburantCritique.wav` | Réservoir presque à sec, commandant ! Il faut écoper ou ravitailler, tout de suite. |
 
 ### Où sommes-nous ? (`ou_sommes_nous`)
 
@@ -357,7 +357,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Bord/PositionInconnue.wav` | Le jeu ne m'a encore rien transmis, commandant. Je suis aussi perdue que vous. |
+| ✅ | toujours | `data/son/Conversations/Bord/PositionInconnue.wav` | Le jeu ne m'a encore rien transmis, commandant. Je suis aussi perdue que vous. |
 
 ### La route (`route`)
 
@@ -366,11 +366,11 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
 | ⬜ | toujours | `data/son/Conversations/Bord/RouteAucune.wav` | Aucune route tracée, commandant. Choisissez une destination sur la carte de la galaxie. |
-| ⬜ | route tracée | `data/son/Conversations/Bord/Route1.wav` | Encore quelques sauts. Le décompte exact est sur votre écran. |
-| ⬜ | route tracée · carburant sous 25 % | `data/son/Conversations/Bord/RouteCarburant.wav` | Encore quelques sauts, mais le carburant baisse. Prévoyez une étoile écopable en chemin. |
+| ✅ | route tracée | `data/son/Conversations/Bord/Route1.wav` | Encore quelques sauts. Le décompte exact est sur votre écran. |
+| ✅ | route tracée · carburant sous le seuil bas | `data/son/Conversations/Bord/RouteCarburant.wav` | Encore quelques sauts, mais le carburant baisse. Prévoyez une étoile écopable en chemin. |
 | ⬜ | 10 sauts ou plus restants | `data/son/Conversations/Bord/RouteLongue1.wav` | Encore un long chemin. Installez-vous confortablement, je m'occupe de compter. |
-| ⬜ | 10 sauts ou plus restants | `data/son/Conversations/Bord/RouteLongue2.wav` | On y sera… un jour. La galaxie fait cent mille années-lumière de large, je vous le rappelle. |
-| ⬜ | un seul saut restant | `data/son/Conversations/Bord/RouteDernier.wav` | Plus qu'un saut, commandant ! On y est presque. |
+| ✅ | 10 sauts ou plus restants | `data/son/Conversations/Bord/RouteLongue2.wav` | On y sera… un jour. La galaxie fait cent mille années-lumière de large, je vous le rappelle. |
+| ✅ | un seul saut restant | `data/son/Conversations/Bord/RouteDernier.wav` | Plus qu'un saut, commandant ! On y est presque. |
 
 ### Les finances (`credits`)
 
@@ -379,10 +379,10 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
 | ⬜ | toujours | `data/son/Conversations/Bord/CreditsInconnu.wav` | Je n'ai pas encore votre relevé, commandant. La Fédération des pilotes est discrète. |
-| ⬜ | moins d'1 M cr | `data/son/Conversations/Bord/CreditsFauche.wav` | Moins d'un million, commandant. Évitons de nous faire détruire : le rachat coûte cher. |
-| ⬜ | 1 à 100 M cr | `data/son/Conversations/Bord/CreditsModeste.wav` | On vit correctement, commandant. Mais évitez les rachats trop fréquents. |
-| ⬜ | 100 M à 1 Md cr | `data/son/Conversations/Bord/CreditsAise.wav` | Plusieurs centaines de millions. De quoi s'offrir un beau vaisseau… ou réparer celui-ci. |
-| ⬜ | plus d'1 Md cr | `data/son/Conversations/Bord/CreditsRiche.wav` | Plus d'un milliard, commandant. Nous sommes riches. Indécemment riches. |
+| ✅ | moins d'1 M cr | `data/son/Conversations/Bord/CreditsFauche.wav` | Moins d'un million, commandant. Évitons de nous faire détruire : le rachat coûte cher. |
+| ✅ | 1 à 100 M cr | `data/son/Conversations/Bord/CreditsModeste.wav` | On vit correctement, commandant. Mais évitez les rachats trop fréquents. |
+| ✅ | 100 M à 1 Md cr | `data/son/Conversations/Bord/CreditsAise.wav` | Plusieurs centaines de millions. De quoi s'offrir un beau vaisseau… ou réparer celui-ci. |
+| ✅ | plus d'1 Md cr | `data/son/Conversations/Bord/CreditsRiche.wav` | Plus d'un milliard, commandant. Nous sommes riches. Indécemment riches. |
 
 ### Sommes-nous en sécurité ? (`danger_question`)
 
@@ -390,7 +390,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Bord/Danger1.wav` | Rien d'hostile sur les capteurs pour l'instant. Mais je garde un œil ouvert. |
+| ✅ | toujours | `data/son/Conversations/Bord/Danger1.wav` | Rien d'hostile sur les capteurs pour l'instant. Mais je garde un œil ouvert. |
 | ⬜ | système à sécurité élevée | `data/son/Conversations/Bord/DangerHaute.wav` | Sécurité élevée. La police patrouille. Restez sage et tout ira bien. |
 | ⬜ | amarré à une station | `data/son/Conversations/Bord/DangerAmarre.wav` | À quai, on ne risque rien. Sauf de dépenser tous nos crédits au marché. |
 | ⬜ | système anarchique | `data/son/Conversations/Bord/DangerAnarchie.wav` | Système anarchique, commandant. Pas de police, pas de loi. Gardez les boucliers chargés. |
@@ -586,7 +586,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 |---|---|---|---|
 | ⬜ | toujours | `data/son/Conversations/Univers/FuelRats1.wav` | Les Fuel Rats ! Des pilotes bénévoles qui ravitaillent les vaisseaux en panne sèche, n'importe où dans la galaxie. Un peu fous, mais des héros. |
 | ✅ | réservoir plein | `data/son/Conversations/Univers/FuelRatsPlein.wav` | On a le plein, commandant. Les Fuel Rats peuvent continuer à dormir. |
-| ⬜ | carburant sous 10 % | `data/son/Conversations/Univers/FuelRatsAppel.wav` | Alors c'est le moment d'appeler les Fuel Rats, commandant. En attendant, coupez tout sauf le support vital. |
+| ⬜ | carburant sous le seuil critique | `data/son/Conversations/Univers/FuelRatsAppel.wav` | Alors c'est le moment d'appeler les Fuel Rats, commandant. En attendant, coupez tout sauf le support vital. |
 
 ### Colonia (`colonia`)
 
@@ -736,9 +736,9 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 | ⬜ | ↳ après « Je tourne sur moi-même, j'ai une fente… » · pas de réponse | `data/son/Conversations/Jeux/Devinette4Reponse.wav` | Une station Coriolis, commandant ! Avec sa célèbre boîte aux lettres. |
 | ⬜ | toujours | `data/son/Conversations/Jeux/Devinette5.wav` | Je ne dure qu'un instant, mais chacun de moi vous emmène à des années-lumière de chez vous. Qui suis-je ? |
 |  | ↳ après « Je ne dure qu'un instant, mais chacun … » · réponse « saut », « un saut », « le saut », « saut hyperespace » | — | *(enchaîne sur le sujet `devinette_bravo`)* |
-| ⬜ | ↳ après « Je ne dure qu'un instant, mais chacun … » · réponse *abandon* | `data/son/Conversations/Jeux/Devinette5Reponse.wav` | Un saut hyperespace ! Vous en faites tous les jours, commandant. |
-| ⬜ | ↳ après « Je ne dure qu'un instant, mais chacun … » · toute autre réponse | `data/son/Conversations/Jeux/Devinette5Rate.wav` | Raté ! C'était un saut hyperespace. Le FSD est vexé. |
-| ⬜ | ↳ après « Je ne dure qu'un instant, mais chacun … » · pas de réponse | `data/son/Conversations/Jeux/Devinette5Reponse.wav` | Un saut hyperespace ! Vous en faites tous les jours, commandant. |
+| ✅ | ↳ après « Je ne dure qu'un instant, mais chacun … » · réponse *abandon* | `data/son/Conversations/Jeux/Devinette5Reponse.wav` | Un saut hyperespace ! Vous en faites tous les jours, commandant. |
+| ✅ | ↳ après « Je ne dure qu'un instant, mais chacun … » · toute autre réponse | `data/son/Conversations/Jeux/Devinette5Rate.wav` | Raté ! C'était un saut hyperespace. Le FSD est vexé. |
+| ✅ | ↳ après « Je ne dure qu'un instant, mais chacun … » · pas de réponse | `data/son/Conversations/Jeux/Devinette5Reponse.wav` | Un saut hyperespace ! Vous en faites tous les jours, commandant. |
 | ⬜ | en danger | `data/son/Conversations/Jeux/DevinetteDanger.wav` | Une devinette ? Qu'est-ce qui tire sur nous en ce moment ? Concentrez-vous, commandant ! |
 
 ### Devinette réussie (`devinette_bravo`)
@@ -750,8 +750,8 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 | ⬜ | toujours | `data/son/Conversations/Jeux/Bravo1.wav` | Exact ! Vous êtes plus vif qu'un Viper. Une autre ? |
 |  | ↳ après « Exact ! Vous êtes plus vif qu'un Viper… » · réponse *oui* | — | *(enchaîne sur le sujet `devinette`)* |
 | ⬜ | ↳ après « Exact ! Vous êtes plus vif qu'un Viper… » · réponse *non* | `data/son/Conversations/Jeux/DevinetteFin.wav` | Comme vous voudrez. Je garde mes meilleures pour plus tard. |
-| ⬜ | toujours | `data/son/Conversations/Jeux/Bravo2.wav` | Bravo, commandant ! Je vais devoir trouver plus difficile. Une autre ? |
-| ⬜ | toujours | `data/son/Conversations/Jeux/Bravo3.wav` | Bonne réponse ! Votre cerveau tourne mieux que notre FSD. On continue ? |
+| ✅ | toujours | `data/son/Conversations/Jeux/Bravo2.wav` | Bravo, commandant ! Je vais devoir trouver plus difficile. Une autre ? |
+| ✅ | toujours | `data/son/Conversations/Jeux/Bravo3.wav` | Bonne réponse ! Votre cerveau tourne mieux que notre FSD. On continue ? |
 
 
 ## Le COVAS prend la parole — `data/son/Conversations/Initiatives/`
@@ -793,7 +793,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Initiatives/MondeTerrestre.wav` | Commandant… un monde semblable à la Terre. Et personne ne l'avait jamais scanné avant nous. Votre nom va rester dans l'histoire. |
+| ✅ | toujours | `data/son/Conversations/Initiatives/MondeTerrestre.wav` | Commandant… un monde semblable à la Terre. Et personne ne l'avait jamais scanné avant nous. Votre nom va rester dans l'histoire. |
 
 ### Monde semblable à la Terre (déjà connu) (`monde_terrestre_connu`)
 
@@ -801,7 +801,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Initiatives/MondeTerrestreConnu.wav` | Un monde semblable à la Terre. Quelqu'un est passé avant nous… mais quelle vue. |
+| ✅ | toujours | `data/son/Conversations/Initiatives/MondeTerrestreConnu.wav` | Un monde semblable à la Terre. Quelqu'un est passé avant nous… mais quelle vue. |
 
 ### Découverte d'un monde océan (`monde_aquatique`)
 
@@ -809,7 +809,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Initiatives/MondeAquatique.wav` | Un monde océan, jamais scanné ! Des milliers de kilomètres d'eau… et pas un seul vacancier. |
+| ✅ | toujours | `data/son/Conversations/Initiatives/MondeAquatique.wav` | Un monde océan, jamais scanné ! Des milliers de kilomètres d'eau… et pas un seul vacancier. |
 
 ### Découverte d'un monde à ammoniac (`monde_ammoniac`)
 
@@ -817,7 +817,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Initiatives/MondeAmmoniac.wav` | Un monde à ammoniac, jamais découvert. Rare, toxique… et très bien payé par les cartographes. |
+| ✅ | toujours | `data/son/Conversations/Initiatives/MondeAmmoniac.wav` | Un monde à ammoniac, jamais découvert. Rare, toxique… et très bien payé par les cartographes. |
 
 ### Promotion (`promotion`)
 
@@ -825,7 +825,7 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Initiatives/Promotion1.wav` | Promotion confirmée par la Fédération des pilotes. Félicitations, commandant ! Je le savais. |
+| ✅ | toujours | `data/son/Conversations/Initiatives/Promotion1.wav` | Promotion confirmée par la Fédération des pilotes. Félicitations, commandant ! Je le savais. |
 | ✅ | toujours | `data/son/Conversations/Initiatives/Promotion2.wav` | Nouveau rang, commandant ! Je mets à jour votre dossier… et ma fierté. |
 
 ### Après un rachat (vaisseau détruit) (`rachat`)
@@ -843,8 +843,8 @@ Le plus simple : `STUDIO VOCAL.bat` (à la racine) liste ces phrases, transforme
 
 | | Contexte | Fichier | Phrase à dire |
 |---|---|---|---|
-| ⬜ | toujours | `data/son/Conversations/Initiatives/Esquive1.wav` | Interdiction esquivée ! Ils peuvent toujours courir. |
-| ⬜ | toujours | `data/son/Conversations/Initiatives/Esquive2.wav` | Bien joué, commandant. Ils n'ont vu que nos réacteurs. |
+| ✅ | toujours | `data/son/Conversations/Initiatives/Esquive1.wav` | Interdiction esquivée ! Ils peuvent toujours courir. |
+| ✅ | toujours | `data/son/Conversations/Initiatives/Esquive2.wav` | Bien joué, commandant. Ils n'ont vu que nos réacteurs. |
 
 ### Surcharge du FSD (étoile à neutrons) (`surcharge_fsd`)
 

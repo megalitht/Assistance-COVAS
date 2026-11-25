@@ -1,0 +1,82 @@
+COVAS — ASSISTANT DE BORD POUR ELITE DANGEROUS
+===============================================
+
+Le COVAS écoute ta voix, répond avec des répliques enregistrées et appuie sur les
+touches du jeu à ta place (train, soute, FSD, énergie, apontage...). Il lit aussi
+les journaux du jeu pour t'alerter (carburant, avaries, scans...).
+
+
+CE QU'IL FAUT
+-------------
+- Windows 10 ou 11 (64 bits).
+- Elite Dangerous.
+- Un micro (celui du casque suffit).
+- Conseillé : une carte graphique NVIDIA. Sans elle, le COVAS marche aussi,
+  mais comprend un peu moins bien et répond un peu plus lentement.
+
+Rien à installer : tout est dans ce dossier.
+
+
+INSTALLATION
+------------
+1. Mets le dossier COVAS où tu veux (Bureau, Documents, D:\Jeux...).
+   Évite « C:\Program Files » : le COVAS doit pouvoir écrire dans son dossier.
+2. Garde tout ensemble : COVAS.exe ne marche pas sans les dossiers Backend et Frontend.
+3. Clic droit sur COVAS.exe > Afficher plus d'options > Envoyer vers > Bureau (créer un raccourci).
+
+
+PREMIER LANCEMENT
+-----------------
+1. Double-clique sur COVAS.exe.
+2. Windows peut afficher « Windows a protégé votre ordinateur » : le programme n'est
+   pas signé, c'est normal. Clique sur « Informations complémentaires », puis
+   « Exécuter quand même ».
+3. La fenêtre s'ouvre en plein écran (sur ton deuxième écran si tu en as un).
+   F11 : quitter ou retrouver le plein écran.
+4. Clique sur le bouton au centre : le COVAS démarre (la première fois, ça peut prendre
+   une minute). Pendant le « Calibrage du micro », ne parle pas.
+5. Réglages (roue dentée) > Son : choisis ton micro et ta sortie audio.
+
+Important : le COVAS ajoute des touches « virtuelles » (F13 à F24, absentes de ton
+clavier) dans ton fichier de commandes du jeu, pour les commandes qui n'ont pas de
+touche. Une sauvegarde de ton fichier est faite avant (fichier « .bak », à côté).
+Relance le jeu après le premier démarrage du COVAS pour qu'il les prenne en compte.
+Dans le jeu, le profil de commandes doit être ton profil personnalisé (« Custom »).
+
+
+UTILISATION
+-----------
+Dis « Covas » suivi d'une commande, par exemple :
+    « Covas, sors le train »
+    « Covas, active le FSD »
+    « Covas, rapport d'avarie »
+    « Covas, ouvre le panel »
+Ou dis seulement « Covas » : il te répond et attend ta commande.
+Tu peux aussi lui parler (« Covas, ça va ? ») ou lui écrire depuis l'interface.
+
+L'interface montre ton vaisseau, ses avaries, ta route, tes scans... et se met à jour
+toute seule pendant que tu joues.
+
+
+SI ÇA NE MARCHE PAS
+-------------------
+- Le COVAS ne m'entend pas : Réglages > Son, vérifie le micro (bouton de test).
+  L'onglet Studio des réglages met l'écoute en pause : ferme-le.
+- Les touches n'ont pas d'effet : relance le jeu (voir « Important » plus haut), et
+  vérifie que le jeu est bien au premier plan.
+- Un autre problème : envoie le fichier  Backend\data\covas.log  à la personne qui
+  t'a donné le COVAS (il note les erreurs de la dernière utilisation).
+
+
+TÉLÉPHONE EN SECOND ÉCRAN (facultatif)
+--------------------------------------
+Le fichier Backend\data\config.toml (créé au premier démarrage) se modifie avec le
+Bloc-notes : section [second_ecran]. Le téléphone doit être sur le même Wi-Fi, et
+Windows peut demander d'autoriser le COVAS dans le pare-feu.
+
+
+DÉSINSTALLER
+------------
+Supprime le dossier COVAS. Tes réglages de jeu ne sont pas touchés, à part les
+touches virtuelles ajoutées (ta sauvegarde « .bak » est dans le dossier des commandes
+du jeu : %LOCALAPPDATA%\Frontier Developments\Elite Dangerous\Options\Bindings).

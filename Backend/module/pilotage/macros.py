@@ -6,11 +6,11 @@ Les touches sont lues automatiquement dans le fichier de raccourcis d'Elite Dang
 secours (commandes.py) sert pour les commandes que le fichier du jeu ne donne pas.
 Les séquences de menus (apontage, décollage, ravitaillement...) se règlent au même endroit.
 """
+import logging
 import os
 import threading
 import time
 import unicodedata
-from datetime import datetime
 
 import pydirectinput
 
@@ -18,6 +18,8 @@ from module.pilotage import commandes
 from module.pilotage import pips
 from module.interface import reglages
 from module.pilotage import touches
+
+_log = logging.getLogger(__name__)
 
 pydirectinput.PAUSE = 0.05
 
@@ -162,37 +164,6 @@ def nom_touche(nom) -> str:
     return " + ".join(valeur[1] + [valeur[0]]) if valeur else "aucune"
 
 
-# Terminal : écrit chaque touche réellement envoyée au jeu (False pour ne plus les afficher)
-TRACER_TOUCHES = True
-_NOMS_TOUCHES = {"space": "Espace", "backspace": "Retour arrière", "delete": "Suppr", "enter": "Entrée",
-                 "tab": "Tab", "insert": "Inser", "home": "Origine", "end": "Fin",
-                 "up": "Flèche haut", "down": "Flèche bas", "left": "Flèche gauche",
-                 "right": "Flèche droite", "ctrlleft": "Ctrl", "shiftleft": "Maj",
-                 "shiftright": "Maj droite", "altleft": "Alt"}
-_IMPRIME_AZERTY = {"q": "A", "a": "Q", "w": "Z", "z": "W", ";": "M", "m": ",", ",": ";", ".": ":", "/": "!"}
-
-
-def _nom_imprime(touche):
-    """Le nom écrit sur le clavier du commandant, pas l'emplacement physique envoyé."""
-    if touche in _NOMS_TOUCHES:
-        return _NOMS_TOUCHES[touche]
-    if touches.ETAT.get("azerty") and touche in _IMPRIME_AZERTY:
-        return _IMPRIME_AZERTY[touche]
-    return touche.upper()
-
-
-def _tracer_touche(nom, touche, modificateurs, duree=None):
-    if not TRACER_TOUCHES:
-        return
-    combinaison = " + ".join(_nom_imprime(t) for t in [*modificateurs, touche])
-    maintien = f", maintenue {duree:g} s" if duree else ""
-    try:
-        print(f"[Touche] {datetime.now().strftime('%H:%M:%S.%f')[:-3]}  {combinaison:<15} "
-              f"{touches.libelle(nom)} ({nom}{maintien})", flush=True)
-    except (OSError, ValueError):
-        pass                    # un terminal fermé ne doit jamais bloquer une commande
-
-
 def _enfoncer(touche):
     _enfoncees.add(touche)
     pydirectinput.keyDown(touche)
@@ -214,14 +185,13 @@ def appuyer(nom: str, fois: int = 1, duree: float = None) -> bool:
     Renvoie False si la touche n'existe pas ou si un « stop » est arrivé."""
     valeur = touche_de(nom)
     if not valeur:
-        print(f"[Macros] Pas de touche pour « {nom} » ({touches.libelle(nom)}).")
+        _log.warning(f"Pas de touche pour « {nom} » ({touches.libelle(nom)}).")
         return False
     touche, modificateurs = valeur
     for _ in range(fois):
         if STOP.is_set():
             return False
         DERNIERS_APPUIS[nom] = time.monotonic()
-        _tracer_touche(nom, touche, modificateurs, duree)
         for m in modificateurs:
             _enfoncer(m)
         _enfoncer(touche)
@@ -257,7 +227,7 @@ def executer_touches(action: str) -> bool:
         return jouer_etapes(reglages.sequence(cle))
     etapes = MACROS.get(cle)
     if not etapes:
-        print(f"[Macros] Aucune touche associée à l'action : {action}")
+        _log.warning(f"Aucune touche associée à l'action : {action}")
         return False
     for touche, fois in etapes:
         if not appuyer(touche, fois):
@@ -299,7 +269,6 @@ def _premier_plan(fenetre) -> bool:
         user32.ShowWindow(fenetre, 9)          # restaure la fenêtre réduite
     # Windows bloque SetForegroundWindow pour un programme en arrière-plan ;
     # un appui sur Alt lève ce verrou.
-    _tracer_touche("mise au premier plan de la fenêtre", "altleft", [])
     user32.keybd_event(0x12, 0, 0, 0)
     user32.keybd_event(0x12, 0, 2, 0)
     user32.SetForegroundWindow(fenetre)

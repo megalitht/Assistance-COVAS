@@ -19,6 +19,7 @@ import asyncio
 import glob
 import itertools
 import json
+import logging
 import os
 import time
 from collections import deque
@@ -40,6 +41,8 @@ from module.jeu.commerce import SuiviCommerce
 from module.jeu.prospection import Prospection
 from module.jeu.materiaux import SuiviMateriaux
 from module.interface.serveur_ws import definir_demandes, definir_instantane, envoyer_donnees_web, programme_actuel
+
+_log = logging.getLogger(__name__)
 
 # --- CHEMINS D'ACCÈS ---
 # Dossier standard du jeu. S'il a été déplacé, indique le bon chemin dans la
@@ -73,12 +76,6 @@ DRAPEAU_DANS_LE_VAISSEAU = 1 << 24
 
 EMPLACEMENTS_COSMETIQUES = ("paintjob", "decal", "shipname", "shipid", "shipkit", "bobble",
                             "weaponcolour", "enginecolour", "vesselvoice", "stringlights")
-
-if not os.path.exists(DOSSIER_ED):
-    print(f"[Erreur Critique] Le dossier Elite n'a pas été trouvé à : {DOSSIER_ED}")
-else:
-    print(f"[Système] Pointage des logs confirmé sur : {DOSSIER_ED}")
-
 
 # =====================================================================
 #  ÉTAT PARTAGÉ
@@ -186,7 +183,6 @@ async def annoncer(texte, gravite="info", categorie="covas"):
              "nom": "COVAS", "categorie": categorie, "gravite": gravite, "texte": texte,
              "hostile": False, "n": 1}
     HISTORIQUE.append(ligne)
-    print(f"[COVAS] {texte}")
     await envoyer_donnees_web({"type": "evenement", "evenement": ligne})
 
 
@@ -321,7 +317,7 @@ async def _dire(cle, urgent=False, secours=None):
     if not chemin_audio:
         if cle not in _cles_sans_son:
             _cles_sans_son.add(cle)
-            print(f'[Voix] Aucune réplique audio pour "{cle}" dans barks.json.')
+            _log.warning(f'Aucune réplique audio pour "{cle}" dans barks.json.')
         return
     if maintenant - _dernier_son.get(chemin_audio, -1e9) < min(delai, DELAI_MEME_SON):
         return
@@ -1620,7 +1616,7 @@ async def _chercher_systemes_proches(systeme, portee):
                                          delai * 2 + 2)
         resultat = {"etat": "ok", "total": len(trouves), "liste": trouves[:SYSTEMES_PROCHES_MAX]}
     except Exception as erreur:
-        print(f"[EDSM] Systèmes proches indisponibles : {erreur!r}")
+        _log.warning(f"Systèmes proches indisponibles : {erreur!r}")
         resultat = {"etat": "erreur", "total": 0, "liste": []}
     if ETAT["position"]["systeme"] == systeme:      # on n'a pas ressauté entre-temps
         ETAT["proches"] = {"systeme": systeme, "rayon": portee, **resultat}
@@ -1664,7 +1660,7 @@ async def _traiter_ligne(ligne, en_direct):
             try:
                 fonction(evenement)
             except Exception as erreur:
-                print(f"[Logs] Écouteur en erreur : {erreur!r}")
+                _log.warning(f"Écouteur en erreur : {erreur!r}")
     gestionnaire = _GESTIONNAIRES.get(evenement.get("event"))
     suivi = any(evenement.get("event") in s.EVENEMENTS for s in _SUIVIS)
     if not gestionnaire and not suivi:
@@ -1677,7 +1673,7 @@ async def _traiter_ligne(ligne, en_direct):
         if gestionnaire:
             gestionnaire(evenement)
     except Exception as erreur:
-        print(f"[Logs] Événement {evenement.get('event')} ignoré : {erreur!r}")
+        _log.warning(f"Événement {evenement.get('event')} ignoré : {erreur!r}")
         return
     if not en_direct:
         return        # rattrapage : on reconstruit l'état en silence
@@ -1690,7 +1686,6 @@ async def _traiter_ligne(ligne, en_direct):
         if isinstance(cle, dict):           # phrase chiffrée, en morceaux
             await _dire_morceaux(cle["morceaux"], cle["secours"])
             continue
-        print(f"[Logs] {evenement.get('event')} -> réplique \"{cle}\"")
         await _dire(cle)
     if sections & {"position", "vaisseau"}:
         _demander_systemes_proches()
@@ -1771,10 +1766,7 @@ async def _ouvrir_suivis():
             journaux = sorted(glob.glob(CHEMIN_LOGS), key=os.path.getctime)
         except OSError:
             journaux = []
-        print(f"[Suivi] Premier lancement : relecture de {len(journaux)} journaux "
-              f"({', '.join(s.NOM for s in neufs)})...")
-        compte = await asyncio.to_thread(suivis.reconstruire, neufs, journaux)
-        print(f"[Suivi] {compte} événements relus.")
+        await asyncio.to_thread(suivis.reconstruire, neufs, journaux)
     for suivi in _SUIVIS:
         ETAT[_SECTIONS_SUIVIS[suivi]] = suivi.vue()
     await _publier(*_SECTIONS_SUIVIS.values())
@@ -1807,7 +1799,7 @@ async def surveiller_logs(tts_queue, generer_replique_func):
     try:
         await _ouvrir_suivis()
     except Exception as erreur:
-        print(f"[Suivi] Ouverture impossible : {erreur!r}")
+        _log.warning(f"Ouverture impossible : {erreur!r}")
 
     journal = None            # fichier actuellement suivi
     chemin_actuel = None
@@ -1831,8 +1823,6 @@ async def surveiller_logs(tts_queue, generer_replique_func):
                     rattrapage = False
                     _suivi["en_direct"] = True
                     _enregistrer_suivis(forcer=True)
-                    print(f"[Logs] État du vaisseau reconstruit, suivi en direct "
-                          f"({len(HISTORIQUE)} événements en mémoire).")
                     await envoyer_donnees_web(_instantane())
                     _demander_systemes_proches()
                     _demander_fiche_systeme()
@@ -1854,17 +1844,15 @@ async def surveiller_logs(tts_queue, generer_replique_func):
                     chemin_actuel, reste = plus_recent, ""
                     rattrapage, premiere_ouverture = premiere_ouverture, False
                     ETAT["session"]["journal"] = os.path.basename(plus_recent)
-                    print(f"[Logs] Surveillance activée sur : {os.path.basename(plus_recent)}")
                     continue
                 if not plus_recent and not attente_signalee:
                     attente_signalee = True
                     premiere_ouverture = False     # le prochain journal sera lu en direct
                     _suivi["en_direct"] = True
-                    print("[Logs] Aucun journal Elite Dangerous trouvé : en attente du jeu...")
 
             await asyncio.sleep(0.5)   # Polling léger, zéro impact CPU
         except Exception as erreur:
-            print(f"[Logs] Erreur de lecture du journal : {erreur!r}")
+            _log.warning(f"Erreur de lecture du journal : {erreur!r}")
             await asyncio.sleep(2)
 
 
@@ -1938,7 +1926,6 @@ async def surveiller_fichiers_auxiliaires():
         (_FichierSurveille(CHEMIN_MODULES), _maj_puissances, "modules"),
         (_FichierSurveille(CHEMIN_SOUTE), _maj_soute, "soute"),
     ]
-    print("[Logs] Surveillance de NavRoute, ModulesInfo et Cargo activée.")
 
     while True:
         for fichier, mettre_a_jour, section in fichiers:
@@ -1954,7 +1941,7 @@ async def surveiller_fichiers_auxiliaires():
                     await _annoncer_route_tracee()
                     await _controler_carburant()
             except Exception as erreur:
-                print(f"[Logs] Erreur sur {os.path.basename(fichier.chemin)} : {erreur!r}")
+                _log.warning(f"Erreur sur {os.path.basename(fichier.chemin)} : {erreur!r}")
         _enregistrer_suivis()      # les suivis modifiés sont écrits (au plus toutes les 2 s)
         await asyncio.sleep(1.0)   # Check toutes les secondes, très léger
 
@@ -1965,7 +1952,6 @@ async def surveiller_fichiers_auxiliaires():
 async def surveiller_status_json():
     fichier = _FichierSurveille(CHEMIN_STATUS)
     drapeaux_precedents = None
-    print("[Logs] Surveillance de Status.json activée (avec WebSockets).")
 
     while True:
         try:
@@ -2023,5 +2009,5 @@ async def surveiller_status_json():
                         await _dire("alerte_surchauffe")
                 drapeaux_precedents = drapeaux
         except Exception as erreur:
-            print(f"[Logs] Erreur sur Status.json : {erreur!r}")
+            _log.warning(f"Erreur sur Status.json : {erreur!r}")
         await asyncio.sleep(0.5)

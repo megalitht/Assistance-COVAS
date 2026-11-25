@@ -7,42 +7,62 @@ Api.activer() : main.demarrer() tourne alors dans un thread, chaque étape du d�
 affichée à l'écran, puis l'interface devient le panneau de contrôle (liaison WebSocket
 habituelle, voir module/interface/serveur_ws.py).
 
-Lancement : COVAS.bat (sans console) ou  .venv\\Scripts\\python.exe Backend\\app.py
+Lancement : COVAS.exe (application partagée, voir construire_application.py) ou COVAS.bat (sources).
+Pas de console : les problèmes sont écrits dans data/covas.log.
 Variable COVAS_DEBUG=1 : ouvre les outils de développement de la fenêtre.
 """
 import json
+import logging
 import os
 import shutil
 import socket
 import sys
 import threading
 import time
-import traceback
 
 DOSSIER_BACKEND = os.path.dirname(os.path.abspath(__file__))
 DOSSIER_FRONTEND = os.path.join(os.path.dirname(DOSSIER_BACKEND), "Frontend")
-TITRE = "COVAS — Assistance de bord"      # même titre que main.TITRE / macros.TITRE_INTERFACE
+TITRE = "COVAS — Assistance de bord"      # même titre que macros.TITRE_INTERFACE
 # Liaison du panneau (module/interface/serveur_ws.py) : port de data/config.toml [second_ecran]
 PORT_PAGE = 8766                          # serveur local de la page
 DOSSIER_PROFIL = os.path.join(DOSSIER_BACKEND, "data", "fenetre")   # profil WebView2 (préférences)
+JOURNAL = os.path.join(DOSSIER_BACKEND, "data", "covas.log")
 DELAI_FERMETURE = 5                       # secondes au plus pour fermer proprement
-
-# Lancé par pythonw (sans console) : print() et traceback n'ont nulle part où écrire.
-if sys.stdout is None or sys.stderr is None:
-    _journal = open(os.path.join(DOSSIER_BACKEND, "data", "covas.log"), "w",
-                    encoding="utf-8", buffering=1)
-    sys.stdout = sys.stdout or _journal
-    sys.stderr = sys.stderr or _journal
 
 sys.path.insert(0, DOSSIER_BACKEND)
 
+
+def _sous_programme(arguments):
+    """COVAS.exe --studio / --audio-sortie : parties du COVAS lancées dans un processus à part
+    (voir module/programme.py). Ne rend pas la main."""
+    if arguments[:1] == ["--audio-sortie"]:
+        from module.son import audio_sortie
+        sys.exit(audio_sortie.principal(arguments[1:]))
+    if arguments[:1] == ["--studio"]:
+        import studio_vocal
+        studio_vocal.principal(arguments[1:])
+        sys.exit()
+    if arguments[:1] == ["--verifier-voix"]:
+        # Diagnostic sans micro : charge Whisper et écrit où il tourne (COVAS.exe --verifier-voix > voix.txt)
+        logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
+        from module.son import whisper
+        modele = whisper.charger(print)
+        print(f"Modèle vocal prêt : {modele.model.device}")
+        sys.exit()
+
+
+if __name__ == "__main__" and len(sys.argv) > 1:
+    _sous_programme(sys.argv[1:])
+
 import webview  # noqa: E402
 
+from module import programme  # noqa: E402
 from module.son import audio, ecoute  # noqa: E402  (légers : ni micro, ni touches)
 from module.interface import plans, reglages  # noqa: E402
 from module.interface.serveur_ws import port_configure  # noqa: E402
 from module.studio.pont_studio import PontStudio  # noqa: E402
 
+_log = logging.getLogger("covas")
 DOSSIER_PLANS = os.path.join(DOSSIER_FRONTEND, "vaisseaux")
 TITRE_STUDIO = "COVAS — Studio vocal"     # fenêtre de STUDIO VOCAL.bat
 
@@ -55,8 +75,7 @@ class Api:
         self._verrou = threading.Lock()
         self._etat = "veille"          # veille -> activation -> actif (ou retour en veille si erreur)
         self._pauses = set()           # ce qui suspend l'écoute du COVAS : studio, test du micro
-        self._pont = PontStudio([sys.executable, os.path.join(DOSSIER_BACKEND, "studio_vocal.py"),
-                                 "--service"])
+        self._pont = PontStudio(programme.commande("studio", "--service"))
 
     def _pousser(self, texte, etat="etape"):
         """Envoie une étape du démarrage à l'écran d'accueil."""
@@ -70,7 +89,7 @@ class Api:
 
     def _activation(self):
         try:
-            # Un autre COVAS (main.py en console, autre fenêtre...) tient déjà la liaison :
+            # Un autre COVAS (autre fenêtre, autre copie de l'application...) tient déjà la liaison :
             # deux COVAS écouteraient le même micro et appuieraient deux fois sur les touches.
             port = port_configure()
             if not _port_libre(port):
@@ -78,11 +97,9 @@ class Api:
                                    "Ferme-le, puis réessaie.")
             self._pousser("Chargement des modules de bord")
             import main                             # importe macros, actions... (pas avant le clic)
-            from module.pilotage import actions
-            actions.MODE_APPLICATION = True
             main.demarrer(progression=self._pousser)     # ne rend la main qu'à l'arrêt
         except BaseException as erreur:            # SystemExit compris : la fenêtre doit le dire
-            traceback.print_exc()
+            _log.exception("Activation ou arrêt du COVAS")
             actif = self._etat == "actif"
             self._etat = "veille"
             self._pousser(("COVAS arrêté : " if actif else "Activation impossible : ")
@@ -113,7 +130,7 @@ class Api:
         try:
             self._fenetre.destroy()
         except Exception:
-            traceback.print_exc()
+            _log.exception("Fermeture")
         time.sleep(DELAI_FERMETURE)     # la fenêtre ne s'est pas fermée : on ne reste pas bloqué
         _fermer_proprement(self)
         os._exit(0)
@@ -205,7 +222,7 @@ def _nettoyer(api):
     try:
         audio.TEST_MICRO.arreter()
     except Exception:
-        traceback.print_exc()
+        _log.exception("Fermeture")
     macros = sys.modules.get("module.pilotage.macros")
     if macros:
         try:
@@ -213,11 +230,11 @@ def _nettoyer(api):
             time.sleep(0.1)
             macros.relacher_tout()
         except Exception:
-            traceback.print_exc()
+            _log.exception("Fermeture")
     try:
         api._pont.arreter()
     except Exception:
-        traceback.print_exc()
+        _log.exception("Fermeture")
 
 
 def _fermer_proprement(api):
@@ -291,9 +308,21 @@ def _ramener_fenetre_existante():
     return True
 
 
+def _ouvrir_journal():
+    """Pas de console : les problèmes (et les erreurs imprévues des threads) vont dans data/covas.log."""
+    os.makedirs(os.path.dirname(JOURNAL), exist_ok=True)
+    journal = open(JOURNAL, "w", encoding="utf-8", buffering=1)
+    sys.stderr = journal
+    if sys.stdout is None:                  # .exe ou pythonw : une bibliothèque qui écrit ne doit pas planter
+        sys.stdout = open(os.devnull, "w")
+    logging.basicConfig(stream=journal, level=logging.WARNING,
+                        format="%(asctime)s %(levelname)s %(name)s : %(message)s", datefmt="%d/%m %H:%M:%S")
+
+
 def lancer():
     if _ramener_fenetre_existante():
         return
+    _ouvrir_journal()
     _vider_cache_page()
     api = Api()
     # Servie en http (et non en file://) : WebView2 garde ainsi le « ?app » de l'adresse.

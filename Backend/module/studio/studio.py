@@ -28,6 +28,7 @@ import copy
 import hashlib
 import itertools
 import json
+import logging
 import os
 import shutil
 import tempfile
@@ -38,6 +39,8 @@ import numpy as np
 
 from module.studio import effet_voix
 from module.son import sons
+
+_log = logging.getLogger(__name__)
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DOSSIER_STUDIO = os.path.join(DOSSIER_BACKEND, "data", "studio")
@@ -541,7 +544,7 @@ class Studio:
             from module.dialogue import conversation
             conversation.ecrire_script()
         except Exception as erreur:            # le script n'est qu'un aide-mémoire
-            print(f"[Studio] Script des conversations non mis à jour : {erreur!r}")
+            _log.warning(f"Script des conversations non mis à jour : {erreur!r}")
 
     def compteurs(self):
         prises = lire_prises()

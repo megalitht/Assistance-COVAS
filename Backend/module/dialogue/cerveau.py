@@ -1,9 +1,12 @@
 # module/dialogue/cerveau.py
 import json
+import logging
 import os
 import random
 
 from module.son import sons
+
+_log = logging.getLogger(__name__)
 
 DOSSIER_BACKEND = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CHEMIN_BARKS = os.path.join(DOSSIER_BACKEND, "data", "barks.json")
@@ -42,6 +45,6 @@ async def obtenir_chemin_audio(action: str, polite: bool = False) -> str:
                 return random.choice(reponses)
 
     except Exception as e:
-        print(f"[Routeur Audio] Erreur lors de la lecture du JSON : {e}")
+        _log.warning(f"Erreur lors de la lecture du JSON : {e}")
 
     return None

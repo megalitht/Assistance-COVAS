@@ -4,8 +4,9 @@ audio_sortie.py — Petit programme à part pour les sorties audio (lancé par m
 Il passe par la même bibliothèque que la voix du COVAS (pygame), donc voit les mêmes noms de
 périphériques. Dans son propre processus, il ne dérange jamais une réplique en cours.
 
-    python audio_sortie.py --lister                    -> liste JSON des sorties
-    python audio_sortie.py --jouer son.mp3 "nom" 80    -> joue le son sur ce périphérique
+    audio_sortie.py --lister                    -> liste JSON des sorties (sur la sortie standard)
+    audio_sortie.py --jouer son.mp3 "nom" 80    -> joue le son sur ce périphérique
+(Dans l'application : COVAS.exe --audio-sortie --lister, voir module/programme.py.)
 """
 import json
 import os
@@ -40,14 +41,20 @@ def jouer(chemin, nom, volume):
         pygame.mixer.quit()
 
 
-if __name__ == "__main__":
+def principal(arguments):
+    """Renvoie le code de sortie du processus. La réponse part sur la sortie standard."""
     try:
-        if sys.argv[1] == "--lister":
-            print(json.dumps(lister()))
-        elif sys.argv[1] == "--jouer":
-            jouer(sys.argv[2], sys.argv[3], float(sys.argv[4]))
+        if arguments[:1] == ["--lister"]:
+            sys.stdout.write(json.dumps(lister()) + "\n")
+        elif arguments[:1] == ["--jouer"]:
+            jouer(arguments[1], arguments[2], float(arguments[3]))
         else:
-            sys.exit(2)
+            return 2
     except Exception as erreur:
-        print(erreur, file=sys.stderr)
-        sys.exit(1)
+        sys.stderr.write(f"{erreur}\n")
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(principal(sys.argv[1:]))

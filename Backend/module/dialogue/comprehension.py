@@ -244,10 +244,7 @@ def trouver_action_detail(texte: str, actions: dict, ignorees=()) -> Corresponda
 
 def trouver_action(texte: str, actions: dict, ignorees=()) -> str | None:
     """Clé de l'action demandée, ou None (voir trouver_action_detail)."""
-    resultat = trouver_action_detail(texte, actions, ignorees)
-    if resultat.cle and not resultat.exacte:
-        print(f"[Compréhension] Correspondance approchée : {resultat.cle} ({resultat.score:.0%})")
-    return resultat.cle
+    return trouver_action_detail(texte, actions, ignorees).cle
 
 
 def contient_reveil(texte: str, mots_reveil) -> bool:

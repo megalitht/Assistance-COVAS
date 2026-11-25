@@ -28,11 +28,14 @@ import email.utils
 import http
 import json
 
+import logging
 import websockets
 
 from module import config
 from module.interface import reglages
 from module.interface import second_ecran
+
+_log = logging.getLogger(__name__)
 
 # Sans second écran : ce PC seulement (IPv4 et IPv6). Avec : toutes les cartes réseau (None), les
 # appareils hors du réseau local étant refusés à la connexion.
@@ -68,11 +71,6 @@ def definir_instantane(fonction):
     """Enregistre la fonction qui fabrique l'état complet envoyé à la connexion."""
     global _instantane
     _instantane = fonction
-
-
-def interfaces_ouvertes() -> int:
-    """Nombre d'interfaces web connectées en ce moment (PC et autres appareils)."""
-    return len(_clients)
 
 
 def interfaces_locales_ouvertes() -> int:
@@ -156,7 +154,7 @@ def _controle_requete(connexion, requete):
         return _reponse(connexion, http.HTTPStatus.FORBIDDEN, "Adresse refusée.".encode())
     if requete.headers.get("Upgrade", "").lower() == "websocket":
         if not second_ecran.origine_autorisee(requete.headers.get("Origin"), hote):
-            print(f"[Web] Liaison refusée : origine {requete.headers.get('Origin')!r}")
+            _log.warning(f"Liaison refusée : origine {requete.headers.get('Origin')!r}")
             return _reponse(connexion, http.HTTPStatus.FORBIDDEN, "Origine refusée.".encode())
         return None                                   # liaison acceptée
     if not _reseau["actif"] and not second_ecran.est_ce_pc(adresse):
@@ -184,8 +182,6 @@ async def _gerer_interface(websocket, *_):
     local = second_ecran.est_ce_pc(adresse)
     _acces[websocket] = {"adresse": adresse, "local": local, "autorise": local}
     _clients.add(websocket)
-    print(f"[Web] Interface connectée{'' if local else ' depuis ' + str(adresse)} "
-          f"({len(_clients)} ouverte(s)).")
     try:
         await _envoyer(websocket, {"type": "acces", "local": local, "autorise": local,
                                    "pin_regle": bool(config.valeur("second_ecran", "pin"))})
@@ -202,7 +198,6 @@ async def _gerer_interface(websocket, *_):
     finally:
         _clients.discard(websocket)
         _acces.pop(websocket, None)
-        print(f"[Web] Interface déconnectée ({len(_clients)} ouverte(s)).")
 
 
 async def _verifier_pin(websocket, acces, saisi):
@@ -211,7 +206,7 @@ async def _verifier_pin(websocket, acces, saisi):
                                reglage["blocage_minutes"] * 60)
     acces["autorise"] = acces["local"] or resultat == "ok"
     if resultat != "ok":
-        print(f"[Web] PIN {resultat} depuis {acces['adresse']}")
+        _log.warning(f"PIN {resultat} depuis {acces['adresse']}")
     await _envoyer(websocket, {"type": "pin", "resultat": resultat,
                                "attente": round(_garde.bloque_pour(acces["adresse"]))})
 
@@ -270,10 +265,6 @@ async def demarrer_serveur_web(file_actions=None):
     _reseau.update(actif=actif, port=PORT, adresses=second_ecran.adresses_page(PORT) if actif else [])
     try:
         async with websockets.serve(_gerer_interface, hote, PORT, process_request=_controle_requete):
-            print(f"[Web] Serveur d'interface prêt sur ws://localhost:{PORT}")
-            if actif:
-                for adresse in _reseau["adresses"] or ["(aucune adresse réseau trouvée)"]:
-                    print(f"[Web] Second écran : {adresse}")
             await asyncio.Future()   # tourne jusqu'à l'arrêt du programme
     except OSError as erreur:
-        print(f"[Web] Impossible d'ouvrir le port {PORT} : {erreur}")
+        _log.warning(f"Impossible d'ouvrir le port {PORT} : {erreur}")
