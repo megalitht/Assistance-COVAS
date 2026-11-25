@@ -108,9 +108,22 @@ begin
   Result := Nvidia;
 end;
 
+{ « Installer COVAS.exe /PROCESSEUR » : version processeur même avec une carte NVIDIA (carte trop ancienne...) }
+function ForcerProcesseur: Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+    if CompareText(ParamStr(I), '/PROCESSEUR') = 0 then
+      Result := True;
+end;
+
 function InitializeSetup: Boolean;
 begin
   DetecterCarte;
+  if ForcerProcesseur then
+    Nvidia := False;
   Result := True;
 end;
 
