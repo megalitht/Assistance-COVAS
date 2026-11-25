@@ -2,7 +2,11 @@
 construire_application.py — Fabrique l'application COVAS à partager : Application/COVAS/COVAS.exe
 
     CONSTRUIRE APPLICATION.bat           (à la racine du projet)
-    CONSTRUIRE APPLICATION.bat --zip     (+ Application/COVAS.zip, pour l'envoyer)
+    CONSTRUIRE APPLICATION.bat --installateur   (+ « Application/Installer COVAS.exe », à envoyer)
+    CONSTRUIRE APPLICATION.bat --zip            (+ Application/COVAS.zip)
+
+L'installateur (distribution/covas.iss, Inno Setup 6) détecte la carte graphique : NVIDIA -> version
+complète, sinon version processeur (sans le grand modèle ni les bibliothèques NVIDIA).
 
 Besoin : PyInstaller dans .venv (pip install pyinstaller). Le dossier produit ne demande rien
 d'installé chez la personne qui le reçoit : Python, les bibliothèques, les modèles vocaux et les
@@ -16,6 +20,7 @@ de l'interface, journaux, profil de la fenêtre), les prises brutes du studio vo
 les anciens plans de vaisseaux.
 """
 import json
+from datetime import date
 import os
 import shutil
 import subprocess
@@ -33,6 +38,7 @@ CONTENU = os.path.join(APPLI, "Backend")        # dossier interne de PyInstaller
 
 DONNEES = ["barks.json", "conversations.json", "exobiologie.json", "SCRIPT_VOIX.md",
            "SCRIPT_CONVERSATIONS.md", "son", os.path.join("studio", "originaux.json")]
+LISEZ_MOI = "LISEZ-MOI.txt"
 MODELES = ["modele_vocal_turbo", "modele_vocal_fr"]
 NVIDIA = ["cublas", "cudnn", "cuda_nvrtc"]       # bibliothèques de Whisper sur carte graphique
 NVIDIA_INUTILES = {"nvblas64_12.dll"}
@@ -109,7 +115,6 @@ def fichiers():
         for dll in os.listdir(source):
             if dll.lower().endswith(".dll") and dll not in NVIDIA_INUTILES:
                 _copier(os.path.join(source, dll), os.path.join(CONTENU, "nvidia", nom, "bin", dll))
-    _copier(os.path.join(ICI, "LISEZ-MOI.txt"), os.path.join(APPLI, "LISEZ-MOI.txt"))
 
 
 def archiver():
@@ -122,15 +127,34 @@ def archiver():
     return chemin
 
 
+def _iscc():
+    for base in (os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs"),
+                 os.environ.get("ProgramFiles(x86)", ""), os.environ.get("ProgramFiles", "")):
+        chemin = os.path.join(base, "Inno Setup 6", "ISCC.exe")
+        if os.path.isfile(chemin):
+            return chemin
+    raise SystemExit("Inno Setup 6 introuvable : winget install JRSoftware.InnoSetup")
+
+
+def installateur():
+    subprocess.run([_iscc(), f"/DSource={APPLI}", f"/DVersion={date.today():%Y.%m.%d}",
+                    os.path.join(ICI, "covas.iss")], check=True)
+    return os.path.join(SORTIE, "Installer COVAS.exe")
+
+
 def taille(dossier):
     return sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(dossier) for f in fs)
 
 
 if __name__ == "__main__":
-    if os.path.isdir(APPLI):
-        shutil.rmtree(APPLI)
-    pyinstaller()
-    fichiers()
+    if "--sans-exe" not in sys.argv:          # --sans-exe : reprend Application/COVAS tel quel
+        if os.path.isdir(APPLI):
+            shutil.rmtree(APPLI)
+        pyinstaller()
+        fichiers()
+    _copier(os.path.join(ICI, LISEZ_MOI), os.path.join(APPLI, LISEZ_MOI))
     print(f"\nApplication prête : {APPLI}  ({taille(APPLI) / 1e9:.1f} Go)")
+    if "--installateur" in sys.argv:
+        print(f"Installateur : {installateur()}")
     if "--zip" in sys.argv:
         print(f"Archive : {archiver()}")

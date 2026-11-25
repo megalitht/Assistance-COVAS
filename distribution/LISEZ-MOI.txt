@@ -14,23 +14,29 @@ CE QU'IL FAUT
 - Conseillé : une carte graphique NVIDIA. Sans elle, le COVAS marche aussi,
   mais comprend un peu moins bien et répond un peu plus lentement.
 
-Rien à installer : tout est dans ce dossier.
+Rien d'autre à installer : tout est dans l'installateur.
 
 
 INSTALLATION
 ------------
-1. Mets le dossier COVAS où tu veux (Bureau, Documents, D:\Jeux...).
-   Évite « C:\Program Files » : le COVAS doit pouvoir écrire dans son dossier.
-2. Garde tout ensemble : COVAS.exe ne marche pas sans les dossiers Backend et Frontend.
-3. Clic droit sur COVAS.exe > Afficher plus d'options > Envoyer vers > Bureau (créer un raccourci).
+1. Double-clique sur « Installer COVAS.exe ».
+2. Windows peut afficher « Windows a protégé votre ordinateur » : le programme n'est
+   pas signé, c'est normal. Clique sur « Informations complémentaires », puis
+   « Exécuter quand même ».
+3. Suis les étapes. L'installateur regarde ta carte graphique et choisit tout seul :
+   - carte NVIDIA : version complète (environ 4,6 Go) ;
+   - autre carte (AMD, Intel...) : version processeur (environ 1 Go).
+   Pas besoin d'être administrateur.
+4. Un raccourci « COVAS » est créé dans le menu Démarrer (et sur le Bureau si tu
+   as laissé la case cochée).
+
+Pour une mise à jour, lance simplement le nouvel installateur : tes réglages restent.
 
 
 PREMIER LANCEMENT
 -----------------
-1. Double-clique sur COVAS.exe.
-2. Windows peut afficher « Windows a protégé votre ordinateur » : le programme n'est
-   pas signé, c'est normal. Clique sur « Informations complémentaires », puis
-   « Exécuter quand même ».
+1. Lance COVAS (raccourci du Bureau ou du menu Démarrer).
+2. Windows peut à nouveau afficher l'avertissement : même réponse qu'à l'installation.
 3. La fenêtre s'ouvre en plein écran (sur ton deuxième écran si tu en as un).
    F11 : quitter ou retrouver le plein écran.
 4. Clique sur le bouton au centre : le COVAS démarre (la première fois, ça peut prendre
@@ -64,19 +70,23 @@ SI ÇA NE MARCHE PAS
   L'onglet Studio des réglages met l'écoute en pause : ferme-le.
 - Les touches n'ont pas d'effet : relance le jeu (voir « Important » plus haut), et
   vérifie que le jeu est bien au premier plan.
-- Un autre problème : envoie le fichier  Backend\data\covas.log  à la personne qui
-  t'a donné le COVAS (il note les erreurs de la dernière utilisation).
+- Un autre problème : envoie le fichier covas.log à la personne qui t'a donné le
+  COVAS (il note les erreurs de la dernière utilisation). Pour le trouver, tape
+  dans la barre d'adresse de l'Explorateur :
+      %LOCALAPPDATA%\Programs\COVAS\Backend\data
 
 
 TÉLÉPHONE EN SECOND ÉCRAN (facultatif)
 --------------------------------------
-Le fichier Backend\data\config.toml (créé au premier démarrage) se modifie avec le
-Bloc-notes : section [second_ecran]. Le téléphone doit être sur le même Wi-Fi, et
-Windows peut demander d'autoriser le COVAS dans le pare-feu.
+Le fichier config.toml (dans le même dossier que covas.log, créé au premier
+démarrage) se modifie avec le Bloc-notes : section [second_ecran]. Le téléphone doit
+être sur le même Wi-Fi, et Windows peut demander d'autoriser le COVAS dans le pare-feu.
 
 
 DÉSINSTALLER
 ------------
-Supprime le dossier COVAS. Tes réglages de jeu ne sont pas touchés, à part les
-touches virtuelles ajoutées (ta sauvegarde « .bak » est dans le dossier des commandes
-du jeu : %LOCALAPPDATA%\Frontier Developments\Elite Dangerous\Options\Bindings).
+Paramètres de Windows > Applications > COVAS > Désinstaller. Le dossier du COVAS est
+entièrement supprimé (réglages et journaux compris). Tes réglages de jeu ne sont pas
+touchés, à part les touches virtuelles ajoutées (ta sauvegarde « .bak » est dans le
+dossier des commandes du jeu :
+%LOCALAPPDATA%\Frontier Developments\Elite Dangerous\Options\Bindings).
